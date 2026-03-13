@@ -1,0 +1,2 @@
+# Decision
+Due to the prior experience with the platform, and the extra amount of training other solutions like React Native would require, Flutter will be the framework of choice for developing the frontend. It's perfectly suitable for the purposes of building a cross platform mobile application, and through the FlutterFire package adds strong integration with Firebase.
