@@ -1,0 +1,110 @@
+# Known complexities
+- Multiple users moving or editing the same task. (last write wins)
+  - new writes simply overwrite the current details. The later write would therefore win. Could cause issues with changes being lost. considering the scope of the MVP and the target being small teams, it would be an acceptable compromise
+  - researching and implementing merging strategies would add complexity and time not desirable at this point, but worth looking into if this project is to be expanded beyond and MVP
+- tracking task position in column. (fractional positioning)
+  - updating surrounding task would keep position readable in the database, but doesn't really offer any advantages in terms of coding logic while still increasing writes
+  - fractional positioning would only require a single write, though position might become harder to read when task are moved often. One can possibly correct this somewhat with some logic when moving.
+  - tracking the order in a separate list on the board or elsewhere could also work, but would also result in extra writes
+- board removal while on the board
+  - all users should be moved to the list view with some sort of notification that the board was removed
+  - leaving users on the board would cause confusion (edits wont work) and the board would likely become empty due to data sync
+- animating/positioning tasks during drag & drop
+  - since positioning is part of the model, simply adding to the end is not an option. This functionality will need to be implemented at some point
+  - eventual position should be clear while dragging
+    - space opening between tasks
+  - dropping near top should position above (first) item and vice versa for the bottom of an item
+- owner leaving board
+  - board deletion. the board requires an owner for adding and removing members, since there is no way of specific owner change the board will need to be deleted. members active on the board are notified of deletion and returned to list. transfer could be future consideration
+- cascading deletion
+  - tasks after board deletion
+    - since they are part of the board, there is no need for them to remain after it has been deleted and the sub collection should be removed
+  - account deletion
+    - owned boards are deleted
+    - assigned tasks are unassigned
+    - removed from member list
+
+# Key flows
+- Account creation
+  - user opens app
+  - chooses auth method (email/pass, oAuth, magic link)
+  - account is created or authenticated
+  - user is logged in and lands no the board list page
+    - last active board perhaps a future feature
+- board creation
+  - from the board list view the user pressing the FAB
+  - bottom sheet opens with board form and save/cancel button
+    - accepts
+      - board gets created showing loading
+        - user is moved to new board
+      - creation fails
+        - bottom sheet closes
+        - error notification shown
+- board deletion
+  - user is on board list view
+  - user swipes board sideways showing delete color and icon behind list item
+  - confirmation bottom sheet shown
+    - accepts
+      - user is owner
+        - deletion request sent
+          - active users on board are navigated to board list
+          - users are shown persistent modal with deletion info
+          - users dismissed modal
+        - bottom sheet closes
+          - deletion fails
+          - error notification shown
+      - user is member
+        - user is removed from the member list of the board
+    - cancels
+      - bottom sheet is closed
+- Member addition
+  - user is on a board
+  - user selects user icon in app bar
+  - member list is shown with search bar
+  - user enters username or email
+  - list is shown containing non participating users
+  - user selects add button besides user
+  - selected user is added to the list of members
+- Task creation
+  - User is on a board
+  - user presses the FAB
+  - bottom sheet is opened with task form, cancel/save button
+  - user enters task details
+    - user saves
+      - bottom sheet is closed
+      - task is added to first column
+      - create endpoint is called with details
+    - user cancels
+      - bottom sheet is closed
+      - changes are lost
+- Task movement
+  - user is on a board
+  - user long presses task
+  - task becomes draggable
+    - user moves task across columns
+      - task is moved to column
+      - position is positioned in between other task if dropped there
+    - user moves task within column
+      - task is positioned in between other dropped tasks
+- Task deletion
+  - user is on a board
+  - user presses a task to open detail bottom sheet
+  - user presses delete button at the bottom left
+  - confirm modal is shown
+    - user accepts
+      - bottom sheet is closed
+      - task is deleted
+      - delete endpoint is called
+    - user cancels
+      - bottom sheet is closed
+- Task editing
+  - user is on board
+  - user presses task to open detail bottom sheet
+  - user presses edit bottom in bottom right
+  - same create form is opened with details prefilled
+    - user saves
+      - user is returned to detail bottom sheet
+      - details are updated
+      - update endpoint is called
+    - user cancels
+      - user is returned to detail bottom sheet
