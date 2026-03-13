@@ -13,7 +13,7 @@ The core features of this app are:
   - Board deletion/leaving
 - A project board featuring multiple columns representing the lifetime of a task
   - Adding and removal of users to collaborate with
-  - Columns are hardcoded in the board itself
+  - Columns are hardcoded in the board itself and are fixed values for this MVP in the following order
     - Todo, Blocked, In progress, In review, Done
 - Cards representing tasks which can be moved between the different columns on the board 
   - Creation and editing of cards
@@ -49,12 +49,15 @@ The core features of this app are:
   - To keep the MVP simple and minimal, no mechanisms will be added to handle API failures for eg. creation requests. No internet connection is already handled by firebase caching. If requests end up failing, the initial local action will be reverted (new task deleted, task moved back, deleted board reappears). The user should be informed by notification of the failure
 - assigning others
   - No user management features are intended in this MVP beyond the addition and removal of members to a board
-  
+- fuzzy user search
+  - Too much added complexity, limit to exact match
+  - could be added in the future through separate service handling indexing and search requests
+
 # Known complexities
 - Multiple users moving or editing the same task. (last write wins)
   - new writes simply overwrite the current details. The later write would therefore win. Could cause issues with changes being lost. considering the scope of the MVP and the target being small teams, it would be an acceptable compromise
   - researching and implementing merging strategies would add complexity and time not desirable at this point, but worth looking into if this project is to be expanded beyond and MVP
-- tracking task position in column. (fractional positiong)
+- tracking task position in column. (fractional positioning)
   - updating surrounding task would keep position readable in the database, but doesn't really offer any advantages in terms of coding logic while still increasing writes
   - fractional positioning would only require a single write, though position might become harder to read when task are moved often. One can possibly correct this somewhat with some logic when moving.
   - tracking the order in a separate list on the board or elsewhere could also work, but would also result in extra writes
@@ -66,7 +69,15 @@ The core features of this app are:
   - eventual position should be clear while dragging
     - space opening between tasks
   - dropping near top should position above (first) item and vice versa for the bottom of an item
-
+- owner leaving board
+  - board deletion. the board requires an owner for adding and removing members, since there is no way of specific owner change the board will need to be deleted. members active on the board are notified of deletion and returned to list. transfer could be future consideration
+- cascading deletion
+  - tasks after board deletion
+    - since they are part of the board, there is no need for them to remain after it has been deleted and the sub collection should be removed
+  - account deletion
+    - owned boards are deleted
+    - assigned tasks are unassigned
+    - removed from member list
 
 # Entities
 - User
@@ -74,14 +85,27 @@ The core features of this app are:
     - email address
     - name
   - Relations
-    - Has 0 or more boards
+    - Owns 0 or more boards
     - Is a member of 0 or more boards
 - Project board
   - Details
     - Title
+    - Columns
+      - Todo
+      - Blocked
+      - In progress
+      - In review
+      - Done
   - Relations
+    - Has 1 owner
     - Has 0 or more tasks
-    - Has 1 or more members
+    - Has 1 or more board members
+- Board member
+  - Details
+    - Board
+    - User
+  - Relations
+    - Is part of 1 board
 - Task
   - Details
     - Title
@@ -91,15 +115,7 @@ The core features of this app are:
     - Column
   - Relations
     - Is part of 1 board
-    - Has 0 or 1 assignee
-- Board invite
-  - Details
-    - Board
-    - Board owner
-    - Invited user
-    - Accepted
-  - Relations
-    - Has 1 user+board combination
+    - Has 0 or 1 Board member
 
 # Key flows
 - Account creation
@@ -163,7 +179,29 @@ The core features of this app are:
       - position is positioned in between other task if dropped there
     - user moves task within column
       - task is positioned in between other dropped tasks
-  
+- Task deletion
+  - user is on a board
+  - user presses a task to open detail bottom sheet
+  - user presses delete button at the bottom left
+  - confirm modal is shown
+    - user accepts
+      - bottom sheet is closed
+      - task is deleted
+      - delete endpoint is called
+    - user cancels
+      - bottom sheet is closed
+- Task editing
+  - user is on board
+  - user presses task to open detail bottom sheet
+  - user presses edit bottom in bottom right
+  - same create form is opened with details prefilled
+    - user saves
+      - user is returned to detail bottom sheet
+      - details are updated
+      - update endpoint is called
+    - user cancels
+      - user is returned to detail bottom sheet
+
 # Authorization model
 |feature|Owner|Member|
 |-------|-----|------|

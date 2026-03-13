@@ -13,8 +13,11 @@
     - title text
     - description text
     - column enum(todo, blocked, inProgress, inReview, done)
-    - position int
-    - assigneeUuid (fk user.uuid)
+    - position num
+    - assigneeUuid (fk board_member.uuid)
+  - BoardMembers
+    - uuid (pk)
+    - userUuid (fk user.uuid)
 
 ## Relations
 - User 0:* Board
