@@ -1,1 +1,22 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"collaborative-kanban-boa-13069","appId":"1:441387628695:android:f75203bb024fb7ae2551d2","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"collaborative-kanban-boa-13069","configurations":{"android":"1:441387628695:android:f75203bb024fb7ae2551d2","ios":"1:441387628695:ios:b5d7432ccee578e52551d2"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "collaborative-kanban-boa-13069",
+          "appId": "1:441387628695:android:f75203bb024fb7ae2551d2",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "collaborative-kanban-boa-13069",
+          "configurations": {
+            "android": "1:441387628695:android:f75203bb024fb7ae2551d2",
+            "ios": "1:441387628695:ios:b5d7432ccee578e52551d2"
+          }
+        }
+      }
+    }
+  }
+}
