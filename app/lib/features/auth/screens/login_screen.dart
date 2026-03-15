@@ -59,6 +59,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authController = ref.watch(authControllerProvider);
+    final currentAction = ref
+        .watch(authControllerProvider.notifier)
+        .currentAction;
     ref.listen(authControllerProvider, _onAuthControllerState);
 
     final passwordValidator = ValidationBuilder()
@@ -102,12 +105,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       controller: _emailController,
                       decoration: const InputDecoration(labelText: 'Email'),
                       validator: emailValidator,
+                      onTapOutside: (event) => FocusScope.of(context).unfocus(),
+                      autofillHints: const [
+                        AutofillHints.email,
+                        AutofillHints.username,
+                      ],
                     ),
                     TextFormField(
                       controller: _passwordController,
                       decoration: const InputDecoration(labelText: 'Password'),
                       obscureText: true,
                       validator: passwordValidator,
+                      onTapOutside: (event) => FocusScope.of(context).unfocus(),
+                      autofillHints: const [
+                        AutofillHints.password,
+                      ],
                     ),
                     const SizedBox(height: AppSpacing.medium),
                     Row(
@@ -117,15 +129,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           onPressed: authController.isLoading
                               ? null
                               : _register,
-                          child: authController.isLoading
-                              ? const CircularProgressIndicator()
+                          child:
+                              authController.isLoading &&
+                                  currentAction == AuthAction.signUp
+                              ? const SizedBox.square(
+                                  dimension: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                  ),
+                                )
                               : const Text('Register'),
                         ),
                         const SizedBox(width: AppSpacing.medium),
                         ElevatedButton(
                           onPressed: authController.isLoading ? null : _login,
-                          child: authController.isLoading
-                              ? const CircularProgressIndicator()
+                          child:
+                              authController.isLoading &&
+                                  currentAction == AuthAction.signIn
+                              ? const SizedBox.square(
+                                  dimension: 20,
+                                  child: CircularProgressIndicator(),
+                                )
                               : const Text('Login'),
                         ),
                       ],

@@ -36,7 +36,7 @@ final class AuthControllerProvider
   AuthController create() => AuthController();
 }
 
-String _$authControllerHash() => r'c7755bdc20c4d257db55185506d7c81d938f84cb';
+String _$authControllerHash() => r'8e15539514fa4f5ec0921cf83ca32afb57f7e8ff';
 
 /// Controller that handles login and sign-up logic for the authentication flow.
 
