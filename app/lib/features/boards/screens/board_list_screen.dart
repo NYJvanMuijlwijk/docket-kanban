@@ -7,6 +7,13 @@ class BoardListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Your Boards'),
+      ),
+      body: const Center(
+        child: Text('Board List Content Goes Here'),
+      ),
+    );
   }
 }
