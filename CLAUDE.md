@@ -53,10 +53,11 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 
 - **State:** Riverpod providers only. No ChangeNotifier, no BLoC.
 - **Persistence:** Repository pattern — `BoardRepository` interface, swap implementations via provider override.
-- **Models:** Immutable with `copyWith`. No codegen for Hive (manual TypeAdapters or JSON serialization).
+- **Models:** Immutable with `copyWith`. Manual `==`/`hashCode` via `Object.hash`. No codegen for Hive.
 - **Naming:** `KanbanCard` (not `Card`) to avoid Material widget conflict. `KanbanColumn` for columns.
 - **Tests:** Provider overrides for repository mocking. Widget tests for screens.
 - **Linting:** `very_good_analysis` strict mode. `public_member_api_docs` disabled.
+- **Serialization:** Prefer `toJson`/`fromJson` on models over manual Hive TypeAdapters. Simpler, safer schema evolution.
 
 ## Don't
 
@@ -65,6 +66,7 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - Don't use `hive_generator` — conflicts with `riverpod_generator` on Dart 3.11
 - Don't name model classes `Card` or `Column` — conflicts with Flutter/Material widgets
 - Don't skip `flutter analyze` before committing
+- Don't add `riverpod_lint` or `custom_lint` — analyzer ^9.0.0 conflict with `riverpod_generator` 4.x. Revisit when `custom_lint` catches up.
 
 ## Gotchas
 
