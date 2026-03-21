@@ -1,187 +1,171 @@
+import 'package:analyzer/analysis_rule/analysis_rule.dart';
+import 'package:analyzer/analysis_rule/rule_context.dart';
+import 'package:analyzer/analysis_rule/rule_visitor_registry.dart';
 import 'package:analyzer/dart/ast/ast.dart';
-import 'package:analyzer/error/error.dart' hide LintCode;
-import 'package:analyzer/error/listener.dart';
-import 'package:custom_lint_builder/custom_lint_builder.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:analyzer/error/error.dart';
+
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
 
 /// Categories a class member can be classified as.
 ///
-/// The enum order here defines the DEFAULT ordering.
-/// Override via analysis_options.yaml to change it.
+/// **To customise the ordering**, rearrange the entries in [defaultOrder]
+/// below.  The plugin reads that list at startup — no YAML config needed.
 enum MemberCategory {
-  publicStaticConstFields('public-static-const-fields'),
-  publicStaticFields('public-static-fields'),
-  privateStaticFields('private-static-fields'),
-  publicFinalFields('public-final-fields'),
-  publicFields('public-fields'),
-  privateFinalFields('private-final-fields'),
-  privateFields('private-fields'),
-  constructors('constructors'),
-  namedConstructors('named-constructors'),
-  factoryConstructors('factory-constructors'),
-  publicOverrideMethods('public-override-methods'),
-  publicGetters('public-getters'),
-  publicSetters('public-setters'),
-  publicMethods('public-methods'),
-  buildMethod('build-method'),
-  privateGetters('private-getters'),
-  privateSetters('private-setters'),
-  privateMethods('private-methods');
+  publicStaticConstFields('public static const field'),
+  publicStaticFields('public static field'),
+  privateStaticFields('private static field'),
+  publicFinalFields('public final field'),
+  publicFields('public field'),
+  privateFinalFields('private final field'),
+  privateFields('private field'),
+  constructors('constructor'),
+  namedConstructors('named constructor'),
+  factoryConstructors('factory constructor'),
+  publicOverrideMethods('public override method'),
+  publicGetters('public getter'),
+  publicSetters('public setter'),
+  publicMethods('public method'),
+  buildMethod('build method'),
+  privateGetters('private getter'),
+  privateSetters('private setter'),
+  privateMethods('private method')
+  ;
 
-  const MemberCategory(this.configKey);
-  final String configKey;
-
-  static MemberCategory? fromKey(String key) {
-    for (final category in values) {
-      if (category.configKey == key) return category;
-    }
-    return null;
-  }
+  const MemberCategory(this.displayName);
+  final String displayName;
 }
 
-/// A lint rule that enforces consistent ordering of class members.
+/// The enforced ordering.  Edit this list to change the convention.
 ///
-/// Enable and configure in analysis_options.yaml:
-/// ```yaml
-/// custom_lint:
-///   rules:
-///     - member_ordering  # uses default ordering
-/// ```
-///
-/// Or with a custom order (list only the categories you care about;
-/// unlisted categories are appended at the end):
-/// ```yaml
-/// custom_lint:
-///   rules:
-///     - member_ordering:
-///       order:
-///         - constructors
-///         - named-constructors
-///         - factory-constructors
-///         - public-static-const-fields
-///         - public-static-fields
-///         - private-static-fields
-///         - public-final-fields
-///         - public-fields
-///         - private-final-fields
-///         - private-fields
-///         - public-override-methods
-///         - build-method
-///         - public-getters
-///         - public-setters
-///         - public-methods
-///         - private-getters
-///         - private-setters
-///         - private-methods
-/// ```
-class MemberOrderingRule extends DartLintRule {
-  MemberOrderingRule({
-    List<MemberCategory>? order,
-  }) : _order = order ?? MemberCategory.values.toList(),
-       super(code: _code);
+/// Every category must appear exactly once.
+const List<MemberCategory> defaultOrder = [
+  // public-constructor
+  MemberCategory.constructors,
+  // named-constructors
+  MemberCategory.namedConstructors,
+  MemberCategory.factoryConstructors,
+  // public-static-variables
+  MemberCategory.publicStaticConstFields,
+  MemberCategory.publicStaticFields,
+  // public-instance-variables
+  MemberCategory.publicFinalFields,
+  MemberCategory.publicFields,
+  MemberCategory.publicGetters,
+  MemberCategory.publicSetters,
+  // private-static-variables
+  MemberCategory.privateStaticFields,
+  // private-instance-variables
+  MemberCategory.privateFinalFields,
+  MemberCategory.privateFields,
+  MemberCategory.privateGetters,
+  MemberCategory.privateSetters,
+  // public-override-methods
+  MemberCategory.publicOverrideMethods,
+  // public-other-methods
+  MemberCategory.publicMethods,
+  // private-other-methods
+  MemberCategory.privateMethods,
+  // build-method
+  MemberCategory.buildMethod,
+];
 
-  factory MemberOrderingRule.fromConfigs(CustomLintConfigs configs) {
-    final ruleConfig = configs.rules['member_ordering'];
-    final orderOption = ruleConfig?.json['order'];
+// ---------------------------------------------------------------------------
+// Rule
+// ---------------------------------------------------------------------------
 
-    List<MemberCategory>? order;
-    if (orderOption is List) {
-      final parsed = <MemberCategory>[];
-      final seen = <MemberCategory>{};
-      for (final entry in orderOption) {
-        final cat = MemberCategory.fromKey(entry.toString());
-        if (cat != null && seen.add(cat)) {
-          parsed.add(cat);
-        }
-      }
-      // Append any categories not listed so nothing is silently ignored.
-      for (final cat in MemberCategory.values) {
-        if (seen.add(cat)) parsed.add(cat);
-      }
-      order = parsed;
-    }
-
-    return MemberOrderingRule(order: order);
-  }
-
-  final List<MemberCategory> _order;
-
-  static const _code = LintCode(
-    name: 'member_ordering',
-    problemMessage:
-        '{0} should come before {1}. '
-        'Expected order: {2} before {3}.',
-    errorSeverity: ErrorSeverity.WARNING,
+class MemberOrderingRule extends AnalysisRule {
+  MemberOrderingRule()
+    : super(
+        name: 'member_ordering',
+        description:
+            'Enforce a consistent ordering of class, enum, mixin, '
+            'and extension members.',
+      );
+  static const LintCode code = LintCode(
+    'member_ordering',
+    'Class member is out of order.',
+    correctionMessage:
+        'Reorder members to match the project convention.  '
+        'Run `dart analyze` after fixing to verify.',
   );
 
   @override
-  void run(
-    CustomLintResolver resolver,
-    ErrorReporter reporter,
-    CustomLintContext context,
+  LintCode get diagnosticCode => code;
+
+  @override
+  void registerNodeProcessors(
+    RuleVisitorRegistry registry,
+    RuleContext context,
   ) {
-    context.registry.addClassDeclaration((node) {
-      _checkMembers(node.members, node.name.lexeme, reporter);
-    });
+    final visitor = _Visitor(this);
+    registry
+      ..addClassDeclaration(this, visitor)
+      ..addEnumDeclaration(this, visitor)
+      ..addMixinDeclaration(this, visitor)
+      ..addExtensionDeclaration(this, visitor)
+      ..addExtensionTypeDeclaration(this, visitor);
+  }
+}
 
-    context.registry.addEnumDeclaration((node) {
-      _checkMembers(node.members, node.name.lexeme, reporter);
-    });
+// ---------------------------------------------------------------------------
+// Visitor
+// ---------------------------------------------------------------------------
 
-    context.registry.addMixinDeclaration((node) {
-      _checkMembers(node.members, node.name.lexeme, reporter);
-    });
+class _Visitor extends SimpleAstVisitor<void> {
+  _Visitor(this.rule);
 
-    context.registry.addExtensionDeclaration((node) {
-      _checkMembers(
-        node.members,
-        node.name?.lexeme ?? '<extension>',
-        reporter,
-      );
-    });
+  final AnalysisRule rule;
 
-    context.registry.addExtensionTypeDeclaration((node) {
-      _checkMembers(node.members, node.name.lexeme, reporter);
-    });
+  @override
+  void visitClassDeclaration(ClassDeclaration node) {
+    _checkMembers(node.body.members);
   }
 
-  void _checkMembers(
-    NodeList<ClassMember> members,
-    String className,
-    ErrorReporter reporter,
-  ) {
+  @override
+  void visitEnumDeclaration(EnumDeclaration node) {
+    _checkMembers(node.body.members);
+  }
+
+  @override
+  void visitMixinDeclaration(MixinDeclaration node) {
+    _checkMembers(node.body.members);
+  }
+
+  @override
+  void visitExtensionDeclaration(ExtensionDeclaration node) {
+    _checkMembers(node.body.members);
+  }
+
+  @override
+  void visitExtensionTypeDeclaration(ExtensionTypeDeclaration node) {
+    _checkMembers(node.body.members);
+  }
+
+  // ─── Core check ──────────────────────────────────────────────────
+
+  void _checkMembers(NodeList<ClassMember> members) {
     if (members.length < 2) return;
 
-    final categorized = <(ClassMember, MemberCategory, String)>[];
+    final classified = <(ClassMember, int)>[];
     for (final member in members) {
       final category = _classify(member);
-      if (category == null) continue; // skip unrecognized
-      categorized.add((member, category, _memberLabel(member)));
+      if (category == null) continue;
+      classified.add((member, defaultOrder.indexOf(category)));
     }
 
-    // Walk through the list and report any member that appears after
-    // a member with a higher-priority (lower index) category.
-    var highestSeenIndex = -1;
-    String? highestSeenLabel;
-    MemberCategory? highestSeenCategory;
-
-    for (final (member, category, label) in categorized) {
-      final index = _order.indexOf(category);
-
-      if (index < highestSeenIndex) {
-        reporter.atNode(
-          _reportTarget(member),
-          _code,
-          arguments: [
-            label,
-            highestSeenLabel ?? '?',
-            category.configKey,
-            highestSeenCategory?.configKey ?? '?',
-          ],
-        );
-      } else if (index > highestSeenIndex) {
-        highestSeenIndex = index;
-        highestSeenLabel = label;
-        highestSeenCategory = category;
+    // Walk forward.  Whenever a member has a *lower* priority index than
+    // the highest we've seen so far, it is out of place.
+    var highestIndex = -1;
+    for (final (member, index) in classified) {
+      if (index < highestIndex) {
+        // Report at the whole member declaration.  The IDE will
+        // highlight the declaration, making it clear what to move.
+        rule.reportAtNode(member);
+      } else if (index > highestIndex) {
+        highestIndex = index;
       }
     }
   }
@@ -201,9 +185,7 @@ class MemberOrderingRule extends DartLintRule {
         node.fields.isConst ||
         (node.fields.isFinal &&
             isStatic &&
-            node.fields.variables.every(
-              (v) => v.initializer != null,
-            ));
+            node.fields.variables.every((v) => v.initializer != null));
     final isFinal = node.fields.isFinal;
     final isPrivate = _firstVarName(node).startsWith('_');
 
@@ -227,9 +209,8 @@ class MemberOrderingRule extends DartLintRule {
   MemberCategory _classifyMethod(MethodDeclaration node) {
     final name = node.name.lexeme;
     final isPrivate = name.startsWith('_');
-    final isOverride = _hasOverrideAnnotation(node);
+    final isOverride = node.metadata.any((m) => m.name.name == 'override');
 
-    // build method (Flutter)
     if (name == 'build' && !isPrivate) return MemberCategory.buildMethod;
 
     if (node.isGetter) {
@@ -249,49 +230,6 @@ class MemberOrderingRule extends DartLintRule {
 
   // ─── Helpers ─────────────────────────────────────────────────────
 
-  bool _hasOverrideAnnotation(MethodDeclaration node) {
-    return node.metadata.any((m) => m.name.name == 'override');
-  }
-
-  String _firstVarName(FieldDeclaration node) {
-    return node.fields.variables.first.name.lexeme;
-  }
-
-  /// Returns a human-readable label for a member, used in the warning message.
-  String _memberLabel(ClassMember member) {
-    if (member is FieldDeclaration) {
-      return 'field "${_firstVarName(member)}"';
-    }
-    if (member is ConstructorDeclaration) {
-      final name = member.name?.lexeme;
-      if (member.factoryKeyword != null) {
-        return name != null ? 'factory "$name"' : 'factory constructor';
-      }
-      return name != null ? 'constructor "$name"' : 'constructor';
-    }
-    if (member is MethodDeclaration) {
-      final kind =
-          member.isGetter
-              ? 'getter'
-              : member.isSetter
-              ? 'setter'
-              : 'method';
-      return '$kind "${member.name.lexeme}"';
-    }
-    return 'member';
-  }
-
-  /// Returns the AST node to underline in the IDE for a given member.
-  AstNode _reportTarget(ClassMember member) {
-    if (member is FieldDeclaration) {
-      return member.fields.variables.first;
-    }
-    if (member is ConstructorDeclaration) {
-      return member.returnType;
-    }
-    if (member is MethodDeclaration) {
-      return member;
-    }
-    return member;
-  }
+  String _firstVarName(FieldDeclaration node) =>
+      node.fields.variables.first.name.lexeme;
 }

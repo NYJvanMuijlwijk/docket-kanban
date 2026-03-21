@@ -7,6 +7,9 @@ analyzer:
     strict-raw-types: true
   exclude:
     - "**/*.g.dart"
+plugins:
+  member_ordering_lints:
+    path: member_ordering_lints
 
 linter:
   rules:

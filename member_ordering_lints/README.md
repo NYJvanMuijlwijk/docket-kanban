@@ -1,97 +1,88 @@
 # member_ordering_lints
 
-Custom lint rules enforcing consistent class member ordering in Dart files.
-Works with `custom_lint` — runs in any IDE and on CI via `dart analyze`.
+Analyzer plugin enforcing consistent class member ordering in Dart files.
+
+Built on `analysis_server_plugin` — the official first-party plugin system
+introduced in Dart 3.10. Works natively with `dart analyze` and
+`flutter analyze`, no extra commands needed.
+
+## Requirements
+
+- Dart SDK >= 3.10.0
+- analyzer >= 9.0.0
 
 ## Setup
 
-### 1. Add the package to your project
+### 1. Add the plugin to your project
 
-Copy the `member_ordering_lints/` directory into your repo (e.g. at the root
-or in a `packages/` folder), then add it as a dev dependency in your app's
-`pubspec.yaml`:
+Copy the `member_ordering_lints/` directory into your repo, then add it
+to your `analysis_options.yaml`:
 
 ```yaml
-dev_dependencies:
-  custom_lint: ^0.7.0
+plugins:
   member_ordering_lints:
-    path: member_ordering_lints  # adjust path as needed
+    path: member_ordering_lints  # adjust to actual path
 ```
 
-### 2. Enable custom_lint in analysis_options.yaml
+That's it — no `dev_dependencies` entry needed. The analysis server
+resolves the package from the `plugins:` block directly.
 
-```yaml
-analyzer:
-  plugins:
-    - custom_lint
-```
-
-### 3. Run it
+### 2. Restart your analysis server
 
 ```sh
-# IDE integration is automatic — warnings appear inline.
-# For CI or Claude Code, run:
-dart run custom_lint
+# In VS Code: Cmd/Ctrl+Shift+P → "Dart: Restart Analysis Server"
+# Or just restart your IDE.
 ```
 
-## Configuration
+### 3. Verify
 
-### Default ordering
-
-With no configuration the rule enforces this order:
-
-1. `public-static-const-fields`
-2. `public-static-fields`
-3. `private-static-fields`
-4. `public-final-fields`
-5. `public-fields`
-6. `private-final-fields`
-7. `private-fields`
-8. `constructors`
-9. `named-constructors`
-10. `factory-constructors`
-11. `public-override-methods`
-12. `public-getters`
-13. `public-setters`
-14. `public-methods`
-15. `build-method`
-16. `private-getters`
-17. `private-setters`
-18. `private-methods`
-
-### Custom ordering
-
-Override via `analysis_options.yaml`. List only the categories you care
-about — any unlisted categories are appended at the end in their default
-relative order.
-
-```yaml
-custom_lint:
-  rules:
-    - member_ordering:
-      order:
-        - constructors
-        - named-constructors
-        - factory-constructors
-        - public-static-const-fields
-        - public-static-fields
-        - private-static-fields
-        - public-final-fields
-        - public-fields
-        - private-final-fields
-        - private-fields
-        - public-override-methods
-        - build-method
-        - public-methods
-        - private-methods
+```sh
+dart analyze
 ```
 
-### Disable the rule
+Warnings will appear inline in your IDE and in `dart analyze` output for
+any class whose members are out of order.
 
-```yaml
-custom_lint:
-  rules:
-    - member_ordering: false
+## Default ordering
+
+The enforced order (top to bottom):
+
+1. Public static const fields
+2. Public static fields
+3. Private static fields
+4. Public final fields
+5. Public fields
+6. Private final fields
+7. Private fields
+8. Constructors (unnamed)
+9. Named constructors
+10. Factory constructors
+11. Public override methods
+12. Public getters
+13. Public setters
+14. Public methods
+15. `build` method
+16. Private getters
+17. Private setters
+18. Private methods
+
+## Customising the order
+
+Edit `defaultOrder` in `lib/src/member_ordering_rule.dart`. Rearrange the
+entries to match your convention. Since this is a local path dependency,
+editing the source is the intended workflow.
+
+For example, to put constructors before fields (Flutter Stylizer default):
+
+```dart
+const List<MemberCategory> defaultOrder = [
+  MemberCategory.constructors,
+  MemberCategory.namedConstructors,
+  MemberCategory.factoryConstructors,
+  MemberCategory.publicStaticConstFields,
+  MemberCategory.publicStaticFields,
+  // ... etc
+];
 ```
 
 ## What gets checked
@@ -99,16 +90,38 @@ custom_lint:
 The rule checks member ordering in:
 
 - Classes
-- Enums
+- Enums (non-constant members)
 - Mixins
 - Extensions
 - Extension types
 
-## Example warning
+## Warning vs lint
 
+The rule is registered as a **warning** (enabled by default). If you
+prefer it as an opt-in lint, change `registerWarningRule` to
+`registerLintRule` in `lib/main.dart`, then enable it explicitly:
+
+```yaml
+plugins:
+  member_ordering_lints:
+    path: member_ordering_lints
+    diagnostics:
+      member_ordering: true
 ```
-warning: field "_name" should come before method "toString".
-         Expected order: private-fields before public-methods.
+
+## Suppressing
+
+Standard `// ignore` comments work, namespaced to the plugin:
+
+```dart
+// ignore: member_ordering_lints/member_ordering
+String _lateField;
+```
+
+Or for an entire file:
+
+```dart
+// ignore_for_file: member_ordering_lints/member_ordering
 ```
 
 ## Using with Claude Code
@@ -118,8 +131,7 @@ Add this to your `CLAUDE.md`:
 ```markdown
 ## Linting
 
-Run `dart run custom_lint` after editing Dart files.
-Fix any member_ordering warnings by reordering class members.
+Run `dart analyze` after editing Dart files.
+Fix any member_ordering warnings by reordering class members to match:
+constructors → fields → overrides → public methods → build → private methods.
 ```
-
-Claude Code will then automatically validate its own edits against the rule.
