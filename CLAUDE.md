@@ -30,10 +30,14 @@ lib/
     board/
       data/         # repository implementations (Hive, future Firebase)
       domain/       # models, repository interfaces
-      presentation/ # screens, widgets
+      presentation/
+        providers/  # Riverpod codegen providers
+        widgets/    # reusable widgets (bottom sheets, etc.)
   router/           # GoRouter configuration
   main.dart         # entry point — ProviderScope + MaterialApp.router
-test/               # mirrors lib/ structure
+test/
+  helpers/          # shared test utilities (FakeBoardRepository, etc.)
+  features/         # mirrors lib/features/ structure
 docs/
   backlog.md        # project backlog and slices
 ```
@@ -42,34 +46,32 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 
 ## Stack
 
-- Flutter 3.41.4 / Dart 3.11.1
 - Riverpod 3.x with codegen (`riverpod_generator`)
-- Hive for local persistence (no codegen — manual serialization)
-- GoRouter for navigation
+- Hive for local persistence (JSON serialization, no codegen)
+- GoRouter, Material 3, dark-mode-first
 - `very_good_analysis` + strict-casts/inference/raw-types
-- Material 3, dark-mode-first
 
 ## Conventions
 
 - **State:** Riverpod providers only. No ChangeNotifier, no BLoC.
 - **Persistence:** Repository pattern — `BoardRepository` interface, swap implementations via provider override.
-- **Models:** Immutable with `copyWith`. Manual `==`/`hashCode` via `Object.hash`. No codegen for Hive.
+- **Models:** Immutable with `copyWith`, `toJson`/`fromJson`. No codegen for Hive.
 - **Naming:** `KanbanCard` (not `Card`) to avoid Material widget conflict. `KanbanColumn` for columns.
-- **Tests:** Provider overrides for repository mocking. Widget tests for screens.
+- **Router:** `createRouter()` factory, not a global singleton — singletons leak state between tests.
+- **Riverpod codegen:** Use `Ref` (not generated `FooRef`) in `@riverpod` free functions.
+- **Hive box type:** `Box<Map<dynamic, dynamic>>` for JSON storage. Cast to `Map<String, dynamic>` on read.
+- **Tests:** `FakeBoardRepository` in `test/helpers/` for widget tests. Real Hive + temp dir for repository integration tests.
 - **Linting:** `very_good_analysis` strict mode. `public_member_api_docs` disabled.
-- **Serialization:** Prefer `toJson`/`fromJson` on models over manual Hive TypeAdapters. Simpler, safer schema evolution.
 
 ## Don't
 
-- Don't use `ChangeNotifier` or raw `setState` for state management
-- Don't import `dart:io` in shared code (breaks web)
+- Don't import `dart:io` in shared code (breaks web). Fine in tests.
 - Don't use `hive_generator` — conflicts with `riverpod_generator` on Dart 3.11
 - Don't name model classes `Card` or `Column` — conflicts with Flutter/Material widgets
-- Don't skip `flutter analyze` before committing
 - Don't add `riverpod_lint` or `custom_lint` — analyzer ^9.0.0 conflict with `riverpod_generator` 4.x. Revisit when `custom_lint` catches up.
+- Don't use a global `final` GoRouter instance — use `createRouter()` factory.
 
 ## Gotchas
 
-- `hive_generator` has analyzer version conflicts with `riverpod_generator` on Dart 3.11. Use manual Hive TypeAdapters or JSON serialization instead.
 - Android package: `me.nyj.kanban_board`
 - Codegen output (`*.g.dart`) is excluded from analysis via `analysis_options.yaml`
