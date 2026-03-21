@@ -31,13 +31,13 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 
 **Acceptance:** `flutter run -d chrome` boots to placeholder screen. `flutter test` passes. `flutter analyze` clean (strict). `dart run build_runner build` succeeds.
 
-### Slice 2: Board CRUD — PRIORITY: next
-- [ ] Data model: `Board` (id, name, column order, timestamps)
-- [ ] `HiveBoardRepository` full implementation (CRUD + watch)
-- [ ] Board list screen — shows boards, create new, delete
-- [ ] Board detail screen — placeholder for columns (Slice 3)
-- [ ] Riverpod providers: board list, single board
-- [ ] Tests: repository unit tests (provider overrides), widget tests for board list
+### Slice 2: Board CRUD — DONE
+- [x] Data model: `Board` (id, name, column order, timestamps)
+- [x] `HiveBoardRepository` full implementation (CRUD + watch)
+- [x] Board list screen — shows boards, create new, delete
+- [x] Board detail screen — placeholder for columns (Slice 3)
+- [x] Riverpod providers: board list, single board
+- [x] Tests: repository unit tests (provider overrides), widget tests for board list
 
 **Acceptance:** Can create a board, see it in the list, tap into it, delete it. Data persists across refreshes via Hive. Tests pass.
 

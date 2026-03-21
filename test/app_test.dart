@@ -1,19 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
 import 'package:kanban_board/main.dart';
 
+import 'helpers/fake_board_repository.dart';
+
 void main() {
-  testWidgets('App renders home screen', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: KanbanApp()));
+  testWidgets('App renders board list screen', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          boardRepositoryProvider.overrideWithValue(FakeBoardRepository()),
+        ],
+        child: const KanbanApp(),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.text('Kanban Board'), findsWidgets);
-    expect(find.text('Welcome to Kanban Board'), findsOneWidget);
+    expect(find.text('My Boards'), findsOneWidget);
+    expect(
+      find.text('No boards yet. Tap + to create one.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('App uses dark theme by default', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: KanbanApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          boardRepositoryProvider.overrideWithValue(FakeBoardRepository()),
+        ],
+        child: const KanbanApp(),
+      ),
+    );
     await tester.pumpAndSettle();
 
     final materialApp = tester.widget<MaterialApp>(
