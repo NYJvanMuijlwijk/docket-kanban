@@ -5,8 +5,10 @@ import 'package:kanban_board/features/board/domain/board.dart';
 /// FirebaseBoardRepository (future).
 abstract class BoardRepository {
   Future<List<Board>> getBoards();
-  Future<Board> createBoard(Board board);
+  Future<Board?> getBoard(String id);
+  Future<Board> createBoard(String name);
   Future<void> updateBoard(Board board);
   Future<void> deleteBoard(String id);
   Stream<List<Board>> watchBoards();
+  void dispose();
 }
