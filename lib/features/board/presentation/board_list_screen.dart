@@ -44,14 +44,19 @@ class BoardListScreen extends ConsumerWidget {
                     color: Theme.of(context).colorScheme.onError,
                   ),
                 ),
-                confirmDismiss: (_) async {
+                onDismissed: (_) async {
                   try {
                     await ref
                         .read(boardListProvider.notifier)
                         .deleteBoard(board.id);
-                    return true;
                   } on Object {
-                    return false;
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Failed to delete board'),
+                      ),
+                    );
+                    ref.invalidate(boardListProvider);
                   }
                 },
                 child: ListTile(

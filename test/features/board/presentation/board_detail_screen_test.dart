@@ -15,7 +15,10 @@ Widget _buildApp({
   final repo = repository ?? FakeBoardRepository();
   return ProviderScope(
     overrides: [
-      boardRepositoryProvider.overrideWithValue(repo),
+      boardRepositoryProvider.overrideWith((ref) {
+        ref.onDispose(repo.dispose);
+        return repo;
+      }),
     ],
     child: MaterialApp(
       theme: buildDarkTheme(),

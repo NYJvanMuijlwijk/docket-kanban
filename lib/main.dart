@@ -16,9 +16,11 @@ Future<void> main() async {
   runApp(
     ProviderScope(
       overrides: [
-        boardRepositoryProvider.overrideWithValue(
-          HiveBoardRepository(boardsBox),
-        ),
+        boardRepositoryProvider.overrideWith((ref) {
+          final repo = HiveBoardRepository(boardsBox);
+          ref.onDispose(repo.dispose);
+          return repo;
+        }),
       ],
       child: const KanbanApp(),
     ),

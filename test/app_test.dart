@@ -11,7 +11,11 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          boardRepositoryProvider.overrideWithValue(FakeBoardRepository()),
+          boardRepositoryProvider.overrideWith((ref) {
+            final repo = FakeBoardRepository();
+            ref.onDispose(repo.dispose);
+            return repo;
+          }),
         ],
         child: const KanbanApp(),
       ),
@@ -29,7 +33,11 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          boardRepositoryProvider.overrideWithValue(FakeBoardRepository()),
+          boardRepositoryProvider.overrideWith((ref) {
+            final repo = FakeBoardRepository();
+            ref.onDispose(repo.dispose);
+            return repo;
+          }),
         ],
         child: const KanbanApp(),
       ),
