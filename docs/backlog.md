@@ -67,9 +67,10 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 - [ ] Empty states (no boards, no columns, no cards)
 - [ ] Loading states
 - [ ] Error handling UX (snackbars, retry)
+- [ ] GoRouter `errorBuilder`: general error/404 screen with "Go Home" navigation
 - [ ] App icon + splash screen
 
-**Acceptance:** Portfolio-ready on web (desktop + mobile viewport) and Android. Dark mode default. Edge cases handled. Clean, minimal aesthetic.
+**Acceptance:** Portfolio-ready on web (desktop + mobile viewport) and Android. Dark mode default. Edge cases handled (including unknown routes → error screen). Clean, minimal aesthetic.
 
 ### Slice 6: Firebase + Collaboration (optional) — PRIORITY: future
 - [ ] Firebase Core + Firestore + Auth packages
