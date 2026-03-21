@@ -15,6 +15,9 @@ class BoardFormSheet extends StatefulWidget {
   /// Pre-fill for rename mode. Null = create mode.
   final String? initialName;
 
+  @override
+  State<BoardFormSheet> createState() => _BoardFormSheetState();
+
   /// Show the bottom sheet and return the entered name, or null if dismissed.
   static Future<String?> show(
     BuildContext context, {
@@ -26,9 +29,6 @@ class BoardFormSheet extends StatefulWidget {
       builder: (_) => BoardFormSheet(initialName: initialName),
     );
   }
-
-  @override
-  State<BoardFormSheet> createState() => _BoardFormSheetState();
 }
 
 class _BoardFormSheetState extends State<BoardFormSheet> {
@@ -45,6 +45,12 @@ class _BoardFormSheetState extends State<BoardFormSheet> {
     _controller.addListener(_onChanged);
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   void _onChanged() {
     final valid = _controller.text.trim().isNotEmpty;
     if (valid != _isValid) {
@@ -57,12 +63,6 @@ class _BoardFormSheetState extends State<BoardFormSheet> {
     if (name.isNotEmpty) {
       Navigator.of(context).pop(name);
     }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override

@@ -7,6 +7,24 @@ import 'package:kanban_board/features/board/presentation/widgets/board_form_shee
 class BoardListScreen extends ConsumerWidget {
   const BoardListScreen({super.key});
 
+  Future<void> _createBoard(BuildContext context, WidgetRef ref) async {
+    final name = await BoardFormSheet.show(context);
+    if (name != null && context.mounted) {
+      await ref.read(boardListProvider.notifier).createBoard(name);
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final diff = date.isAfter(now) ? Duration.zero : now.difference(date);
+
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    if (diff.inDays < 7) return '${diff.inDays}d ago';
+    return '${date.month}/${date.day}/${date.year}';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final boardsAsync = ref.watch(boardListProvider);
@@ -73,23 +91,5 @@ class BoardListScreen extends ConsumerWidget {
         },
       ),
     );
-  }
-
-  Future<void> _createBoard(BuildContext context, WidgetRef ref) async {
-    final name = await BoardFormSheet.show(context);
-    if (name != null && context.mounted) {
-      await ref.read(boardListProvider.notifier).createBoard(name);
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = date.isAfter(now) ? Duration.zero : now.difference(date);
-
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${date.month}/${date.day}/${date.year}';
   }
 }
