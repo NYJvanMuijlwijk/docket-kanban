@@ -1,0 +1,12 @@
+name: member_ordering_lints
+description: Custom lint rules enforcing consistent class member ordering in Dart files.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  analyzer: ">=5.0.0 <8.0.0"
+  analyzer_plugin: ">=0.11.0 <1.0.0"
+  custom_lint_builder: ^0.7.0
