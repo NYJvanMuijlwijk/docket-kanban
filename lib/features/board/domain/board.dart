@@ -1,14 +1,16 @@
+import 'dart:collection';
+
 import 'package:flutter/foundation.dart';
 
 @immutable
 class Board {
-  const Board({
+  Board({
     required this.id,
     required this.name,
     required this.createdAt,
     required this.updatedAt,
-    this.columnOrder = const [],
-  });
+    List<String> columnOrder = const [],
+  }) : columnOrder = UnmodifiableListView(columnOrder);
 
   factory Board.fromJson(Map<String, dynamic> json) {
     return Board(

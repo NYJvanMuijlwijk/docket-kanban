@@ -67,7 +67,6 @@ class BoardDetailScreen extends ConsumerWidget {
     );
     if (newName != null && newName != currentName && context.mounted) {
       await ref.read(boardListProvider.notifier).renameBoard(boardId, newName);
-      ref.invalidate(boardProvider(boardId));
     }
   }
 }

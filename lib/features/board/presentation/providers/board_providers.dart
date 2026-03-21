@@ -20,7 +20,6 @@ class BoardList extends _$BoardList {
   @override
   Stream<List<Board>> build() {
     final repository = ref.watch(boardRepositoryProvider);
-    ref.onDispose(repository.dispose);
     return repository.watchBoards();
   }
 
@@ -47,7 +46,7 @@ class BoardList extends _$BoardList {
 }
 
 @riverpod
-Future<Board?> board(Ref ref, String id) {
+Stream<Board?> board(Ref ref, String id) {
   final repository = ref.watch(boardRepositoryProvider);
-  return repository.getBoard(id);
+  return repository.watchBoard(id);
 }

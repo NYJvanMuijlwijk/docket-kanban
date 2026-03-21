@@ -33,7 +33,7 @@ final class BoardListProvider
   BoardList create() => BoardList();
 }
 
-String _$boardListHash() => r'a92f98262ab0fff0456d471c1111596c9084ef58';
+String _$boardListHash() => r'5e9750ecdddeefc3ab01f998c866ca97ec0f42e9';
 
 abstract class _$BoardList extends $StreamNotifier<List<Board>> {
   Stream<List<Board>> build();
@@ -57,8 +57,8 @@ abstract class _$BoardList extends $StreamNotifier<List<Board>> {
 final boardProvider = BoardFamily._();
 
 final class BoardProvider
-    extends $FunctionalProvider<AsyncValue<Board?>, Board?, FutureOr<Board?>>
-    with $FutureModifier<Board?>, $FutureProvider<Board?> {
+    extends $FunctionalProvider<AsyncValue<Board?>, Board?, Stream<Board?>>
+    with $FutureModifier<Board?>, $StreamProvider<Board?> {
   BoardProvider._({
     required BoardFamily super.from,
     required String super.argument,
@@ -82,11 +82,11 @@ final class BoardProvider
 
   @$internal
   @override
-  $FutureProviderElement<Board?> $createElement($ProviderPointer pointer) =>
-      $FutureProviderElement(pointer);
+  $StreamProviderElement<Board?> $createElement($ProviderPointer pointer) =>
+      $StreamProviderElement(pointer);
 
   @override
-  FutureOr<Board?> create(Ref ref) {
+  Stream<Board?> create(Ref ref) {
     final argument = this.argument as String;
     return board(ref, argument);
   }
@@ -102,10 +102,10 @@ final class BoardProvider
   }
 }
 
-String _$boardHash() => r'c1083b8f8547d04bd27fe8743582abd4b127f126';
+String _$boardHash() => r'f6656b0ac69819b2585a1932d860202055ce66b5';
 
 final class BoardFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<Board?>, String> {
+    with $FunctionalFamilyOverride<Stream<Board?>, String> {
   BoardFamily._()
     : super(
         retry: null,

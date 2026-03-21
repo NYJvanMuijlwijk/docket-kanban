@@ -10,5 +10,6 @@ abstract class BoardRepository {
   Future<void> updateBoard(Board board);
   Future<void> deleteBoard(String id);
   Stream<List<Board>> watchBoards();
+  Stream<Board?> watchBoard(String id);
   void dispose();
 }

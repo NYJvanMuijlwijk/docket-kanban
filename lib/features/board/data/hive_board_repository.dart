@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:hive/hive.dart';
+import 'package:kanban_board/core/seed_transformer.dart';
 import 'package:kanban_board/features/board/domain/board.dart';
 import 'package:kanban_board/features/board/domain/board_repository.dart';
 import 'package:uuid/uuid.dart';
@@ -70,46 +71,25 @@ class HiveBoardRepository implements BoardRepository {
 
   @override
   Stream<List<Board>> watchBoards() {
-    // Seed the stream with current state on first listen, then continue
-    // with updates from box.watch(). Same semantics as BehaviorSubject
-    // without the rxdart dependency.
     return _controller.stream
-        .transform(_SeedTransformer<List<Board>>(_readAll));
+        .transform(SeedTransformer<List<Board>>(_readAll));
+  }
+
+  @override
+  Stream<Board?> watchBoard(String id) {
+    return watchBoards().map(
+      (boards) {
+        for (final board in boards) {
+          if (board.id == id) return board;
+        }
+        return null;
+      },
+    );
   }
 
   @override
   void dispose() {
     unawaited(_subscription.cancel());
     unawaited(_controller.close());
-  }
-}
-
-/// StreamTransformer that prepends a seed value (computed lazily on listen)
-/// before forwarding all subsequent events from the source stream.
-class _SeedTransformer<T> extends StreamTransformerBase<T, T> {
-  _SeedTransformer(this._seedFactory);
-
-  final T Function() _seedFactory;
-
-  @override
-  Stream<T> bind(Stream<T> stream) {
-    late StreamController<T> controller;
-    StreamSubscription<T>? subscription;
-
-    controller = StreamController<T>.broadcast(
-      onListen: () {
-        controller.add(_seedFactory());
-        subscription = stream.listen(
-          controller.add,
-          onError: controller.addError,
-          onDone: controller.close,
-        );
-      },
-      onCancel: () {
-        unawaited(subscription?.cancel());
-      },
-    );
-
-    return controller.stream;
   }
 }

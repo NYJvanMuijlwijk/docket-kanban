@@ -44,10 +44,15 @@ class BoardListScreen extends ConsumerWidget {
                     color: Theme.of(context).colorScheme.onError,
                   ),
                 ),
-                onDismissed: (_) async {
-                  await ref
-                      .read(boardListProvider.notifier)
-                      .deleteBoard(board.id);
+                confirmDismiss: (_) async {
+                  try {
+                    await ref
+                        .read(boardListProvider.notifier)
+                        .deleteBoard(board.id);
+                    return true;
+                  } on Object {
+                    return false;
+                  }
                 },
                 child: ListTile(
                   title: Text(board.name),
@@ -55,7 +60,7 @@ class BoardListScreen extends ConsumerWidget {
                     'Last used ${_formatDate(board.updatedAt)}',
                   ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.go('/board/${board.id}'),
+                  onTap: () => context.push('/board/${board.id}'),
                 ),
               );
             },
@@ -74,7 +79,7 @@ class BoardListScreen extends ConsumerWidget {
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    final diff = now.difference(date);
+    final diff = date.isAfter(now) ? Duration.zero : now.difference(date);
 
     if (diff.inMinutes < 1) return 'just now';
     if (diff.inHours < 1) return '${diff.inMinutes}m ago';
