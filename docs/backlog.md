@@ -10,6 +10,7 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 - **Drag-and-drop:** `drag_and_drop_lists`
 - **Routing:** GoRouter
 - **Linting:** `very_good_analysis` + strict-casts/inference/raw-types
+  - **Note:** `riverpod_lint` excluded due to `analyzer` version conflict with `riverpod_generator` 4.x. Revisit when `custom_lint` supports `analyzer ^9.0.0`. Until then, manually check: `ProviderScope` at root, no `BuildContext` in providers, proper `Notifier` encapsulation, correct codegen annotations.
 - **Build:** `build_runner` for Riverpod codegen
 - **Design:** Material 3, dark-mode-first, minimal/zen aesthetic
 
