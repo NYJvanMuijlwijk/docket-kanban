@@ -16,18 +16,18 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 
 ## Slices
 
-### Slice 1: Scaffold — PRIORITY: now
-- [ ] Flutter project initialized with folder structure
-- [ ] Riverpod 3.0 + codegen wired (`riverpod_generator`, `riverpod_annotation`, `build_runner`)
-- [ ] Hive initialized for web + Android
-- [ ] Repository abstraction: `BoardRepository` interface
-- [ ] `HiveBoardRepository` stub implementation
-- [ ] App entry point with `ProviderScope` and `MaterialApp.router`
-- [ ] GoRouter shell with placeholder home screen
-- [ ] Strict linting: `very_good_analysis` + `strict-casts`, `strict-inference`, `strict-raw-types`
-- [ ] Dev, build, test, lint commands all work
-- [ ] CLAUDE.md generated
-- [ ] First commit
+### Slice 1: Scaffold — DONE
+- [x] Flutter project initialized with folder structure
+- [x] Riverpod 3.0 + codegen wired (`riverpod_generator`, `riverpod_annotation`, `build_runner`)
+- [x] Hive initialized for web + Android
+- [x] Repository abstraction: `BoardRepository` interface
+- [x] `HiveBoardRepository` stub implementation
+- [x] App entry point with `ProviderScope` and `MaterialApp.router`
+- [x] GoRouter shell with placeholder home screen
+- [x] Strict linting: `very_good_analysis` + `strict-casts`, `strict-inference`, `strict-raw-types`
+- [x] Dev, build, test, lint commands all work
+- [x] CLAUDE.md generated
+- [x] First commit
 
 **Acceptance:** `flutter run -d chrome` boots to placeholder screen. `flutter test` passes. `flutter analyze` clean (strict). `dart run build_runner build` succeeds.
 
