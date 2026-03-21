@@ -11,6 +11,8 @@ class HiveBoardRepository implements BoardRepository {
     _subscription = _box.watch().listen((_) => _emit());
   }
 
+  static const boxName = 'boards';
+
   final Box<Map<dynamic, dynamic>> _box;
   final _uuid = const Uuid();
   final _controller = StreamController<List<Board>>.broadcast();

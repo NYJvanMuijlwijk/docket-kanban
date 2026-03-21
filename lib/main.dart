@@ -10,7 +10,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
 
-  final boardsBox = await Hive.openBox<Map<dynamic, dynamic>>('boards');
+  final boardsBox =
+      await Hive.openBox<Map<dynamic, dynamic>>(HiveBoardRepository.boxName);
 
   runApp(
     ProviderScope(

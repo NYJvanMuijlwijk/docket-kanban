@@ -13,7 +13,9 @@ void main() {
   setUp(() async {
     tempDir = Directory.systemTemp.createTempSync('hive_test_');
     Hive.init(tempDir.path);
-    box = await Hive.openBox<Map<dynamic, dynamic>>('boards');
+    box = await Hive.openBox<Map<dynamic, dynamic>>(
+      HiveBoardRepository.boxName,
+    );
     repository = HiveBoardRepository(box);
   });
 
