@@ -27,8 +27,7 @@ class HiveBoardRepository implements BoardRepository {
   final Box<Map<dynamic, dynamic>> _cardBox;
   final _uuid = const Uuid();
   final _boardController = StreamController<List<Board>>.broadcast();
-  final _columnController =
-      StreamController<List<KanbanColumn>>.broadcast();
+  final _columnController = StreamController<List<KanbanColumn>>.broadcast();
   final _cardController = StreamController<List<KanbanCard>>.broadcast();
   late final StreamSubscription<BoxEvent> _boardSub;
   late final StreamSubscription<BoxEvent> _columnSub;
@@ -83,8 +82,9 @@ class HiveBoardRepository implements BoardRepository {
 
   @override
   Stream<List<Board>> watchBoards() {
-    return _boardController.stream
-        .transform(SeedTransformer<List<Board>>(_readAllBoards));
+    return _boardController.stream.transform(
+      SeedTransformer<List<Board>>(_readAllBoards),
+    );
   }
 
   @override
@@ -124,10 +124,8 @@ class HiveBoardRepository implements BoardRepository {
       );
     }
 
-    final lastOrder =
-        existing.isEmpty ? null : existing.last.order;
-    final order =
-        FractionalIndexer.generateKeyBetween(lastOrder, null)!;
+    final lastOrder = existing.isEmpty ? null : existing.last.order;
+    final order = FractionalIndexer.generateKeyBetween(lastOrder, null)!;
 
     final now = DateTime.now();
     final column = KanbanColumn(
@@ -168,9 +166,7 @@ class HiveBoardRepository implements BoardRepository {
           ),
         )
         .map(
-          (all) => all
-              .where((c) => c.boardId == boardId)
-              .toList(),
+          (all) => all.where((c) => c.boardId == boardId).toList(),
         );
   }
 
@@ -200,10 +196,8 @@ class HiveBoardRepository implements BoardRepository {
       );
     }
 
-    final lastOrder =
-        existing.isEmpty ? null : existing.last.order;
-    final order =
-        FractionalIndexer.generateKeyBetween(lastOrder, null)!;
+    final lastOrder = existing.isEmpty ? null : existing.last.order;
+    final order = FractionalIndexer.generateKeyBetween(lastOrder, null)!;
 
     final now = DateTime.now();
     final card = KanbanCard(
@@ -244,9 +238,7 @@ class HiveBoardRepository implements BoardRepository {
           ),
         )
         .map(
-          (all) => all
-              .where((c) => c.columnId == columnId)
-              .toList(),
+          (all) => all.where((c) => c.columnId == columnId).toList(),
         );
   }
 
@@ -276,8 +268,7 @@ class HiveBoardRepository implements BoardRepository {
   List<KanbanColumn> _readColumnsByBoard(String boardId) {
     return _columnBox.values
         .map(
-          (raw) =>
-              KanbanColumn.fromJson(Map<String, dynamic>.from(raw)),
+          (raw) => KanbanColumn.fromJson(Map<String, dynamic>.from(raw)),
         )
         .where((c) => c.boardId == boardId)
         .toList()
@@ -287,8 +278,7 @@ class HiveBoardRepository implements BoardRepository {
   List<KanbanCard> _readCardsByColumn(String columnId) {
     return _cardBox.values
         .map(
-          (raw) =>
-              KanbanCard.fromJson(Map<String, dynamic>.from(raw)),
+          (raw) => KanbanCard.fromJson(Map<String, dynamic>.from(raw)),
         )
         .where((c) => c.columnId == columnId)
         .toList()
@@ -298,22 +288,18 @@ class HiveBoardRepository implements BoardRepository {
   Future<void> _deleteCardsForColumn(String columnId) async {
     final cardIds = _cardBox.values
         .map(
-          (raw) =>
-              KanbanCard.fromJson(Map<String, dynamic>.from(raw)),
+          (raw) => KanbanCard.fromJson(Map<String, dynamic>.from(raw)),
         )
         .where((c) => c.columnId == columnId)
         .map((c) => c.id)
         .toList();
-    for (final cardId in cardIds) {
-      await _cardBox.delete(cardId);
-    }
+    await _cardBox.deleteAll(cardIds);
   }
 
   List<KanbanColumn> _readAllColumns() {
     return _columnBox.values
         .map(
-          (raw) =>
-              KanbanColumn.fromJson(Map<String, dynamic>.from(raw)),
+          (raw) => KanbanColumn.fromJson(Map<String, dynamic>.from(raw)),
         )
         .toList()
       ..sort((a, b) => a.order.compareTo(b.order));
@@ -322,8 +308,7 @@ class HiveBoardRepository implements BoardRepository {
   List<KanbanCard> _readAllCards() {
     return _cardBox.values
         .map(
-          (raw) =>
-              KanbanCard.fromJson(Map<String, dynamic>.from(raw)),
+          (raw) => KanbanCard.fromJson(Map<String, dynamic>.from(raw)),
         )
         .toList()
       ..sort((a, b) => a.order.compareTo(b.order));
