@@ -7,16 +7,24 @@ import 'package:kanban_board/features/board/domain/board.dart';
 
 void main() {
   late Directory tempDir;
-  late Box<Map<dynamic, dynamic>> box;
+  late Box<Map<dynamic, dynamic>> boardBox;
+  late Box<Map<dynamic, dynamic>> columnBox;
+  late Box<Map<dynamic, dynamic>> cardBox;
   late HiveBoardRepository repository;
 
   setUp(() async {
     tempDir = Directory.systemTemp.createTempSync('hive_test_');
     Hive.init(tempDir.path);
-    box = await Hive.openBox<Map<dynamic, dynamic>>(
+    boardBox = await Hive.openBox<Map<dynamic, dynamic>>(
       HiveBoardRepository.boxName,
     );
-    repository = HiveBoardRepository(box);
+    columnBox = await Hive.openBox<Map<dynamic, dynamic>>(
+      HiveBoardRepository.columnBoxName,
+    );
+    cardBox = await Hive.openBox<Map<dynamic, dynamic>>(
+      HiveBoardRepository.cardBoxName,
+    );
+    repository = HiveBoardRepository(boardBox, columnBox, cardBox);
   });
 
   tearDown(() async {

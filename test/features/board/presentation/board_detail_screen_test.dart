@@ -30,7 +30,7 @@ Widget _buildApp({
 void main() {
   testWidgets('shows board name in app bar', (tester) async {
     final now = DateTime.now();
-    final repo = FakeBoardRepository([
+    final repo = FakeBoardRepository(initialBoards: [
       Board(
         id: 'test-id',
         name: 'My Board',
@@ -56,7 +56,7 @@ void main() {
 
   testWidgets('shows placeholder text for columns', (tester) async {
     final now = DateTime.now();
-    final repo = FakeBoardRepository([
+    final repo = FakeBoardRepository(initialBoards: [
       Board(
         id: 'test-id',
         name: 'My Board',
@@ -73,7 +73,7 @@ void main() {
 
   testWidgets('rename via popup menu updates board name', (tester) async {
     final now = DateTime.now();
-    final repo = FakeBoardRepository([
+    final repo = FakeBoardRepository(initialBoards: [
       Board(
         id: 'test-id',
         name: 'Old Name',

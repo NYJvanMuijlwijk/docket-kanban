@@ -34,7 +34,7 @@ void main() {
 
   testWidgets('shows board names when boards exist', (tester) async {
     final now = DateTime.now();
-    final repo = FakeBoardRepository([
+    final repo = FakeBoardRepository(initialBoards: [
       Board(
         id: '1',
         name: 'Work Board',
@@ -121,7 +121,7 @@ void main() {
 
   testWidgets('tap board tile navigates to detail screen', (tester) async {
     final now = DateTime.now();
-    final repo = FakeBoardRepository([
+    final repo = FakeBoardRepository(initialBoards: [
       Board(
         id: 'test-id',
         name: 'Test Board',
@@ -142,7 +142,7 @@ void main() {
 
   testWidgets('swipe board tile removes it from list', (tester) async {
     final now = DateTime.now();
-    final repo = FakeBoardRepository([
+    final repo = FakeBoardRepository(initialBoards: [
       Board(
         id: '1',
         name: 'Board to Delete',
