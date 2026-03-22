@@ -1,16 +1,13 @@
-import 'dart:collection';
-
 import 'package:flutter/foundation.dart';
 
 @immutable
 class Board {
-  Board({
+  const Board({
     required this.id,
     required this.name,
     required this.createdAt,
     required this.updatedAt,
-    List<String> columnOrder = const [],
-  }) : columnOrder = UnmodifiableListView(columnOrder);
+  });
 
   factory Board.fromJson(Map<String, dynamic> json) {
     return Board(
@@ -18,10 +15,6 @@ class Board {
       name: json['name'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
-      columnOrder: (json['columnOrder'] as List<dynamic>?)
-              ?.cast<String>()
-              .toList() ??
-          const [],
     );
   }
 
@@ -29,11 +22,9 @@ class Board {
   final String name;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final List<String> columnOrder;
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, createdAt, updatedAt, Object.hashAll(columnOrder));
+  int get hashCode => Object.hash(id, name, createdAt, updatedAt);
 
   @override
   bool operator ==(Object other) =>
@@ -43,8 +34,7 @@ class Board {
           id == other.id &&
           name == other.name &&
           createdAt == other.createdAt &&
-          updatedAt == other.updatedAt &&
-          listEquals(columnOrder, other.columnOrder);
+          updatedAt == other.updatedAt;
 
   @override
   String toString() => 'Board(id: $id, name: $name)';
@@ -55,7 +45,6 @@ class Board {
       'name': name,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
-      'columnOrder': columnOrder,
     };
   }
 
@@ -64,14 +53,12 @@ class Board {
     String? name,
     DateTime? createdAt,
     DateTime? updatedAt,
-    List<String>? columnOrder,
   }) {
     return Board(
       id: id ?? this.id,
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      columnOrder: columnOrder ?? this.columnOrder,
     );
   }
 }
