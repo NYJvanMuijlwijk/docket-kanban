@@ -80,6 +80,21 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 
 **Acceptance:** Editing a card in column A does not rebuild columns B/C/D. Verify with `debugPrintRebuildDirtyWidgets` or DevTools rebuild tracker.
 
+### Slice 4d: Drag-and-Drop UX Improvements — PRIORITY: later
+- [ ] Columns don't fill screen height — `DragAndDropList.generateWidget()` hardcodes `Column(mainAxisSize: MainAxisSize.min)`, columns shrink to content
+- [ ] Horizontal auto-scroll during drag is too slow — library hardcodes velocity (`_overDragCoefficient = 3.3`, `_scrollAreaSize = 20px`, `_duration = 30ms`), no parameter exposed
+- [ ] Cannot drop a card onto the empty-state widget ("No cards yet") to add to an empty column — only the `lastItemTargetHeight` zone accepts drops
+- [ ] UI issues when dragging a column to the last position — revisit
+
+**Options:** Fork `drag_and_drop_lists` and patch (smallest diff), or replace with a custom implementation using `LongPressDraggable` + `DragTarget` + horizontal `ListView` (more control, more work).
+
+**If forking:**
+- Column height: change `MainAxisSize.min` → `MainAxisSize.max` in `drag_and_drop_list.dart`, or expose as parameter
+- Scroll speed: expose `_overDragCoefficient` and `_scrollAreaSize` as constructor params in `drag_and_drop_lists.dart`
+- Empty-state drop: make `contentsWhenEmpty` a valid `DragTarget`
+
+**Acceptance:** Columns stretch to full screen height. Dragging horizontally feels responsive. Cards can be dropped onto empty columns via the empty-state widget. All existing drag tests still pass.
+
 ### Slice 5: Polish — PRIORITY: later
 - [ ] Material 3 theme: dark-mode-first, zen/minimal palette
 - [ ] Responsive layout (mobile vs. desktop/tablet breakpoints)

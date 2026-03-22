@@ -26,9 +26,7 @@ class BoardDetailScreen extends ConsumerWidget {
       initialName: currentName,
     );
     if (newName != null && newName != currentName && context.mounted) {
-      await ref
-          .read(boardListProvider.notifier)
-          .renameBoard(boardId, newName);
+      await ref.read(boardListProvider.notifier).renameBoard(boardId, newName);
     }
   }
 
@@ -38,9 +36,7 @@ class BoardDetailScreen extends ConsumerWidget {
   ) async {
     final name = await ColumnFormSheet.show(context);
     if (name != null && context.mounted) {
-      await ref
-          .read(columnListProvider(boardId).notifier)
-          .createColumn(name);
+      await ref.read(columnListProvider(boardId).notifier).createColumn(name);
     }
   }
 
@@ -65,8 +61,7 @@ class BoardDetailScreen extends ConsumerWidget {
           );
         }
 
-        final columnsAsync =
-            ref.watch(columnListProvider(boardId));
+        final columnsAsync = ref.watch(columnListProvider(boardId));
 
         return Scaffold(
           appBar: AppBar(
@@ -150,12 +145,12 @@ class _BoardDragContent extends ConsumerWidget {
       if (oldItemIndex >= sourceCards.length) return;
 
       final card = sourceCards[oldItemIndex];
-      final targetOrders =
-          targetCards.map((c) => c.order).toList();
-      final newOrder =
-          computeOrderKeyAtInsert(targetOrders, newItemIndex);
+      final targetOrders = targetCards.map((c) => c.order).toList();
+      final newOrder = computeOrderKeyAtInsert(targetOrders, newItemIndex);
 
-      await ref.read(boardRepositoryProvider).updateCard(
+      await ref
+          .read(boardRepositoryProvider)
+          .updateCard(
             card.copyWith(
               columnId: targetColumn.id,
               order: newOrder,
@@ -179,8 +174,7 @@ class _BoardDragContent extends ConsumerWidget {
     }
 
     final colorScheme = Theme.of(context).colorScheme;
-    final bottomPadding =
-        MediaQuery.paddingOf(context).bottom;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     return SafeArea(
       top: false,
@@ -209,8 +203,7 @@ class _BoardDragContent extends ConsumerWidget {
                 ),
               ),
               children: [
-                for (final card
-                    in columnCards[column.id] ?? <KanbanCard>[])
+                for (final card in columnCards[column.id] ?? <KanbanCard>[])
                   DragAndDropItem(
                     child: _KanbanCardTile(
                       card: card,
@@ -220,21 +213,22 @@ class _BoardDragContent extends ConsumerWidget {
               ],
             ),
         ],
-        onItemReorder: (
-          oldItemIndex,
-          oldListIndex,
-          newItemIndex,
-          newListIndex,
-        ) async {
-          await _onItemReorder(
-            ref: ref,
-            oldItemIndex: oldItemIndex,
-            oldListIndex: oldListIndex,
-            newItemIndex: newItemIndex,
-            newListIndex: newListIndex,
-            columnCards: columnCards,
-          );
-        },
+        onItemReorder:
+            (
+              oldItemIndex,
+              oldListIndex,
+              newItemIndex,
+              newListIndex,
+            ) async {
+              await _onItemReorder(
+                ref: ref,
+                oldItemIndex: oldItemIndex,
+                oldListIndex: oldListIndex,
+                newItemIndex: newItemIndex,
+                newListIndex: newListIndex,
+                columnCards: columnCards,
+              );
+            },
         onListReorder: (oldListIndex, newListIndex) async {
           await ref
               .read(columnListProvider(boardId).notifier)
@@ -272,7 +266,8 @@ class _BoardDragContent extends ConsumerWidget {
             ),
           ],
         ),
-        lastItemTargetHeight: 8,
+        lastItemTargetHeight: 24,
+        lastListTargetSize: 0,
       ),
     );
   }
@@ -310,7 +305,7 @@ class _ColumnHeader extends ConsumerWidget {
   ) async {
     final message = cardCount > 0
         ? "Delete '${column.name}' and its $cardCount "
-            '${cardCount == 1 ? 'card' : 'cards'}?'
+              '${cardCount == 1 ? 'card' : 'cards'}?'
         : "Delete '${column.name}'?";
 
     final confirmed = await showDialog<bool>(
@@ -397,6 +392,9 @@ class _KanbanCardTile extends ConsumerWidget {
     return Card(
       color: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: ListTile(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         title: Text(card.title),
         subtitle: card.description.isNotEmpty
             ? Text(

@@ -27,8 +27,7 @@ String? computeOrderKeyBetween(
       : null;
 
   // generateKeyBetween returns String? but is non-null for valid order keys.
-  // ignore: unnecessary_null_checks
-  return FractionalIndexer.generateKeyBetween(prev, next)!;
+  return FractionalIndexer.generateKeyBetween(prev, next);
 }
 
 /// Computes a fractional order key for inserting an item into a different
