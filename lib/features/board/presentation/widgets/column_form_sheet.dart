@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 const _maxColumnNameLength = 50;
@@ -62,12 +64,15 @@ class _ColumnFormSheetState extends State<ColumnFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    final padding = MediaQuery.paddingOf(context);
+    final bottomInset = math.max(viewInsets.bottom, padding.bottom);
     return Padding(
       padding: EdgeInsets.only(
         left: 24,
         right: 24,
         top: 24,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom: bottomInset + 24,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

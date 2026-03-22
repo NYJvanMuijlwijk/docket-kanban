@@ -66,6 +66,7 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - **Ordering:** `order` field is a `String` (fractional index via `FractionalIndexer.generateKeyBetween`). Sort lexicographically ascending.
 - **Limits:** Max 10 columns per board, 100 cards per column. Enforced in repository `create` methods.
 - **Tests:** `FakeBoardRepository` in `test/helpers/` for widget tests (accepts optional `initialBoards`, `initialColumns`, `initialCards`). Real Hive + temp dir for repository integration tests.
+- **System UI insets:** Always account for `MediaQuery.paddingOf(context).bottom` to clear OS chrome (gesture bars, nav bars). For bottom sheets, use `math.max(viewInsets.bottom, padding.bottom)` with `MediaQuery.viewInsetsOf(context)` and `MediaQuery.paddingOf(context)` — `viewInsets` covers the keyboard, `padding` covers system chrome when keyboard is dismissed. For scrollable body content, add `padding.bottom` to bottom padding (`Scaffold`/`AppBar` handle top inset already). Prefer granular `MediaQuery.*Of(context)` methods over `MediaQuery.of(context)` for narrower rebuilds.
 
 ## Don't
 
