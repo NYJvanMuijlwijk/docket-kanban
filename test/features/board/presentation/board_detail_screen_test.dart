@@ -54,7 +54,7 @@ void main() {
     expect(find.text('Board not found'), findsOneWidget);
   });
 
-  testWidgets('shows placeholder text for columns', (tester) async {
+  testWidgets('shows empty column state', (tester) async {
     final now = DateTime.now();
     final repo = FakeBoardRepository(initialBoards: [
       Board(
@@ -68,7 +68,10 @@ void main() {
     await tester.pumpWidget(_buildApp(boardId: 'test-id', repository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('Columns will appear here (Slice 3)'), findsOneWidget);
+    expect(
+      find.text('No columns yet. Tap + to add one.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('rename via popup menu updates board name', (tester) async {

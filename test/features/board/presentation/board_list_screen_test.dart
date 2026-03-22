@@ -136,8 +136,11 @@ void main() {
     await tester.tap(find.text('Test Board'));
     await tester.pumpAndSettle();
 
-    // Should navigate to detail screen
-    expect(find.text('Columns will appear here (Slice 3)'), findsOneWidget);
+    // Should navigate to detail screen — empty board shows column empty state
+    expect(
+      find.text('No columns yet. Tap + to add one.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('swipe board tile removes it from list', (tester) async {
