@@ -8,6 +8,20 @@ class BoardDetailScreen extends ConsumerWidget {
 
   final String boardId;
 
+  Future<void> _renameBoard(
+    BuildContext context,
+    WidgetRef ref,
+    String currentName,
+  ) async {
+    final newName = await BoardFormSheet.show(
+      context,
+      initialName: currentName,
+    );
+    if (newName != null && newName != currentName && context.mounted) {
+      await ref.read(boardListProvider.notifier).renameBoard(boardId, newName);
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final boardAsync = ref.watch(boardProvider(boardId));
@@ -54,19 +68,5 @@ class BoardDetailScreen extends ConsumerWidget {
         );
       },
     );
-  }
-
-  Future<void> _renameBoard(
-    BuildContext context,
-    WidgetRef ref,
-    String currentName,
-  ) async {
-    final newName = await BoardFormSheet.show(
-      context,
-      initialName: currentName,
-    );
-    if (newName != null && newName != currentName && context.mounted) {
-      await ref.read(boardListProvider.notifier).renameBoard(boardId, newName);
-    }
   }
 }

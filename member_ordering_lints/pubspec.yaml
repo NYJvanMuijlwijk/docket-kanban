@@ -1,0 +1,21 @@
+name: member_ordering_lints
+description: >
+  Analyzer plugin enforcing consistent class member ordering in Dart files.
+  Works natively with dart analyze / flutter analyze.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ">=3.10.0 <4.0.0"
+
+dependencies:
+  analysis_server_plugin: ">=0.3.4 <0.4.0"
+  analyzer: ">=9.0.0 <13.0.0"
+  analyzer_plugin: ">=0.14.0 <0.15.0"
+  args: ">=2.4.0 <3.0.0"
+
+dev_dependencies:
+  test: ">=1.24.0 <2.0.0"
+
+executables:
+  fix: fix

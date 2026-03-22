@@ -18,20 +18,6 @@ class HiveBoardRepository implements BoardRepository {
   final _controller = StreamController<List<Board>>.broadcast();
   late final StreamSubscription<BoxEvent> _subscription;
 
-  List<Board> _readAll() {
-    final boards = _box.values
-        .map(
-          (raw) => Board.fromJson(Map<String, dynamic>.from(raw)),
-        )
-        .toList()
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    return boards;
-  }
-
-  void _emit() {
-    _controller.add(_readAll());
-  }
-
   @override
   Future<List<Board>> getBoards() async => _readAll();
 
@@ -93,5 +79,19 @@ class HiveBoardRepository implements BoardRepository {
   void dispose() {
     unawaited(_subscription.cancel());
     unawaited(_controller.close());
+  }
+
+  List<Board> _readAll() {
+    final boards = _box.values
+        .map(
+          (raw) => Board.fromJson(Map<String, dynamic>.from(raw)),
+        )
+        .toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return boards;
+  }
+
+  void _emit() {
+    _controller.add(_readAll());
   }
 }

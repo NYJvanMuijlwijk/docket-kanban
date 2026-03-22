@@ -61,6 +61,15 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 
 **Acceptance:** Drag cards between columns. Reorder cards within a column. Reorder columns. Changes persist. Animations smooth. Tests pass.
 
+### Slice 4b: Last-Used Tracking — PRIORITY: later
+- [ ] Add `lastUsedAt` field to `Board` model (separate from `updatedAt`)
+- [ ] Update `lastUsedAt` on board visit (navigation to board detail screen)
+- [ ] Sort board list by `lastUsedAt` descending (instead of `updatedAt`)
+- [ ] Periodic rebuild of relative timestamps on board list screen (every 60s)
+- [ ] Tests: verify `lastUsedAt` updates on visit, verify timer triggers rebuild
+
+**Acceptance:** Opening a board moves it to the top of the list on return. "Last used X ago" labels refresh automatically every minute. `updatedAt` remains mutation-only. Tests pass.
+
 ### Slice 5: Polish — PRIORITY: later
 - [ ] Material 3 theme: dark-mode-first, zen/minimal palette
 - [ ] Responsive layout (mobile vs. desktop/tablet breakpoints)

@@ -31,6 +31,24 @@ class Board {
   final DateTime updatedAt;
   final List<String> columnOrder;
 
+  @override
+  int get hashCode =>
+      Object.hash(id, name, createdAt, updatedAt, Object.hashAll(columnOrder));
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Board &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          name == other.name &&
+          createdAt == other.createdAt &&
+          updatedAt == other.updatedAt &&
+          listEquals(columnOrder, other.columnOrder);
+
+  @override
+  String toString() => 'Board(id: $id, name: $name)';
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -56,22 +74,4 @@ class Board {
       columnOrder: columnOrder ?? this.columnOrder,
     );
   }
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is Board &&
-          runtimeType == other.runtimeType &&
-          id == other.id &&
-          name == other.name &&
-          createdAt == other.createdAt &&
-          updatedAt == other.updatedAt &&
-          listEquals(columnOrder, other.columnOrder);
-
-  @override
-  int get hashCode =>
-      Object.hash(id, name, createdAt, updatedAt, Object.hashAll(columnOrder));
-
-  @override
-  String toString() => 'Board(id: $id, name: $name)';
 }

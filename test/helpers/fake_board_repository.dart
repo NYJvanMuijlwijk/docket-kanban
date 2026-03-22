@@ -14,19 +14,10 @@ class FakeBoardRepository implements BoardRepository {
     }
   }
 
-  final Map<String, Board> _boards = {};
-  final _controller = StreamController<List<Board>>.broadcast();
   static const _uuid = Uuid();
 
-  List<Board> _sorted() {
-    final list = _boards.values.toList()
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    return list;
-  }
-
-  void _emit() {
-    _controller.add(_sorted());
-  }
+  final Map<String, Board> _boards = {};
+  final _controller = StreamController<List<Board>>.broadcast();
 
   @override
   Future<List<Board>> getBoards() async => _sorted();
@@ -87,5 +78,15 @@ class FakeBoardRepository implements BoardRepository {
   @override
   void dispose() {
     unawaited(_controller.close());
+  }
+
+  List<Board> _sorted() {
+    final list = _boards.values.toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+    return list;
+  }
+
+  void _emit() {
+    _controller.add(_sorted());
   }
 }

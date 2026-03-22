@@ -13,6 +13,8 @@ flutter analyze                # strict lint check
 flutter build web              # production web build
 dart run build_runner build --delete-conflicting-outputs  # Riverpod codegen
 dart run build_runner watch --delete-conflicting-outputs  # codegen watch mode
+cd member_ordering_lints && dart run member_ordering_lints:fix ../lib/ ../test/  # auto-fix member ordering
+cd member_ordering_lints && dart run member_ordering_lints:fix --check ../lib/ ../test/  # CI check (exit 1 if dirty)
 ```
 
 ## Verification (run in order)
