@@ -42,7 +42,6 @@ void main() {
       expect(board.name, 'My Board');
       expect(board.createdAt, isA<DateTime>());
       expect(board.updatedAt, isA<DateTime>());
-      expect(board.columnOrder, isEmpty);
     });
 
     test('board appears in subsequent getBoards()', () async {
@@ -151,25 +150,24 @@ void main() {
   });
 
   group('toJson/fromJson round-trip', () {
-    test('preserves all fields including columnOrder', () async {
+    test('preserves all fields through serialization', () async {
       final created = await repository.createBoard('Round Trip');
-      final withColumns = created.copyWith(
-        columnOrder: ['col-1', 'col-2', 'col-3'],
+      final updated = created.copyWith(
+        name: 'Updated Name',
         updatedAt: DateTime.now(),
       );
 
-      await repository.updateBoard(withColumns);
+      await repository.updateBoard(updated);
 
       final boards = await repository.getBoards();
       final restored = boards.first;
 
-      expect(restored.id, withColumns.id);
-      expect(restored.name, withColumns.name);
-      expect(restored.columnOrder, ['col-1', 'col-2', 'col-3']);
+      expect(restored.id, updated.id);
+      expect(restored.name, 'Updated Name');
       // DateTime precision may differ slightly through serialization
       expect(
         restored.createdAt.millisecondsSinceEpoch,
-        withColumns.createdAt.millisecondsSinceEpoch,
+        updated.createdAt.millisecondsSinceEpoch,
       );
     });
   });
