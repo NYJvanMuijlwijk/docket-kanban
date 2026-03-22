@@ -50,7 +50,7 @@ final class CardListProvider
   }
 }
 
-String _$cardListHash() => r'd5ceefc62580211c508a1789dec5af00d5884cff';
+String _$cardListHash() => r'a62bb3f5b76c30c60115acdeb92c051d6db438cc';
 
 final class CardListFamily extends $Family
     with
