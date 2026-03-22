@@ -219,84 +219,6 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
     }
   }
 
-  Widget _buildDetailView(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                widget.card.title,
-                style: theme.textTheme.titleLarge,
-              ),
-            ),
-            IconButton(
-              onPressed: () => setState(() => _editing = true),
-              icon: const Icon(Icons.edit),
-              tooltip: 'Edit',
-            ),
-            IconButton(
-              onPressed: _confirmDelete,
-              icon: const Icon(Icons.delete),
-              tooltip: 'Delete',
-            ),
-          ],
-        ),
-        if (widget.card.description.isNotEmpty) ...[
-          const SizedBox(height: 12),
-          Text(
-            widget.card.description,
-            style: theme.textTheme.bodyLarge,
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildEditView(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          'Edit Card',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _titleController,
-          autofocus: true,
-          maxLength: _maxTitleLength,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            labelText: 'Title',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: _isValid ? (_) => _submitEdit() : null,
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _descriptionController,
-          maxLength: _maxDescriptionLength,
-          maxLines: 3,
-          textCapitalization: TextCapitalization.sentences,
-          decoration: const InputDecoration(
-            labelText: 'Description (optional)',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: _isValid ? _submitEdit : null,
-          child: const Text('Save'),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final viewInsets = MediaQuery.viewInsetsOf(context);
@@ -309,7 +231,124 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
         top: 24,
         bottom: bottomInset + 24,
       ),
-      child: _editing ? _buildEditView(context) : _buildDetailView(context),
+      child: _editing
+          ? _CardEditView(
+              titleController: _titleController,
+              descriptionController: _descriptionController,
+              isValid: _isValid,
+              onSubmit: _submitEdit,
+            )
+          : _CardDetailView(
+              card: widget.card,
+              onEdit: () => setState(() => _editing = true),
+              onDelete: _confirmDelete,
+            ),
+    );
+  }
+}
+
+class _CardDetailView extends StatelessWidget {
+  const _CardDetailView({
+    required this.card,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final KanbanCard card;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                card.title,
+                style: theme.textTheme.titleLarge,
+              ),
+            ),
+            IconButton(
+              onPressed: onEdit,
+              icon: const Icon(Icons.edit),
+              tooltip: 'Edit',
+            ),
+            IconButton(
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete),
+              tooltip: 'Delete',
+            ),
+          ],
+        ),
+        if (card.description.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(
+            card.description,
+            style: theme.textTheme.bodyLarge,
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _CardEditView extends StatelessWidget {
+  const _CardEditView({
+    required this.titleController,
+    required this.descriptionController,
+    required this.isValid,
+    required this.onSubmit,
+  });
+
+  final TextEditingController titleController;
+  final TextEditingController descriptionController;
+  final bool isValid;
+  final VoidCallback onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Edit Card',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: titleController,
+          autofocus: true,
+          maxLength: _maxTitleLength,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Title',
+            border: OutlineInputBorder(),
+          ),
+          onSubmitted: isValid ? (_) => onSubmit() : null,
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: descriptionController,
+          maxLength: _maxDescriptionLength,
+          maxLines: 3,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Description (optional)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: isValid ? onSubmit : null,
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
