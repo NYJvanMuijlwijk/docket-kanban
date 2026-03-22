@@ -133,6 +133,12 @@ class _BoardDragContent extends ConsumerWidget {
     final sourceColumn = columns[oldListIndex];
     final targetColumn = columns[newListIndex];
 
+    // Reject drops when source or target cards haven't loaded.
+    if (!columnCards.containsKey(sourceColumn.id) ||
+        !columnCards.containsKey(targetColumn.id)) {
+      return;
+    }
+
     if (oldListIndex == newListIndex) {
       // Same-column reorder.
       await ref
@@ -162,11 +168,13 @@ class _BoardDragContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Collect each column's cards (only include columns whose
-    // cards have loaded).
+    // Track each column's async state so we can render
+    // loading/error/data per column.
+    final columnStates = <String, AsyncValue<List<KanbanCard>>>{};
     final columnCards = <String, List<KanbanCard>>{};
     for (final column in columns) {
       final cardsAsync = ref.watch(cardListProvider(column.id));
+      columnStates[column.id] = cardsAsync;
       final cards = cardsAsync.value;
       if (cards != null) {
         columnCards[column.id] = cards;
@@ -192,15 +200,11 @@ class _BoardDragContent extends ConsumerWidget {
                 cardCount: columnCards[column.id]?.length ?? 0,
                 boardId: boardId,
               ),
-              footer: _AddCardFooter(columnId: column.id),
-              contentsWhenEmpty: const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 24,
-                ),
-                child: Center(
-                  child: Text('No cards yet'),
-                ),
+              footer: columnStates[column.id] is AsyncData
+                  ? _AddCardFooter(columnId: column.id)
+                  : const SizedBox.shrink(),
+              contentsWhenEmpty: _ColumnEmptyContent(
+                state: columnStates[column.id]!,
               ),
               children: [
                 for (final card in columnCards[column.id] ?? <KanbanCard>[])
@@ -268,6 +272,30 @@ class _BoardDragContent extends ConsumerWidget {
         ),
         lastItemTargetHeight: 24,
         lastListTargetSize: 0,
+      ),
+    );
+  }
+}
+
+class _ColumnEmptyContent extends StatelessWidget {
+  const _ColumnEmptyContent({required this.state});
+
+  final AsyncValue<List<KanbanCard>> state;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Center(
+        child: switch (state) {
+          AsyncLoading() => const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          AsyncError() => const Icon(Icons.error_outline),
+          _ => const Text('No cards yet'),
+        },
       ),
     );
   }
