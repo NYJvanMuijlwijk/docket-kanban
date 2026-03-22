@@ -101,15 +101,21 @@ class BoardDetailScreen extends ConsumerWidget {
                   ),
                 );
               }
-              return ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.all(12),
-                itemCount: columns.length,
-                itemBuilder: (context, index) {
-                  return KanbanColumnWidget(
-                    column: columns[index],
-                  );
-                },
+              return SafeArea(
+                top: false,
+                left: false,
+                right: false,
+                minimum: const EdgeInsets.only(bottom: 12),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.all(12),
+                  itemCount: columns.length,
+                  itemBuilder: (context, index) {
+                    return KanbanColumnWidget(
+                      column: columns[index],
+                    );
+                  },
+                ),
               );
             },
           ),
