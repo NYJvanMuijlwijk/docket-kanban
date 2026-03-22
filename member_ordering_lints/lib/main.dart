@@ -11,9 +11,9 @@ class MemberOrderingPlugin extends Plugin {
 
   @override
   void register(PluginRegistry registry) {
-    // Registered as a lint rule — must be explicitly enabled in
+    // Registered as a warning rule — enabled by default.
+    // Use registerLintRule() instead if you want it opt-in via
     // analysis_options.yaml under `plugins: > diagnostics:`.
-    // Use registerWarningRule() instead if you want it on by default.
     registry.registerWarningRule(MemberOrderingRule());
   }
 }

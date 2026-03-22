@@ -80,13 +80,15 @@ MemberCategory? classifyMember(ClassMember member) {
 
 MemberCategory _classifyField(FieldDeclaration node) {
   final isStatic = node.isStatic;
-  final isConst =
-      node.fields.isConst ||
-      (node.fields.isFinal &&
-          isStatic &&
-          node.fields.variables.every((v) => v.initializer != null));
+  final isConst = node.fields.isConst;
   final isFinal = node.fields.isFinal;
-  final isPrivate = node.fields.variables.first.name.lexeme.startsWith('_');
+  final variables = node.fields.variables;
+  final anyPrivate = variables.any((v) => v.name.lexeme.startsWith('_'));
+
+  // Mixed-privacy multi-variable declaration (e.g. `int _a, b;`) — treat as
+  // private so it sorts conservatively and the ordering warning draws attention
+  // to the problematic declaration.
+  final isPrivate = anyPrivate;
 
   if (isStatic && isConst && !isPrivate) {
     return MemberCategory.publicStaticConstFields;

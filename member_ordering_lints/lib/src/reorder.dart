@@ -2,7 +2,7 @@ import 'package:analyzer/dart/analysis/features.dart';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-
+import 'package:analyzer/diagnostic/diagnostic.dart' show Severity;
 import 'package:member_ordering_lints/src/classify.dart';
 
 /// Returns the rewritten [source] with members reordered, or `null` if no
@@ -13,6 +13,11 @@ String? reorderFile(String source) {
     featureSet: FeatureSet.latestLanguageVersion(),
     throwIfDiagnostics: false,
   );
+
+  // Bail out if the file has parse errors — AST offsets may be unreliable.
+  final hasErrors = result.errors
+      .any((e) => e.severity == Severity.error);
+  if (hasErrors) return null;
 
   final declarations = _collectDeclarations(result.unit);
   if (declarations.isEmpty) return null;
@@ -99,8 +104,10 @@ class _DeclarationCollector extends RecursiveAstVisitor<void> {
     final chunkStart = i == 0 ? regionStart : members[i - 1].end;
     final chunkEnd = members[i].end;
     final category = classifyMember(members[i]);
+    // Unclassified members keep their original position so the fixer
+    // doesn't move constructs the lint rule ignores.
     final categoryIndex =
-        category != null ? defaultOrder.indexOf(category) : -1;
+        category != null ? defaultOrder.indexOf(category) : i;
     chunks.add(_MemberChunk(
       sourceStart: chunkStart,
       sourceEnd: chunkEnd,

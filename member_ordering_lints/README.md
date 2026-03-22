@@ -47,28 +47,28 @@ any class whose members are out of order.
 
 The enforced order (top to bottom):
 
-1. Public static const fields
-2. Public static fields
-3. Private static fields
-4. Public final fields
-5. Public fields
-6. Private final fields
-7. Private fields
-8. Constructors (unnamed)
-9. Named constructors
-10. Factory constructors
-11. Public override methods
-12. Public getters
-13. Public setters
-14. Public methods
-15. `build` method
-16. Private getters
-17. Private setters
-18. Private methods
+1. Constructors (unnamed)
+2. Named constructors
+3. Factory constructors
+4. Public static const fields
+5. Public static fields
+6. Public final fields
+7. Public fields
+8. Public getters
+9. Public setters
+10. Private static fields
+11. Private final fields
+12. Private fields
+13. Private getters
+14. Private setters
+15. Public override methods
+16. Public methods
+17. Private methods
+18. `build` method
 
 ## Customising the order
 
-Edit `defaultOrder` in `lib/src/member_ordering_rule.dart`. Rearrange the
+Edit `defaultOrder` in `lib/src/classify.dart`. Rearrange the
 entries to match your convention. Since this is a local path dependency,
 editing the source is the intended workflow.
 
