@@ -6,6 +6,12 @@ part 'column_providers.g.dart';
 
 @riverpod
 class ColumnList extends _$ColumnList {
+  @override
+  Stream<List<KanbanColumn>> build(String boardId) {
+    final repository = ref.watch(boardRepositoryProvider);
+    return repository.watchColumns(boardId);
+  }
+
   Future<KanbanColumn> createColumn(String name) {
     final repository = ref.read(boardRepositoryProvider);
     return repository.createColumn(boardId: boardId, name: name);
@@ -25,11 +31,5 @@ class ColumnList extends _$ColumnList {
   Future<void> deleteColumn(String id) {
     final repository = ref.read(boardRepositoryProvider);
     return repository.deleteColumn(id);
-  }
-
-  @override
-  Stream<List<KanbanColumn>> build(String boardId) {
-    final repository = ref.watch(boardRepositoryProvider);
-    return repository.watchColumns(boardId);
   }
 }

@@ -6,6 +6,12 @@ part 'card_providers.g.dart';
 
 @riverpod
 class CardList extends _$CardList {
+  @override
+  Stream<List<KanbanCard>> build(String columnId) {
+    final repository = ref.watch(boardRepositoryProvider);
+    return repository.watchCards(columnId);
+  }
+
   Future<KanbanCard> createCard({
     required String title,
     String description = '',
@@ -40,11 +46,5 @@ class CardList extends _$CardList {
   Future<void> deleteCard(String id) {
     final repository = ref.read(boardRepositoryProvider);
     return repository.deleteCard(id);
-  }
-
-  @override
-  Stream<List<KanbanCard>> build(String columnId) {
-    final repository = ref.watch(boardRepositoryProvider);
-    return repository.watchCards(columnId);
   }
 }
