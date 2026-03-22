@@ -41,16 +41,18 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 
 **Acceptance:** Can create a board, see it in the list, tap into it, delete it. Data persists across refreshes via Hive. Tests pass.
 
-### Slice 3: Columns + Cards — PRIORITY: next
-- [ ] Data models: `KanbanColumn` (id, name, order), `KanbanCard` (id, title, description, order, createdAt, updatedAt)
-- [ ] Column + card repository methods on `BoardRepository`
-- [ ] Board detail screen: render columns with cards
-- [ ] Add/edit/delete columns
-- [ ] Add/edit/delete cards (title + description)
-- [ ] Riverpod providers: columns for board, cards for column
-- [ ] Tests: repository tests, widget tests for column/card CRUD
+### Slice 3: Columns + Cards — DONE
+- [x] Data models: `KanbanColumn` (id, boardId, name, order), `KanbanCard` (id, columnId, title, description, order, createdAt, updatedAt)
+- [x] Column + card repository methods on `BoardRepository`
+- [x] Board detail screen: render columns with cards
+- [x] Add/edit/delete columns
+- [x] Add/edit/delete cards (title + description)
+- [x] Riverpod providers: columns for board, cards for column
+- [x] Tests: repository tests, widget tests for column/card CRUD
 
 **Acceptance:** Inside a board, can add columns (Todo, In Progress, Done), add cards to columns, edit/delete both. Data persists in Hive. Tests pass.
+
+**Notes:** Ordering uses `fractional_indexing` package (String keys, lexicographic sort) for O(1) reorder in Slice 4. `Board.columnOrder` removed — ordering lives on `KanbanColumn.order`. Limits: 10 columns/board, 100 cards/column. Delete column shows confirmation with card count.
 
 ### Slice 4: Drag-and-drop — PRIORITY: next
 - [ ] `drag_and_drop_lists` integration for card reorder + cross-column move
