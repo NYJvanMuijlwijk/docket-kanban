@@ -10,14 +10,25 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
 
-  final boardsBox =
-      await Hive.openBox<Map<dynamic, dynamic>>(HiveBoardRepository.boxName);
+  final boardsBox = await Hive.openBox<Map<dynamic, dynamic>>(
+    HiveBoardRepository.boxName,
+  );
+  final columnsBox = await Hive.openBox<Map<dynamic, dynamic>>(
+    HiveBoardRepository.columnBoxName,
+  );
+  final cardsBox = await Hive.openBox<Map<dynamic, dynamic>>(
+    HiveBoardRepository.cardBoxName,
+  );
 
   runApp(
     ProviderScope(
       overrides: [
         boardRepositoryProvider.overrideWith((ref) {
-          final repo = HiveBoardRepository(boardsBox);
+          final repo = HiveBoardRepository(
+            boardsBox,
+            columnsBox,
+            cardsBox,
+          );
           ref.onDispose(repo.dispose);
           return repo;
         }),
