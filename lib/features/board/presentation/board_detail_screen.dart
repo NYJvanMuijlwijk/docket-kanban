@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
+import 'package:kanban_board/features/board/presentation/providers/column_providers.dart';
 import 'package:kanban_board/features/board/presentation/widgets/board_form_sheet.dart';
+import 'package:kanban_board/features/board/presentation/widgets/column_form_sheet.dart';
+import 'package:kanban_board/features/board/presentation/widgets/kanban_column_widget.dart';
 
 class BoardDetailScreen extends ConsumerWidget {
   const BoardDetailScreen({required this.boardId, super.key});
@@ -18,7 +21,21 @@ class BoardDetailScreen extends ConsumerWidget {
       initialName: currentName,
     );
     if (newName != null && newName != currentName && context.mounted) {
-      await ref.read(boardListProvider.notifier).renameBoard(boardId, newName);
+      await ref
+          .read(boardListProvider.notifier)
+          .renameBoard(boardId, newName);
+    }
+  }
+
+  Future<void> _addColumn(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final name = await ColumnFormSheet.show(context);
+    if (name != null && context.mounted) {
+      await ref
+          .read(columnListProvider(boardId).notifier)
+          .createColumn(name);
     }
   }
 
@@ -43,6 +60,9 @@ class BoardDetailScreen extends ConsumerWidget {
           );
         }
 
+        final columnsAsync =
+            ref.watch(columnListProvider(boardId));
+
         return Scaffold(
           appBar: AppBar(
             title: Text(board.name),
@@ -62,8 +82,36 @@ class BoardDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
-          body: const Center(
-            child: Text('Columns will appear here (Slice 3)'),
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => _addColumn(context, ref),
+            child: const Icon(Icons.add),
+          ),
+          body: columnsAsync.when(
+            loading: () => const Center(
+              child: CircularProgressIndicator(),
+            ),
+            error: (error, _) => Center(
+              child: Text('Error: $error'),
+            ),
+            data: (columns) {
+              if (columns.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No columns yet. Tap + to add one.',
+                  ),
+                );
+              }
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.all(12),
+                itemCount: columns.length,
+                itemBuilder: (context, index) {
+                  return KanbanColumnWidget(
+                    column: columns[index],
+                  );
+                },
+              );
+            },
           ),
         );
       },
