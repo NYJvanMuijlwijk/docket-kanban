@@ -33,7 +33,7 @@ final class BoardListProvider
   BoardList create() => BoardList();
 }
 
-String _$boardListHash() => r'5e9750ecdddeefc3ab01f998c866ca97ec0f42e9';
+String _$boardListHash() => r'579ef77235a607f68a30e336b9d73e77cb72fdee';
 
 abstract class _$BoardList extends $StreamNotifier<List<Board>> {
   Stream<List<Board>> build();
