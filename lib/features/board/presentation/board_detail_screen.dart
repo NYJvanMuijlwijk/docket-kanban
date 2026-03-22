@@ -1,10 +1,15 @@
+import 'package:drag_and_drop_lists/drag_and_drop_lists.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kanban_board/core/reorder_helpers.dart';
+import 'package:kanban_board/features/board/domain/kanban_card.dart';
+import 'package:kanban_board/features/board/domain/kanban_column.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
+import 'package:kanban_board/features/board/presentation/providers/card_providers.dart';
 import 'package:kanban_board/features/board/presentation/providers/column_providers.dart';
 import 'package:kanban_board/features/board/presentation/widgets/board_form_sheet.dart';
+import 'package:kanban_board/features/board/presentation/widgets/card_form_sheet.dart';
 import 'package:kanban_board/features/board/presentation/widgets/column_form_sheet.dart';
-import 'package:kanban_board/features/board/presentation/widgets/kanban_column_widget.dart';
 
 class BoardDetailScreen extends ConsumerWidget {
   const BoardDetailScreen({required this.boardId, super.key});
@@ -101,26 +106,341 @@ class BoardDetailScreen extends ConsumerWidget {
                   ),
                 );
               }
-              return SafeArea(
-                top: false,
-                left: false,
-                right: false,
-                minimum: const EdgeInsets.only(bottom: 12),
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.all(12),
-                  itemCount: columns.length,
-                  itemBuilder: (context, index) {
-                    return KanbanColumnWidget(
-                      column: columns[index],
-                    );
-                  },
-                ),
+              return _BoardDragContent(
+                boardId: boardId,
+                columns: columns,
               );
             },
           ),
         );
       },
+    );
+  }
+}
+
+class _BoardDragContent extends ConsumerWidget {
+  const _BoardDragContent({
+    required this.boardId,
+    required this.columns,
+  });
+
+  final String boardId;
+  final List<KanbanColumn> columns;
+
+  Future<void> _onItemReorder({
+    required WidgetRef ref,
+    required int oldItemIndex,
+    required int oldListIndex,
+    required int newItemIndex,
+    required int newListIndex,
+    required Map<String, List<KanbanCard>> columnCards,
+  }) async {
+    final sourceColumn = columns[oldListIndex];
+    final targetColumn = columns[newListIndex];
+
+    if (oldListIndex == newListIndex) {
+      // Same-column reorder.
+      await ref
+          .read(cardListProvider(sourceColumn.id).notifier)
+          .reorderCard(oldItemIndex, newItemIndex);
+    } else {
+      // Cross-column move.
+      final sourceCards = columnCards[sourceColumn.id] ?? [];
+      final targetCards = columnCards[targetColumn.id] ?? [];
+      if (oldItemIndex >= sourceCards.length) return;
+
+      final card = sourceCards[oldItemIndex];
+      final targetOrders =
+          targetCards.map((c) => c.order).toList();
+      final newOrder =
+          computeOrderKeyAtInsert(targetOrders, newItemIndex);
+
+      await ref.read(boardRepositoryProvider).updateCard(
+            card.copyWith(
+              columnId: targetColumn.id,
+              order: newOrder,
+              updatedAt: DateTime.now(),
+            ),
+          );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Collect each column's cards (only include columns whose
+    // cards have loaded).
+    final columnCards = <String, List<KanbanCard>>{};
+    for (final column in columns) {
+      final cardsAsync = ref.watch(cardListProvider(column.id));
+      final cards = cardsAsync.value;
+      if (cards != null) {
+        columnCards[column.id] = cards;
+      }
+    }
+
+    final bottomPadding =
+        MediaQuery.paddingOf(context).bottom;
+
+    return SafeArea(
+      top: false,
+      left: false,
+      right: false,
+      minimum: EdgeInsets.only(
+        bottom: bottomPadding > 0 ? 0 : 12,
+      ),
+      child: DragAndDropLists(
+        children: [
+          for (final column in columns)
+            DragAndDropList(
+              header: _ColumnHeader(
+                column: column,
+                cardCount: columnCards[column.id]?.length ?? 0,
+                boardId: boardId,
+              ),
+              footer: _AddCardFooter(columnId: column.id),
+              contentsWhenEmpty: const Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 24,
+                ),
+                child: Center(
+                  child: Text('No cards yet'),
+                ),
+              ),
+              children: [
+                for (final card
+                    in columnCards[column.id] ?? <KanbanCard>[])
+                  DragAndDropItem(
+                    child: _KanbanCardTile(
+                      card: card,
+                      columnId: column.id,
+                    ),
+                  ),
+              ],
+            ),
+        ],
+        onItemReorder: (
+          oldItemIndex,
+          oldListIndex,
+          newItemIndex,
+          newListIndex,
+        ) async {
+          await _onItemReorder(
+            ref: ref,
+            oldItemIndex: oldItemIndex,
+            oldListIndex: oldListIndex,
+            newItemIndex: newItemIndex,
+            newListIndex: newListIndex,
+            columnCards: columnCards,
+          );
+        },
+        onListReorder: (oldListIndex, newListIndex) async {
+          await ref
+              .read(columnListProvider(boardId).notifier)
+              .reorderColumn(oldListIndex, newListIndex);
+        },
+        axis: Axis.horizontal,
+        listWidth: 300,
+        listPadding: const EdgeInsets.symmetric(
+          horizontal: 6,
+          vertical: 12,
+        ),
+        listInnerDecoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        lastItemTargetHeight: 8,
+        contentsWhenEmpty: const Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
+          child: Center(child: Text('No cards yet')),
+        ),
+      ),
+    );
+  }
+}
+
+class _ColumnHeader extends ConsumerWidget {
+  const _ColumnHeader({
+    required this.column,
+    required this.cardCount,
+    required this.boardId,
+  });
+
+  final KanbanColumn column;
+  final int cardCount;
+  final String boardId;
+
+  Future<void> _renameColumn(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final newName = await ColumnFormSheet.show(
+      context,
+      initialName: column.name,
+    );
+    if (newName != null && newName != column.name && context.mounted) {
+      await ref
+          .read(columnListProvider(boardId).notifier)
+          .renameColumn(column.id, newName);
+    }
+  }
+
+  Future<void> _deleteColumn(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final message = cardCount > 0
+        ? "Delete '${column.name}' and its $cardCount "
+            '${cardCount == 1 ? 'card' : 'cards'}?'
+        : "Delete '${column.name}'?";
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Column'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      await ref
+          .read(columnListProvider(boardId).notifier)
+          .deleteColumn(column.id);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: 16,
+        right: 4,
+        top: 8,
+        bottom: 4,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              column.name,
+              style: Theme.of(context).textTheme.titleMedium,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              switch (value) {
+                case 'rename':
+                  await _renameColumn(context, ref);
+                case 'delete':
+                  if (!context.mounted) return;
+                  await _deleteColumn(context, ref);
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'rename',
+                child: Text('Rename'),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Text('Delete'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _KanbanCardTile extends ConsumerWidget {
+  const _KanbanCardTile({
+    required this.card,
+    required this.columnId,
+  });
+
+  final KanbanCard card;
+  final String columnId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      child: ListTile(
+        title: Text(card.title),
+        subtitle: card.description.isNotEmpty
+            ? Text(
+                card.description,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              )
+            : null,
+        onTap: () async {
+          final result = await CardDetailSheet.show(
+            context,
+            card: card,
+          );
+          if (!context.mounted) return;
+          switch (result) {
+            case CardEdited():
+              await ref
+                  .read(cardListProvider(columnId).notifier)
+                  .updateCard(
+                    id: card.id,
+                    title: result.title,
+                    description: result.description,
+                  );
+            case CardDeleted():
+              await ref
+                  .read(cardListProvider(columnId).notifier)
+                  .deleteCard(card.id);
+            case null:
+              break;
+          }
+        },
+      ),
+    );
+  }
+}
+
+class _AddCardFooter extends ConsumerWidget {
+  const _AddCardFooter({required this.columnId});
+
+  final String columnId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: TextButton.icon(
+        onPressed: () async {
+          final result = await CardFormSheet.show(context);
+          if (result != null && context.mounted) {
+            await ref
+                .read(cardListProvider(columnId).notifier)
+                .createCard(
+                  title: result.title,
+                  description: result.description,
+                );
+          }
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Add Card'),
+      ),
     );
   }
 }
