@@ -157,71 +157,34 @@ class KanbanColumnWidget extends ConsumerWidget {
                     itemCount: cards.length,
                     itemBuilder: (context, index) {
                       final card = cards[index];
-                      return Dismissible(
-                        key: ValueKey(card.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding:
-                              const EdgeInsets.only(right: 16),
-                          color: Theme.of(context)
-                              .colorScheme
-                              .error,
-                          child: Icon(
-                            Icons.delete,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onError,
-                          ),
-                        ),
-                        onDismissed: (_) async {
-                          try {
-                            await ref
-                                .read(
-                                  cardListProvider(column.id)
-                                      .notifier,
+                      return Card(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHigh,
+                        child: ListTile(
+                          title: Text(card.title),
+                          subtitle: card.description.isNotEmpty
+                              ? Text(
+                                  card.description,
+                                  maxLines: 2,
+                                  overflow:
+                                      TextOverflow.ellipsis,
                                 )
-                                .deleteCard(card.id);
-                          } on Object {
+                              : null,
+                          onTap: () async {
+                            final result =
+                                await CardDetailSheet.show(
+                              context,
+                              card: card,
+                            );
                             if (!context.mounted) return;
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Failed to delete card',
-                                ),
-                              ),
-                            );
-                            ref.invalidate(
-                              cardListProvider(column.id),
-                            );
-                          }
-                        },
-                        child: Card(
-                          child: ListTile(
-                            title: Text(card.title),
-                            subtitle: card.description.isNotEmpty
-                                ? Text(
-                                    card.description,
-                                    maxLines: 2,
-                                    overflow:
-                                        TextOverflow.ellipsis,
-                                  )
-                                : null,
-                            onTap: () async {
-                              final result =
-                                  await CardFormSheet.show(
-                                context,
-                                initialTitle: card.title,
-                                initialDescription:
-                                    card.description,
-                              );
-                              if (result != null &&
-                                  context.mounted) {
+                            switch (result) {
+                              case CardEdited():
                                 await ref
                                     .read(
-                                      cardListProvider(column.id)
-                                          .notifier,
+                                      cardListProvider(
+                                        column.id,
+                                      ).notifier,
                                     )
                                     .updateCard(
                                       id: card.id,
@@ -229,9 +192,18 @@ class KanbanColumnWidget extends ConsumerWidget {
                                       description:
                                           result.description,
                                     );
-                              }
-                            },
-                          ),
+                              case CardDeleted():
+                                await ref
+                                    .read(
+                                      cardListProvider(
+                                        column.id,
+                                      ).notifier,
+                                    )
+                                    .deleteCard(card.id);
+                              case null:
+                                break;
+                            }
+                          },
                         ),
                       );
                     },
