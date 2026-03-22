@@ -50,6 +50,7 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 
 - Riverpod 3.x with codegen (`riverpod_generator`)
 - Hive for local persistence (JSON serialization, no codegen)
+- `fractional_indexing` for list ordering (O(1) reorder)
 - GoRouter, Material 3, dark-mode-first
 - `very_good_analysis` + strict-casts/inference/raw-types
 
@@ -61,8 +62,11 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - **Naming:** `KanbanCard` (not `Card`) to avoid Material widget conflict. `KanbanColumn` for columns.
 - **Router:** `createRouter()` factory, not a global singleton — singletons leak state between tests.
 - **Riverpod codegen:** Use `Ref` (not generated `FooRef`) in `@riverpod` free functions.
-- **Hive box type:** `Box<Map<dynamic, dynamic>>` for JSON storage. Cast to `Map<String, dynamic>` on read.
-- **Tests:** `FakeBoardRepository` in `test/helpers/` for widget tests. Real Hive + temp dir for repository integration tests.
+- **Hive box type:** `Box<Map<dynamic, dynamic>>` for JSON storage. Cast to `Map<String, dynamic>` on read. Three boxes: `boards`, `columns`, `cards`.
+- **Ordering:** `order` field is a `String` (fractional index via `FractionalIndexer.generateKeyBetween`). Sort lexicographically ascending.
+- **Limits:** Max 10 columns per board, 100 cards per column. Enforced in repository `create` methods.
+- **Tests:** `FakeBoardRepository` in `test/helpers/` for widget tests (accepts optional `initialBoards`, `initialColumns`, `initialCards`). Real Hive + temp dir for repository integration tests.
+- **Widget test finders:** Use `find.descendant(of: find.byType(Widget), matching: ...)` to disambiguate same-typed widgets in different subtrees (e.g., column popup vs app bar popup).
 - **Linting:** `very_good_analysis` strict mode. `public_member_api_docs` disabled.
 
 ## Don't
