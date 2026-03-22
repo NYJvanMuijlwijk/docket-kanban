@@ -66,8 +66,6 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - **Ordering:** `order` field is a `String` (fractional index via `FractionalIndexer.generateKeyBetween`). Sort lexicographically ascending.
 - **Limits:** Max 10 columns per board, 100 cards per column. Enforced in repository `create` methods.
 - **Tests:** `FakeBoardRepository` in `test/helpers/` for widget tests (accepts optional `initialBoards`, `initialColumns`, `initialCards`). Real Hive + temp dir for repository integration tests.
-- **Widget test finders:** Use `find.descendant(of: find.byType(Widget), matching: ...)` to disambiguate same-typed widgets in different subtrees (e.g., column popup vs app bar popup).
-- **Linting:** `very_good_analysis` strict mode. `public_member_api_docs` disabled.
 
 ## Don't
 
@@ -81,3 +79,6 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 
 - Android package: `me.nyj.kanban_board`
 - Codegen output (`*.g.dart`) is excluded from analysis via `analysis_options.yaml`
+- After `build_runner`, check `git status` for ALL modified `.g.dart` — existing hashes change when dependencies change
+- Riverpod codegen providers: import `riverpod_annotation` only, not `flutter_riverpod`
+- Riverpod 3.x `AsyncValue`: use `.value` (nullable), not `.valueOrNull`
