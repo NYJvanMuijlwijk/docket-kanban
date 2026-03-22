@@ -60,25 +60,24 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - **State:** Riverpod providers only. No ChangeNotifier, no BLoC.
 - **Persistence:** Repository pattern — `BoardRepository` interface, swap implementations via provider override.
 - **Models:** Immutable with `copyWith`, `toJson`/`fromJson`. No codegen for Hive.
-- **Naming:** `KanbanCard` (not `Card`) to avoid Material widget conflict. `KanbanColumn` for columns.
+- **Naming:** `KanbanCard` (not `Card`), `KanbanColumn` (not `Column`) to avoid Material/widget conflicts.
 - **Router:** `createRouter()` factory, not a global singleton — singletons leak state between tests.
 - **Riverpod codegen:** Use `Ref` (not generated `FooRef`) in `@riverpod` free functions.
 - **Hive box type:** `Box<Map<dynamic, dynamic>>` for JSON storage. Cast to `Map<String, dynamic>` on read. Three boxes: `boards`, `columns`, `cards`.
 - **Ordering:** `order` field is a `String` (fractional index via `FractionalIndexer.generateKeyBetween`). Sort lexicographically ascending.
-- **Reorder helpers:** `computeOrderKeyBetween` (same-list) and `computeOrderKeyAtInsert` (cross-list) in `lib/core/reorder_helpers.dart`. Both use post-removal indexing matching `drag_and_drop_lists` convention.
+- **Reorder helpers:** `computeOrderKeyBetween` (same-list) and `computeOrderKeyAtInsert` (cross-list) in `lib/core/reorder_helpers.dart`. Both use post-removal indexing — `newItemIndex` is position after dragged item removed. Don't double-adjust.
 - **Cross-column card move:** `CardList` is keyed by `columnId` — source notifier can't see target column's cards. Handle cross-column moves at the screen level via direct `repository.updateCard` call, not through a notifier.
 - **Limits:** Max 10 columns per board, 100 cards per column. Enforced in repository `create` methods.
 - **Tests:** `FakeBoardRepository` in `test/helpers/` for widget tests (accepts optional `initialBoards`, `initialColumns`, `initialCards`). Real Hive + temp dir for repository integration tests.
-- **Widget decomposition:** Prefer private widget classes over helper methods that return widgets. Methods returning `Widget` lose their own `BuildContext`, `Element`, and lifecycle — they rebuild with the parent. Private widget classes (`class _Foo extends StatelessWidget`) get their own spot in the widget tree. Exception: builder callbacks (e.g. `itemBuilder`, `WidgetBuilder`) where a method is idiomatic.
-- **System UI insets:** Always account for `MediaQuery.paddingOf(context).bottom` to clear OS chrome (gesture bars, nav bars). For bottom sheets, use `math.max(viewInsets.bottom, padding.bottom)` with `MediaQuery.viewInsetsOf(context)` and `MediaQuery.paddingOf(context)` — `viewInsets` covers the keyboard, `padding` covers system chrome when keyboard is dismissed. For scrollable body content, add `padding.bottom` to bottom padding (`Scaffold`/`AppBar` handle top inset already). Prefer granular `MediaQuery.*Of(context)` methods over `MediaQuery.of(context)` for narrower rebuilds.
+- **Widget decomposition:** Prefer private widget classes over helper methods returning `Widget` — methods lose their own Element/lifecycle. Exception: builder callbacks.
+- **System UI insets:** Use granular `MediaQuery.*Of(context)`. Bottom sheets: `math.max(viewInsets.bottom, padding.bottom)`. Scrollable bodies: add `padding.bottom`. Scaffold/AppBar handle top inset.
 
 ## Don't
 
 - Don't import `dart:io` in shared code (breaks web). Fine in tests.
+- Don't assume or diagnose UI issues unless specified — document what was reported and move on.
 - Don't use `hive_generator` — conflicts with `riverpod_generator` on Dart 3.11
-- Don't name model classes `Card` or `Column` — conflicts with Flutter/Material widgets
 - Don't add `riverpod_lint` or `custom_lint` — analyzer ^9.0.0 conflict with `riverpod_generator` 4.x. Revisit when `custom_lint` catches up.
-- Don't use a global `final` GoRouter instance — use `createRouter()` factory.
 
 ## Gotchas
 
@@ -88,4 +87,3 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - Riverpod codegen providers: import `riverpod_annotation` only, not `flutter_riverpod`
 - Riverpod 3.x `AsyncValue`: use `.value` (nullable), not `.valueOrNull`
 - `FractionalIndexer.generateKeyBetween` returns `String?` — use `!` with `// ignore: unnecessary_null_checks` and a documenting comment. The analyzer sometimes infers non-null but the declared return type is nullable.
-- `drag_and_drop_lists` callbacks use post-removal indexing: `newItemIndex` is the position in the list after the dragged item has been removed. Don't double-adjust.
