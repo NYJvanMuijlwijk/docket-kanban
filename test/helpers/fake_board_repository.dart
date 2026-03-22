@@ -36,6 +36,7 @@ class FakeBoardRepository implements BoardRepository {
   final Map<String, Board> _boards = {};
   final Map<String, KanbanColumn> _columns = {};
   final Map<String, KanbanCard> _cards = {};
+  final Map<String, String> _cardErrors = {};
   final _boardController =
       StreamController<List<Board>>.broadcast();
   final _columnController =
@@ -252,6 +253,11 @@ class FakeBoardRepository implements BoardRepository {
 
   @override
   Stream<List<KanbanCard>> watchCards(String columnId) {
+    if (_cardErrors.containsKey(columnId)) {
+      return Stream<List<KanbanCard>>.error(
+        Exception(_cardErrors[columnId]),
+      );
+    }
     return _cardController.stream
         .transform(
           SeedTransformer<List<KanbanCard>>(
@@ -272,6 +278,13 @@ class FakeBoardRepository implements BoardRepository {
     unawaited(_boardController.close());
     unawaited(_columnController.close());
     unawaited(_cardController.close());
+  }
+
+  // ── Test helpers ──────────────────────────────────────────────
+
+  /// Makes [watchCards] emit an error for [columnId] instead of data.
+  void setCardError(String columnId, String message) {
+    _cardErrors[columnId] = message;
   }
 
   // ── Private helpers ─────────────────────────────────────────────
