@@ -112,7 +112,30 @@ void main() {
     expect(listTile.subtitle, isNull);
   });
 
-  testWidgets('tap card opens edit form, submit updates card',
+  testWidgets('tap card opens detail view with title and description',
+      (tester) async {
+    final (repo, columnId) = await makeRepoWithColumn();
+    await repo.createCard(
+      columnId: columnId,
+      title: 'My Card',
+      description: 'Some details',
+    );
+
+    await tester
+        .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+    await tester.pumpAndSettle();
+
+    // Tap card to open detail sheet
+    await tester.tap(find.text('My Card'));
+    await tester.pumpAndSettle();
+
+    // Should show read-only detail view (not edit form)
+    expect(find.byIcon(Icons.edit), findsOneWidget);
+    expect(find.byIcon(Icons.delete), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+  });
+
+  testWidgets('detail view edit button opens form, submit updates card',
       (tester) async {
     final (repo, columnId) = await makeRepoWithColumn();
     await repo.createCard(
@@ -125,11 +148,15 @@ void main() {
         .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
     await tester.pumpAndSettle();
 
-    // Tap card
+    // Tap card to open detail sheet
     await tester.tap(find.text('Old Title'));
     await tester.pumpAndSettle();
 
-    // Should see edit form with pre-filled values
+    // Tap edit button to switch to edit mode
+    await tester.tap(find.byIcon(Icons.edit));
+    await tester.pumpAndSettle();
+
+    // Should now see edit form
     expect(find.text('Edit Card'), findsOneWidget);
 
     // Clear title and enter new one
@@ -146,7 +173,7 @@ void main() {
     expect(find.text('New Title'), findsOneWidget);
   });
 
-  testWidgets('swipe card to delete removes it', (tester) async {
+  testWidgets('detail view delete button removes card', (tester) async {
     final (repo, columnId) = await makeRepoWithColumn();
     await repo.createCard(columnId: columnId, title: 'Delete Me');
 
@@ -154,12 +181,51 @@ void main() {
         .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
     await tester.pumpAndSettle();
 
-    // Swipe the card
-    await tester.drag(find.text('Delete Me'), const Offset(-300, 0));
+    // Tap card to open detail sheet
+    await tester.tap(find.text('Delete Me'));
+    await tester.pumpAndSettle();
+
+    // Tap delete button
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+
+    // Confirm in dialog
+    await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
 
     // Card should be gone
     expect(find.text('Delete Me'), findsNothing);
     expect(find.text('No cards yet'), findsOneWidget);
+  });
+
+  testWidgets('cancel delete dialog keeps card', (tester) async {
+    final (repo, columnId) = await makeRepoWithColumn();
+    await repo.createCard(columnId: columnId, title: 'Keep Me');
+
+    await tester
+        .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+    await tester.pumpAndSettle();
+
+    // Tap card to open detail sheet
+    await tester.tap(find.text('Keep Me'));
+    await tester.pumpAndSettle();
+
+    // Tap delete button
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+
+    // Cancel in dialog
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    // Detail sheet should still be open (delete icon still visible)
+    expect(find.byIcon(Icons.delete), findsOneWidget);
+
+    // Dismiss the sheet
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+
+    // Card should still exist
+    expect(find.text('Keep Me'), findsOneWidget);
   });
 }
