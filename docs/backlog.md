@@ -54,14 +54,16 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 
 **Notes:** Ordering uses `fractional_indexing` package (String keys, lexicographic sort) for O(1) reorder in Slice 4. `Board.columnOrder` removed — ordering lives on `KanbanColumn.order`. Limits: 10 columns/board, 100 cards/column. Delete column shows confirmation with card count.
 
-### Slice 4: Drag-and-drop — PRIORITY: next
-- [ ] `drag_and_drop_lists` integration for card reorder + cross-column move
-- [ ] Column reorder via drag
-- [ ] Optimistic UI updates with Hive persistence
-- [ ] Smooth animations during drag
-- [ ] Tests: reorder logic unit tests
+### Slice 4: Drag-and-drop — DONE
+- [x] `drag_and_drop_lists` integration for card reorder + cross-column move
+- [x] Column reorder via drag
+- [x] Optimistic UI updates with Hive persistence
+- [x] Smooth animations during drag
+- [x] Tests: reorder logic unit tests
 
 **Acceptance:** Drag cards between columns. Reorder cards within a column. Reorder columns. Changes persist. Animations smooth. Tests pass.
+
+**Notes:** `drag_and_drop_lists` 0.4.2 handles the horizontal list of vertical lists layout. `KanbanColumnWidget` decomposed into private widgets (`_ColumnHeader`, `_KanbanCardTile`, `_AddCardFooter`) wired into `DragAndDropList` slots. Reorder uses `computeOrderKeyBetween`/`computeOrderKeyAtInsert` helpers with `FractionalIndexer.generateKeyBetween`. Cross-column card move handled at screen level since `CardList` is keyed per-column. Hive's in-memory-first writes make true optimistic UI unnecessary — UI rebuilds within one frame. Drag affordance: long-press for both cards (anywhere on tile) and columns (header area only).
 
 ### Slice 4b: Last-Used Tracking — PRIORITY: later
 - [ ] Add `lastUsedAt` field to `Board` model (separate from `updatedAt`)
