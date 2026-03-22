@@ -51,6 +51,7 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - Riverpod 3.x with codegen (`riverpod_generator`)
 - Hive for local persistence (JSON serialization, no codegen)
 - `fractional_indexing` for list ordering (O(1) reorder)
+- `drag_and_drop_lists` for kanban drag-and-drop (horizontal list of vertical lists)
 - GoRouter, Material 3, dark-mode-first
 - `very_good_analysis` + strict-casts/inference/raw-types
 
@@ -64,6 +65,8 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - **Riverpod codegen:** Use `Ref` (not generated `FooRef`) in `@riverpod` free functions.
 - **Hive box type:** `Box<Map<dynamic, dynamic>>` for JSON storage. Cast to `Map<String, dynamic>` on read. Three boxes: `boards`, `columns`, `cards`.
 - **Ordering:** `order` field is a `String` (fractional index via `FractionalIndexer.generateKeyBetween`). Sort lexicographically ascending.
+- **Reorder helpers:** `computeOrderKeyBetween` (same-list) and `computeOrderKeyAtInsert` (cross-list) in `lib/core/reorder_helpers.dart`. Both use post-removal indexing matching `drag_and_drop_lists` convention.
+- **Cross-column card move:** `CardList` is keyed by `columnId` — source notifier can't see target column's cards. Handle cross-column moves at the screen level via direct `repository.updateCard` call, not through a notifier.
 - **Limits:** Max 10 columns per board, 100 cards per column. Enforced in repository `create` methods.
 - **Tests:** `FakeBoardRepository` in `test/helpers/` for widget tests (accepts optional `initialBoards`, `initialColumns`, `initialCards`). Real Hive + temp dir for repository integration tests.
 - **Widget decomposition:** Prefer private widget classes over helper methods that return widgets. Methods returning `Widget` lose their own `BuildContext`, `Element`, and lifecycle — they rebuild with the parent. Private widget classes (`class _Foo extends StatelessWidget`) get their own spot in the widget tree. Exception: builder callbacks (e.g. `itemBuilder`, `WidgetBuilder`) where a method is idiomatic.
@@ -84,3 +87,5 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - After `build_runner`, check `git status` for ALL modified `.g.dart` — existing hashes change when dependencies change
 - Riverpod codegen providers: import `riverpod_annotation` only, not `flutter_riverpod`
 - Riverpod 3.x `AsyncValue`: use `.value` (nullable), not `.valueOrNull`
+- `FractionalIndexer.generateKeyBetween` returns `String?` — use `!` with `// ignore: unnecessary_null_checks` and a documenting comment. The analyzer sometimes infers non-null but the declared return type is nullable.
+- `drag_and_drop_lists` callbacks use post-removal indexing: `newItemIndex` is the position in the list after the dragged item has been removed. Don't double-adjust.
