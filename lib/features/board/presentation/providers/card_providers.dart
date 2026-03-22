@@ -10,7 +10,9 @@ class CardList extends _$CardList {
   @override
   Stream<List<KanbanCard>> build(String columnId) {
     final repository = ref.watch(boardRepositoryProvider);
-    return repository.watchCards(columnId);
+    return repository.watchCards(columnId).map(
+      (cards) => cards..sort((a, b) => a.order.compareTo(b.order)),
+    );
   }
 
   Future<KanbanCard> createCard({

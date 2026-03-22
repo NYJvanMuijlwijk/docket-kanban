@@ -10,7 +10,10 @@ class ColumnList extends _$ColumnList {
   @override
   Stream<List<KanbanColumn>> build(String boardId) {
     final repository = ref.watch(boardRepositoryProvider);
-    return repository.watchColumns(boardId);
+    return repository.watchColumns(boardId).map(
+      (columns) => columns
+        ..sort((a, b) => a.order.compareTo(b.order)),
+    );
   }
 
   Future<KanbanColumn> createColumn(String name) {

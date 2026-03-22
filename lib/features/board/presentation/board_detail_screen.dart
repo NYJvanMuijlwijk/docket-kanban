@@ -273,13 +273,6 @@ class _BoardDragContent extends ConsumerWidget {
           ],
         ),
         lastItemTargetHeight: 8,
-        contentsWhenEmpty: const Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 24,
-          ),
-          child: Center(child: Text('No cards yet')),
-        ),
       ),
     );
   }

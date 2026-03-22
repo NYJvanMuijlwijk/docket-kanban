@@ -74,6 +74,12 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 
 **Acceptance:** Opening a board moves it to the top of the list on return. "Last used X ago" labels refresh automatically every minute. `updatedAt` remains mutation-only. Tests pass.
 
+### Slice 4c: Drag-and-Drop Rebuild Optimization — PRIORITY: later
+- [ ] `_BoardDragContent` watches all column card providers in `build()` — any card change in any column triggers a full widget rebuild
+- [ ] Decompose so each column watches only its own cards (push `ref.watch(cardListProvider)` into per-column child widgets)
+
+**Acceptance:** Editing a card in column A does not rebuild columns B/C/D. Verify with `debugPrintRebuildDirtyWidgets` or DevTools rebuild tracker.
+
 ### Slice 5: Polish — PRIORITY: later
 - [ ] Material 3 theme: dark-mode-first, zen/minimal palette
 - [ ] Responsive layout (mobile vs. desktop/tablet breakpoints)
