@@ -178,6 +178,7 @@ class _BoardDragContent extends ConsumerWidget {
       }
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
     final bottomPadding =
         MediaQuery.paddingOf(context).bottom;
 
@@ -246,8 +247,30 @@ class _BoardDragContent extends ConsumerWidget {
           vertical: 12,
         ),
         listInnerDecoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerLow,
+          color: colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(12),
+        ),
+        listDecorationWhileDragging: BoxDecoration(
+          color: colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        itemDecorationWhileDragging: BoxDecoration(
+          color: colorScheme.surfaceContainerHigh,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         lastItemTargetHeight: 8,
         contentsWhenEmpty: const Padding(
