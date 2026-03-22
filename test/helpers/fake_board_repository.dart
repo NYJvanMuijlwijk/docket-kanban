@@ -127,6 +127,9 @@ class FakeBoardRepository implements BoardRepository {
     required String boardId,
     required String name,
   }) async {
+    if (!_boards.containsKey(boardId)) {
+      throw ArgumentError('Board not found: $boardId');
+    }
     final existing = _sortedColumns(boardId);
     if (existing.length >= 10) {
       throw StateError('Board already has 10 columns');
@@ -201,6 +204,9 @@ class FakeBoardRepository implements BoardRepository {
     required String title,
     String description = '',
   }) async {
+    if (!_columns.containsKey(columnId)) {
+      throw ArgumentError('Column not found: $columnId');
+    }
     final existing = _sortedCards(columnId);
     if (existing.length >= 100) {
       throw StateError('Column already has 100 cards');

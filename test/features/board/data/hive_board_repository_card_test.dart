@@ -50,6 +50,16 @@ void main() {
   });
 
   group('createCard', () {
+    test('throws ArgumentError for non-existent columnId', () async {
+      expect(
+        () => repository.createCard(
+          columnId: 'non-existent',
+          title: 'Orphan',
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
     test('returns card with generated ID and timestamps', () async {
       final columnId = await createColumnForTest();
       final card = await repository.createCard(

@@ -40,6 +40,16 @@ void main() {
   });
 
   group('createColumn', () {
+    test('throws ArgumentError for non-existent boardId', () async {
+      expect(
+        () => repository.createColumn(
+          boardId: 'non-existent',
+          name: 'Orphan',
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
     test('returns column with generated ID and timestamps', () async {
       final board = await repository.createBoard('Test');
       final column = await repository.createColumn(

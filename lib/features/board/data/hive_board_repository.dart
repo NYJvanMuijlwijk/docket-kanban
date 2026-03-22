@@ -117,6 +117,9 @@ class HiveBoardRepository implements BoardRepository {
     required String boardId,
     required String name,
   }) async {
+    if (!_boardBox.containsKey(boardId)) {
+      throw ArgumentError('Board not found: $boardId');
+    }
     final existing = _readColumnsByBoard(boardId);
     if (existing.length >= maxColumnsPerBoard) {
       throw StateError(
@@ -189,6 +192,9 @@ class HiveBoardRepository implements BoardRepository {
     required String title,
     String description = '',
   }) async {
+    if (!_columnBox.containsKey(columnId)) {
+      throw ArgumentError('Column not found: $columnId');
+    }
     final existing = _readCardsByColumn(columnId);
     if (existing.length >= maxCardsPerColumn) {
       throw StateError(
