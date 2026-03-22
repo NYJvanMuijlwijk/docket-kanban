@@ -17,6 +17,12 @@ final Provider<BoardRepository> boardRepositoryProvider =
 
 @riverpod
 class BoardList extends _$BoardList {
+  @override
+  Stream<List<Board>> build() {
+    final repository = ref.watch(boardRepositoryProvider);
+    return repository.watchBoards();
+  }
+
   Future<Board> createBoard(String name) {
     final repository = ref.read(boardRepositoryProvider);
     return repository.createBoard(name);
@@ -36,12 +42,6 @@ class BoardList extends _$BoardList {
     await repository.updateBoard(
       board.copyWith(name: newName, updatedAt: DateTime.now()),
     );
-  }
-
-  @override
-  Stream<List<Board>> build() {
-    final repository = ref.watch(boardRepositoryProvider);
-    return repository.watchBoards();
   }
 }
 

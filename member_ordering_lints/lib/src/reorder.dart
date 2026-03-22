@@ -97,20 +97,46 @@ class _DeclarationCollector extends RecursiveAstVisitor<void> {
   final (members, regionStart, regionEnd) = _extractBodyInfo(decl);
   if (members == null || members.length < 2) return null;
 
-  // Build chunks: each chunk = text from end-of-previous-member to
-  // end-of-this-member.  The first chunk starts at regionStart.
+  // Build chunks.  Each chunk owns the member's text *plus* any leading
+  // whitespace, doc comments, and annotations that precede it.  We use
+  // `beginToken.offset` which includes leading comments/annotations thanks
+  // to the analyzer's `_AnnotatedNodeMixin`.
+  //
+  // Layout of the region:
+  //   regionStart ... [gap0] member0 [gap1] member1
+  //   ... memberN [trailing] regionEnd
+  //
+  // gap_i = whitespace/blank-lines between member_{i-1}.end and
+  //         member_i.beginToken.offset.  We attach each gap to the
+  //         *following* member so comments travel with their target.
+
+  // Leading gap: whitespace between `{` (regionStart) and first member's
+  // real start.  Preserved as a prefix to whichever member ends up first.
+  final leadingGap = source.substring(
+    regionStart,
+    members[0].beginToken.offset,
+  );
+
   final chunks = <_MemberChunk>[];
   for (var i = 0; i < members.length; i++) {
-    final chunkStart = i == 0 ? regionStart : members[i - 1].end;
-    final chunkEnd = members[i].end;
+    // Gap before this member (whitespace between previous member's end and
+    // this member's doc-comment/annotation start).  For the first member
+    // the gap is handled separately as `leadingGap`.
+    final gap = i == 0
+        ? ''
+        : source.substring(members[i - 1].end, members[i].beginToken.offset);
+    final memberText = source.substring(
+      members[i].beginToken.offset,
+      members[i].end,
+    );
     final category = classifyMember(members[i]);
     // Unclassified members keep their original position so the fixer
     // doesn't move constructs the lint rule ignores.
     final categoryIndex =
         category != null ? defaultOrder.indexOf(category) : i;
     chunks.add(_MemberChunk(
-      sourceStart: chunkStart,
-      sourceEnd: chunkEnd,
+      gap: gap,
+      memberText: memberText,
       categoryIndex: categoryIndex,
       originalIndex: i,
     ));
@@ -137,8 +163,24 @@ class _DeclarationCollector extends RecursiveAstVisitor<void> {
 
   // Rebuild the region.
   final buffer = StringBuffer();
-  for (final chunk in chunks) {
-    buffer.write(source.substring(chunk.sourceStart, chunk.sourceEnd));
+  for (var i = 0; i < chunks.length; i++) {
+    final String gap;
+    if (i == 0) {
+      // First chunk in the output gets the original leading gap (whitespace
+      // between `{` and the first member).
+      gap = leadingGap;
+    } else if (chunks[i].gap.isEmpty) {
+      // This chunk was originally the first member (index 0) so it had no
+      // gap.  Now it's been moved to a later position and needs a separator.
+      // Use the leading gap as a fallback — it carries the newline + indent
+      // pattern for this class body.
+      gap = leadingGap;
+    } else {
+      gap = chunks[i].gap;
+    }
+    buffer
+      ..write(gap)
+      ..write(chunks[i].memberText);
   }
   buffer.write(trailing);
 
@@ -192,14 +234,19 @@ class _DeclarationCollector extends RecursiveAstVisitor<void> {
 
 class _MemberChunk {
   _MemberChunk({
-    required this.sourceStart,
-    required this.sourceEnd,
+    required this.gap,
+    required this.memberText,
     required this.categoryIndex,
     required this.originalIndex,
   });
 
-  final int sourceStart;
-  final int sourceEnd;
+  /// Whitespace/blank-lines between the previous member and this one.
+  final String gap;
+
+  /// The member's source text (from beginToken including comments/annotations
+  /// through to end).
+  final String memberText;
+
   final int categoryIndex;
   final int originalIndex;
 }

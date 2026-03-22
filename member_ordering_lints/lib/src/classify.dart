@@ -35,7 +35,8 @@ enum MemberCategory {
 
 /// The enforced ordering.  Edit this list to change the convention.
 ///
-/// Every category must appear exactly once.
+/// Every category must appear exactly once.  Validated at runtime by
+/// [_assertDefaultOrderValid].
 const List<MemberCategory> defaultOrder = [
   // public-constructor
   MemberCategory.constructors,
@@ -68,10 +69,29 @@ const List<MemberCategory> defaultOrder = [
 ];
 
 // ---------------------------------------------------------------------------
+// Validation
+// ---------------------------------------------------------------------------
+
+bool _assertedOrderValid = false;
+
+void _assertDefaultOrderValid() {
+  if (_assertedOrderValid) return;
+  final length = defaultOrder.length;
+  final unique = defaultOrder.toSet().length;
+  assert(
+    length == MemberCategory.values.length && unique == length,
+    'defaultOrder must contain every MemberCategory exactly once. '
+    'Expected ${MemberCategory.values.length}, got $length ($unique unique).',
+  );
+  _assertedOrderValid = true;
+}
+
+// ---------------------------------------------------------------------------
 // Classification
 // ---------------------------------------------------------------------------
 
 MemberCategory? classifyMember(ClassMember member) {
+  _assertDefaultOrderValid();
   if (member is FieldDeclaration) return _classifyField(member);
   if (member is ConstructorDeclaration) return _classifyConstructor(member);
   if (member is MethodDeclaration) return _classifyMethod(member);
@@ -94,6 +114,9 @@ MemberCategory _classifyField(FieldDeclaration node) {
     return MemberCategory.publicStaticConstFields;
   }
   if (isStatic && !isPrivate) return MemberCategory.publicStaticFields;
+  // Private static const fields intentionally land here — a separate
+  // `privateStaticConstFields` category isn't useful in practice since
+  // private statics are rarely mutable.
   if (isStatic && isPrivate) return MemberCategory.privateStaticFields;
   if (isFinal && !isPrivate) return MemberCategory.publicFinalFields;
   if (!isPrivate) return MemberCategory.publicFields;
@@ -112,7 +135,13 @@ MemberCategory _classifyMethod(MethodDeclaration node) {
   final isPrivate = name.startsWith('_');
   final isOverride = node.metadata.any((m) => m.name.name == 'override');
 
-  if (name == 'build' && !isPrivate) return MemberCategory.buildMethod;
+  // Only classify as `buildMethod` if the signature looks like a Widget build
+  // (first positional parameter is BuildContext).  Riverpod notifier `build()`
+  // methods have no parameters or start with Ref, so they fall through to
+  // `publicOverrideMethods` instead.
+  if (name == 'build' && !isPrivate && _isWidgetBuild(node)) {
+    return MemberCategory.buildMethod;
+  }
 
   if (node.isGetter) {
     return isPrivate
@@ -127,4 +156,22 @@ MemberCategory _classifyMethod(MethodDeclaration node) {
   if (isOverride && !isPrivate) return MemberCategory.publicOverrideMethods;
   if (!isPrivate) return MemberCategory.publicMethods;
   return MemberCategory.privateMethods;
+}
+
+/// Returns `true` if [node] looks like a Widget `build` method — i.e. its
+/// first positional parameter is typed `BuildContext`.
+///
+/// Riverpod notifier `build()` methods have zero parameters (or start with
+/// `Ref`), so this returns `false` for them.
+bool _isWidgetBuild(MethodDeclaration node) {
+  final params = node.parameters?.parameters;
+  if (params == null || params.isEmpty) return false;
+  final first = params.first;
+  // The parameter could be a SimpleFormalParameter with an explicit type,
+  // or a FunctionTypedFormalParameter, etc.  We only care about the simple
+  // case with a named type.
+  if (first is! SimpleFormalParameter) return false;
+  final type = first.type;
+  if (type is! NamedType) return false;
+  return type.name.lexeme == 'BuildContext';
 }
