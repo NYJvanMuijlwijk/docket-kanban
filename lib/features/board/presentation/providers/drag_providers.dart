@@ -1,4 +1,3 @@
-import 'package:flutter/painting.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -12,7 +11,6 @@ class KanbanDragState {
     this.originalIndex,
     this.hoverColumnId,
     this.hoverIndex,
-    this.dragPosition,
   });
 
   static const empty = KanbanDragState();
@@ -22,7 +20,6 @@ class KanbanDragState {
   final int? originalIndex;
   final String? hoverColumnId;
   final int? hoverIndex;
-  final Offset? dragPosition;
 
   bool get isDragging => draggedCard != null;
 
@@ -52,18 +49,6 @@ class KanbanDragController extends _$KanbanDragController {
       sourceColumnId: sourceColumnId,
       originalIndex: originalIndex,
       hoverColumnId: sourceColumnId,
-    );
-  }
-
-  void updatePosition(Offset position) {
-    if (!state.isDragging) return;
-    state = KanbanDragState(
-      draggedCard: state.draggedCard,
-      sourceColumnId: state.sourceColumnId,
-      originalIndex: state.originalIndex,
-      hoverColumnId: state.hoverColumnId,
-      hoverIndex: state.hoverIndex,
-      dragPosition: position,
     );
   }
 
@@ -97,7 +82,6 @@ class KanbanDragController extends _$KanbanDragController {
       originalIndex: state.originalIndex,
       hoverColumnId: columnId,
       hoverIndex: suppressedIndex,
-      dragPosition: state.dragPosition,
     );
   }
 
@@ -107,7 +91,6 @@ class KanbanDragController extends _$KanbanDragController {
       draggedCard: state.draggedCard,
       sourceColumnId: state.sourceColumnId,
       originalIndex: state.originalIndex,
-      dragPosition: state.dragPosition,
     );
   }
 

@@ -16,6 +16,9 @@ import 'package:kanban_board/features/board/presentation/widgets/board_form_shee
 import 'package:kanban_board/features/board/presentation/widgets/card_form_sheet.dart';
 import 'package:kanban_board/features/board/presentation/widgets/column_form_sheet.dart';
 
+const _kColumnWidth = 300.0;
+const _kColumnMarginH = 6.0;
+
 class BoardDetailScreen extends ConsumerStatefulWidget {
   const BoardDetailScreen({required this.boardId, super.key});
 
@@ -245,6 +248,8 @@ class _BoardScrollViewState extends ConsumerState<_BoardScrollView>
       child: LayoutBuilder(
         builder: (context, constraints) {
           _autoScroll.viewportSize = constraints.biggest;
+          _autoScroll.viewportRenderBox =
+              context.findRenderObject() as RenderBox?;
 
           return SingleChildScrollView(
             controller: _horizontalController,
@@ -331,9 +336,12 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
-          width: 300,
+          width: _kColumnWidth,
           constraints: BoxConstraints(minHeight: minHeight),
-          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          margin: const EdgeInsets.symmetric(
+            horizontal: _kColumnMarginH,
+            vertical: 12,
+          ),
           decoration: BoxDecoration(
             color: isHoverTarget ? highlightColor : baseColor,
             borderRadius: BorderRadius.circular(12),
@@ -452,6 +460,7 @@ class _InsertionGap extends ConsumerWidget {
         return true;
       },
       onAcceptWithDetails: (_) => _executeDrop(ref, columnId),
+      // No-op — hover state managed by updateHover(), not by leave events.
       onLeave: (_) {},
       builder: (context, candidateData, rejectedData) {
         return AnimatedContainer(
@@ -496,9 +505,6 @@ class _InsertionLine extends StatelessWidget {
 }
 
 /// A card slot that is both draggable (source) and a drop target (destination).
-///
-/// Detects pointer kind at runtime: [LongPressDraggable] for touch,
-/// [Draggable] for mouse/stylus.
 class _DraggableCardSlot extends ConsumerStatefulWidget {
   const _DraggableCardSlot({
     required this.card,
@@ -519,12 +525,6 @@ class _DraggableCardSlot extends ConsumerStatefulWidget {
 }
 
 class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
-  PointerDeviceKind? _lastPointerKind;
-
-  void _onPointerDown(PointerDownEvent event) {
-    _lastPointerKind = event.kind;
-  }
-
   void _onDragStarted() {
     ref
         .read(kanbanDragControllerProvider.notifier)
@@ -537,23 +537,11 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
-    // Convert global position to viewport-local for auto-scroll.
-    final renderBox = context.findAncestorRenderObjectOfType<RenderBox>();
-    if (renderBox == null) return;
-
-    // Walk up to the _BoardScrollView's RenderBox for viewport-local coords.
-    final scrollViewBox = _findAncestorRenderBox(
-      context,
-      '_BoardScrollViewState',
-    );
-    final localPos = (scrollViewBox ?? renderBox).globalToLocal(
+    final viewportBox = widget.autoScroll.viewportRenderBox;
+    if (viewportBox == null || !viewportBox.attached) return;
+    widget.autoScroll.pointerPosition = viewportBox.globalToLocal(
       details.globalPosition,
     );
-
-    widget.autoScroll.pointerPosition = localPos;
-    ref
-        .read(kanbanDragControllerProvider.notifier)
-        .updatePosition(details.globalPosition);
   }
 
   void _onDragEnd(DraggableDetails details) {
@@ -569,39 +557,6 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
 
   void _handleDrop(DragTargetDetails<KanbanCard> details) {
     _executeDrop(ref, widget.columnId);
-  }
-
-  Widget _buildDraggable({
-    required Widget child,
-    required Widget ghost,
-    required Widget feedback,
-  }) {
-    final isTouch =
-        _lastPointerKind == null || _lastPointerKind == PointerDeviceKind.touch;
-
-    if (isTouch) {
-      return LongPressDraggable<KanbanCard>(
-        data: widget.card,
-        feedback: feedback,
-        childWhenDragging: ghost,
-        onDragStarted: _onDragStarted,
-        onDragUpdate: _onDragUpdate,
-        onDragEnd: _onDragEnd,
-        onDraggableCanceled: _onDraggableCanceled,
-        child: child,
-      );
-    }
-
-    return Draggable<KanbanCard>(
-      data: widget.card,
-      feedback: feedback,
-      childWhenDragging: ghost,
-      onDragStarted: _onDragStarted,
-      onDragUpdate: _onDragUpdate,
-      onDragEnd: _onDragEnd,
-      onDraggableCanceled: _onDraggableCanceled,
-      child: child,
-    );
   }
 
   @override
@@ -622,7 +577,7 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
       elevation: 8,
       borderRadius: BorderRadius.circular(12),
       child: SizedBox(
-        width: 300 - 12, // Column width minus margins
+        width: _kColumnWidth - _kColumnMarginH * 2,
         child: Transform.scale(scale: 1.05, child: child),
       ),
     );
@@ -635,17 +590,88 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
         return true;
       },
       onAcceptWithDetails: _handleDrop,
+      // No-op — hover state managed by updateHover(), not by leave events.
       onLeave: (_) {},
       builder: (context, candidateData, rejectedData) {
-        return Listener(
-          onPointerDown: _onPointerDown,
-          child: _buildDraggable(
-            child: child,
-            ghost: ghost,
-            feedback: feedback,
-          ),
+        return _AdaptiveDraggable<KanbanCard>(
+          data: widget.card,
+          feedback: feedback,
+          childWhenDragging: ghost,
+          onDragStarted: _onDragStarted,
+          onDragUpdate: _onDragUpdate,
+          onDragEnd: _onDragEnd,
+          onDraggableCanceled: _onDraggableCanceled,
+          child: child,
         );
       },
+    );
+  }
+}
+
+/// Detects pointer kind at runtime and selects [LongPressDraggable] for touch
+/// or [Draggable] for mouse/stylus. Pure Flutter state — no Riverpod needed.
+class _AdaptiveDraggable<T extends Object> extends StatefulWidget {
+  const _AdaptiveDraggable({
+    required this.data,
+    required this.feedback,
+    required this.childWhenDragging,
+    required this.onDragStarted,
+    required this.onDragUpdate,
+    required this.onDragEnd,
+    required this.onDraggableCanceled,
+    required this.child,
+    super.key,
+  });
+
+  final T data;
+  final Widget feedback;
+  final Widget childWhenDragging;
+  final VoidCallback onDragStarted;
+  final void Function(DragUpdateDetails) onDragUpdate;
+  final void Function(DraggableDetails) onDragEnd;
+  final void Function(Velocity, Offset) onDraggableCanceled;
+  final Widget child;
+
+  @override
+  State<_AdaptiveDraggable<T>> createState() => _AdaptiveDraggableState<T>();
+}
+
+class _AdaptiveDraggableState<T extends Object>
+    extends State<_AdaptiveDraggable<T>> {
+  PointerDeviceKind? _lastPointerKind;
+
+  @override
+  Widget build(BuildContext context) {
+    final isTouch =
+        _lastPointerKind == null || _lastPointerKind == PointerDeviceKind.touch;
+
+    final draggable = isTouch
+        ? LongPressDraggable<T>(
+            data: widget.data,
+            feedback: widget.feedback,
+            childWhenDragging: widget.childWhenDragging,
+            onDragStarted: widget.onDragStarted,
+            onDragUpdate: widget.onDragUpdate,
+            onDragEnd: widget.onDragEnd,
+            onDraggableCanceled: widget.onDraggableCanceled,
+            child: widget.child,
+          )
+        : Draggable<T>(
+            data: widget.data,
+            feedback: widget.feedback,
+            childWhenDragging: widget.childWhenDragging,
+            onDragStarted: widget.onDragStarted,
+            onDragUpdate: widget.onDragUpdate,
+            onDragEnd: widget.onDragEnd,
+            onDraggableCanceled: widget.onDraggableCanceled,
+            child: widget.child,
+          );
+
+    return Listener(
+      onPointerDown: (event) {
+        _lastPointerKind = event.kind;
+      },
+      child: draggable,
     );
   }
 }
@@ -697,25 +723,6 @@ void _executeDrop(WidgetRef ref, String targetColumnId) {
   }
 
   ref.read(kanbanDragControllerProvider.notifier).endDrag();
-}
-
-/// Walk up the element tree to find a [RenderBox] whose state matches
-/// [stateTypeName]. Used to get the viewport-local coordinates for
-/// auto-scroll calculations.
-RenderBox? _findAncestorRenderBox(BuildContext context, String stateTypeName) {
-  RenderBox? result;
-  context.visitAncestorElements((element) {
-    if (element is StatefulElement &&
-        element.state.runtimeType.toString() == stateTypeName) {
-      final renderObject = element.renderObject;
-      if (renderObject is RenderBox) {
-        result = renderObject;
-        return false;
-      }
-    }
-    return true;
-  });
-  return result;
 }
 
 class _ColumnEmptyContent extends StatelessWidget {

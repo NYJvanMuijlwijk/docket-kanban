@@ -34,6 +34,10 @@ class AutoScrollHandler {
   /// Scroll speed (px/s) when the pointer is at the very edge of the viewport.
   final double maxSpeed;
 
+  /// [RenderBox] used by drag handlers to convert global pointer coordinates
+  /// to viewport-local. Set by the scroll view's [LayoutBuilder] each frame.
+  RenderBox? viewportRenderBox;
+
   /// Current viewport size used for edge zone calculations.
   Size? get viewportSize => _viewportSize;
 

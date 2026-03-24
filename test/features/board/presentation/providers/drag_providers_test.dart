@@ -52,7 +52,6 @@ void main() {
       expect(state.originalIndex, isNull);
       expect(state.hoverColumnId, isNull);
       expect(state.hoverIndex, isNull);
-      expect(state.dragPosition, isNull);
     });
 
     test('startDrag sets all active fields', () {
@@ -79,16 +78,6 @@ void main() {
       readNotifier().endDrag();
       expect(readState().isDragging, isFalse);
       expect(readState().draggedCard, isNull);
-    });
-
-    test('updatePosition updates dragPosition', () {
-      readNotifier().startDrag(
-        card: makeCard(),
-        sourceColumnId: 'col-a',
-        originalIndex: 0,
-      );
-      readNotifier().updatePosition(const Offset(100, 200));
-      expect(readState().dragPosition, const Offset(100, 200));
     });
 
     test('updateHover sets hoverColumnId and hoverIndex', () {
@@ -232,10 +221,6 @@ void main() {
       expect(readState().hoverColumnId, isNull);
     });
 
-    test('updatePosition when not dragging is no-op', () {
-      readNotifier().updatePosition(const Offset(50, 50));
-      expect(readState().dragPosition, isNull);
-    });
   });
 
   group('KanbanDragState.isAdjacencySuppressed', () {
