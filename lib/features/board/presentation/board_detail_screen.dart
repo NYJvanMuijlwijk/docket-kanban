@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:drag_and_drop_lists/drag_and_drop_lists.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban_board/core/reorder_helpers.dart';
+import 'package:kanban_board/features/board/domain/board_repository.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:kanban_board/features/board/domain/kanban_column.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
@@ -11,38 +14,92 @@ import 'package:kanban_board/features/board/presentation/widgets/board_form_shee
 import 'package:kanban_board/features/board/presentation/widgets/card_form_sheet.dart';
 import 'package:kanban_board/features/board/presentation/widgets/column_form_sheet.dart';
 
-class BoardDetailScreen extends ConsumerWidget {
+class BoardDetailScreen extends ConsumerStatefulWidget {
   const BoardDetailScreen({required this.boardId, super.key});
 
   final String boardId;
 
-  Future<void> _renameBoard(
-    BuildContext context,
-    WidgetRef ref,
-    String currentName,
-  ) async {
+  @override
+  ConsumerState<BoardDetailScreen> createState() => _BoardDetailScreenState();
+}
+
+class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
+  late final AppLifecycleListener _lifecycleListener;
+
+  /// Cached at initState so _stampLastUsed can run in dispose
+  /// without touching ref (which is invalid after deactivation).
+  late final BoardRepository _repository;
+  bool _hasStamped = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = ref.read(boardRepositoryProvider);
+    _lifecycleListener = AppLifecycleListener(
+      onStateChange: _onLifecycleChange,
+    );
+  }
+
+  @override
+  void dispose() {
+    _stampLastUsed();
+    _lifecycleListener.dispose();
+    super.dispose();
+  }
+
+  void _onLifecycleChange(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      _stampLastUsed();
+    }
+  }
+
+  /// Stamps `lastUsedAt` on the board. Fire-and-forget — Hive's
+  /// in-memory-first writes make the data immediately available.
+  /// Guarded by [_hasStamped] to prevent double-writes when
+  /// lifecycle callback and dispose race.
+  void _stampLastUsed() {
+    if (_hasStamped) return;
+    _hasStamped = true;
+
+    // Best-effort: repository may already be disposed during teardown.
+    unawaited(
+      _repository.getBoard(widget.boardId).then((board) async {
+        if (board != null) {
+          await _repository.updateBoard(
+            board.copyWith(lastUsedAt: DateTime.now()),
+          );
+        }
+      }).catchError((_) {
+        // Silently ignore — stamp is best-effort.
+      }),
+    );
+  }
+
+  Future<void> _renameBoard(String currentName) async {
     final newName = await BoardFormSheet.show(
       context,
       initialName: currentName,
     );
-    if (newName != null && newName != currentName && context.mounted) {
-      await ref.read(boardListProvider.notifier).renameBoard(boardId, newName);
+    if (newName != null && newName != currentName && mounted) {
+      await ref
+          .read(boardListProvider.notifier)
+          .renameBoard(widget.boardId, newName);
     }
   }
 
-  Future<void> _addColumn(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _addColumn() async {
     final name = await ColumnFormSheet.show(context);
-    if (name != null && context.mounted) {
-      await ref.read(columnListProvider(boardId).notifier).createColumn(name);
+    if (name != null && mounted) {
+      await ref
+          .read(columnListProvider(widget.boardId).notifier)
+          .createColumn(name);
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final boardAsync = ref.watch(boardProvider(boardId));
+  Widget build(BuildContext context) {
+    final boardAsync = ref.watch(boardProvider(widget.boardId));
 
     return boardAsync.when(
       loading: () => Scaffold(
@@ -61,7 +118,7 @@ class BoardDetailScreen extends ConsumerWidget {
           );
         }
 
-        final columnsAsync = ref.watch(columnListProvider(boardId));
+        final columnsAsync = ref.watch(columnListProvider(widget.boardId));
 
         return Scaffold(
           appBar: AppBar(
@@ -70,7 +127,7 @@ class BoardDetailScreen extends ConsumerWidget {
               PopupMenuButton<String>(
                 onSelected: (value) async {
                   if (value == 'rename') {
-                    await _renameBoard(context, ref, board.name);
+                    await _renameBoard(board.name);
                   }
                 },
                 itemBuilder: (_) => const [
@@ -83,7 +140,7 @@ class BoardDetailScreen extends ConsumerWidget {
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: () => _addColumn(context, ref),
+            onPressed: _addColumn,
             child: const Icon(Icons.add),
           ),
           body: columnsAsync.when(
@@ -102,7 +159,7 @@ class BoardDetailScreen extends ConsumerWidget {
                 );
               }
               return _BoardDragContent(
-                boardId: boardId,
+                boardId: widget.boardId,
                 columns: columns,
               );
             },

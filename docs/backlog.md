@@ -65,14 +65,16 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 
 **Notes:** `drag_and_drop_lists` 0.4.2 handles the horizontal list of vertical lists layout. `KanbanColumnWidget` decomposed into private widgets (`_ColumnHeader`, `_KanbanCardTile`, `_AddCardFooter`) wired into `DragAndDropList` slots. Reorder uses `computeOrderKeyBetween`/`computeOrderKeyAtInsert` helpers with `FractionalIndexer.generateKeyBetween`. Cross-column card move handled at screen level since `CardList` is keyed per-column. Hive's in-memory-first writes make true optimistic UI unnecessary — UI rebuilds within one frame. Drag affordance: long-press for both cards (anywhere on tile) and columns (header area only).
 
-### Slice 4b: Last-Used Tracking — PRIORITY: later
-- [ ] Add `lastUsedAt` field to `Board` model (separate from `updatedAt`)
-- [ ] Update `lastUsedAt` on board visit (navigation to board detail screen)
-- [ ] Sort board list by `lastUsedAt` descending (instead of `updatedAt`)
-- [ ] Periodic rebuild of relative timestamps on board list screen (every 60s)
-- [ ] Tests: verify `lastUsedAt` updates on visit, verify timer triggers rebuild
+### Slice 4b: Last-Used Tracking — DONE
+- [x] Add `lastUsedAt` field to `Board` model (separate from `updatedAt`)
+- [x] Stamp `lastUsedAt` on board exit (dispose + app lifecycle), not entry
+- [x] Sort board list by `lastUsedAt` descending (instead of `updatedAt`)
+- [x] Periodic rebuild of relative timestamps on board list screen (every 60s)
+- [x] Tests: verify `lastUsedAt` updates on exit, verify timer triggers rebuild
 
-**Acceptance:** Opening a board moves it to the top of the list on return. "Last used X ago" labels refresh automatically every minute. `updatedAt` remains mutation-only. Tests pass.
+**Acceptance:** Leaving a board stamps `lastUsedAt` and moves it to the top of the list. "Last used X ago" labels refresh automatically every minute. `updatedAt` remains mutation-only. Tests pass.
+
+**Notes:** `lastUsedAt` stamped via `dispose()` + `AppLifecycleListener` (paused/hidden). Repository cached in `initState` since `ref.read()` is invalid in `dispose()` for Riverpod 3.x `ConsumerStatefulWidget`. Stamp is fire-and-forget with `catchError` — best-effort for app kill scenarios. `Board.fromJson` migration: missing `lastUsedAt` falls back to `createdAt`. `BoardListScreen` uses 60s `Timer.periodic` for timestamp refresh.
 
 ### Slice 4c: Drag-and-Drop Rebuild Optimization — PRIORITY: later
 - [ ] `_BoardDragContent` watches all column card providers in `build()` — any card change in any column triggers a full widget rebuild

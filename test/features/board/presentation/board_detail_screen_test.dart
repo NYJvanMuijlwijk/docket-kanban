@@ -36,6 +36,7 @@ void main() {
         name: 'My Board',
         createdAt: now,
         updatedAt: now,
+        lastUsedAt: now,
       ),
     ]);
 
@@ -62,6 +63,7 @@ void main() {
         name: 'My Board',
         createdAt: now,
         updatedAt: now,
+        lastUsedAt: now,
       ),
     ]);
 
@@ -82,6 +84,7 @@ void main() {
         name: 'Old Name',
         createdAt: now,
         updatedAt: now,
+        lastUsedAt: now,
       ),
     ]);
 
@@ -105,5 +108,53 @@ void main() {
 
     // Board name should update reactively via watchBoard stream
     expect(find.text('New Name'), findsOneWidget);
+  });
+
+  testWidgets('dispose stamps lastUsedAt on the board', (tester) async {
+    final originalTime = DateTime(2024);
+    final repo = FakeBoardRepository(initialBoards: [
+      Board(
+        id: 'stamp-test',
+        name: 'Stamp Board',
+        createdAt: originalTime,
+        updatedAt: originalTime,
+        lastUsedAt: originalTime,
+      ),
+    ]);
+
+    // Mount the detail screen
+    await tester.pumpWidget(
+      _buildApp(boardId: 'stamp-test', repository: repo),
+    );
+    await tester.pumpAndSettle();
+
+    // Dispose by replacing the widget tree
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    // The board's lastUsedAt should now be newer than the original
+    final board = await repo.getBoard('stamp-test');
+    expect(board, isNotNull);
+    expect(board!.lastUsedAt.isAfter(originalTime), isTrue);
+    // updatedAt should remain unchanged
+    expect(board.updatedAt, originalTime);
+  });
+
+  testWidgets('dispose does not stamp for non-existent board', (tester) async {
+    final repo = FakeBoardRepository();
+
+    // Mount with a board ID that doesn't exist
+    await tester.pumpWidget(
+      _buildApp(boardId: 'non-existent', repository: repo),
+    );
+    await tester.pumpAndSettle();
+
+    // Dispose — should not throw
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+
+    // No boards to check — just verifying no crash
+    final boards = await repo.getBoards();
+    expect(boards, isEmpty);
   });
 }

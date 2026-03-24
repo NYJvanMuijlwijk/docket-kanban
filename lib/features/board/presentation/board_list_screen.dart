@@ -1,15 +1,39 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
 import 'package:kanban_board/features/board/presentation/widgets/board_form_sheet.dart';
 
-class BoardListScreen extends ConsumerWidget {
+class BoardListScreen extends ConsumerStatefulWidget {
   const BoardListScreen({super.key});
 
-  Future<void> _createBoard(BuildContext context, WidgetRef ref) async {
+  @override
+  ConsumerState<BoardListScreen> createState() => _BoardListScreenState();
+}
+
+class _BoardListScreenState extends ConsumerState<BoardListScreen> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(
+      const Duration(seconds: 60),
+      (_) => setState(() {}),
+    );
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _createBoard() async {
     final name = await BoardFormSheet.show(context);
-    if (name != null && context.mounted) {
+    if (name != null && mounted) {
       await ref.read(boardListProvider.notifier).createBoard(name);
     }
   }
@@ -26,7 +50,7 @@ class BoardListScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final boardsAsync = ref.watch(boardListProvider);
 
     return Scaffold(
@@ -34,7 +58,7 @@ class BoardListScreen extends ConsumerWidget {
         title: const Text('My Boards'),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _createBoard(context, ref),
+        onPressed: _createBoard,
         child: const Icon(Icons.add),
       ),
       body: boardsAsync.when(
@@ -80,7 +104,7 @@ class BoardListScreen extends ConsumerWidget {
                 child: ListTile(
                   title: Text(board.name),
                   subtitle: Text(
-                    'Last used ${_formatDate(board.updatedAt)}',
+                    'Last used ${_formatDate(board.lastUsedAt)}',
                   ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: () => context.push('/board/${board.id}'),
