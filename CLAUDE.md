@@ -51,7 +51,7 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - Riverpod 3.x with codegen (`riverpod_generator`)
 - Hive for local persistence (JSON serialization, no codegen)
 - `fractional_indexing` for list ordering (O(1) reorder)
-- `drag_and_drop_lists` for kanban drag-and-drop (horizontal list of vertical lists)
+- Custom drag-and-drop via Flutter `Draggable`/`DragTarget` + Riverpod `KanbanDragController`
 - GoRouter, Material 3, dark-mode-first
 - `very_good_analysis` + strict-casts/inference/raw-types
 
@@ -65,8 +65,10 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - **Riverpod codegen:** Use `Ref` (not generated `FooRef`) in `@riverpod` free functions.
 - **Hive box type:** `Box<Map<dynamic, dynamic>>` for JSON storage. Cast to `Map<String, dynamic>` on read. Three boxes: `boards`, `columns`, `cards`.
 - **Ordering:** `order` field is a `String` (fractional index via `FractionalIndexer.generateKeyBetween`). Sort lexicographically ascending.
-- **Reorder helpers:** `computeOrderKeyBetween` (same-list) and `computeOrderKeyAtInsert` (cross-list) in `lib/core/reorder_helpers.dart`. Both use post-removal indexing — `newItemIndex` is position after dragged item removed. Don't double-adjust.
+- **Reorder helpers:** `computeOrderKeyBetween` (same-list, post-removal indexing) and `computeOrderKeyAtInsert` (cross-list, raw insertion index into target) in `lib/core/reorder_helpers.dart`. Don't double-adjust.
 - **Cross-column card move:** `CardList` is keyed by `columnId` — source notifier can't see target column's cards. Handle cross-column moves at the screen level via direct `repository.updateCard` call, not through a notifier.
+- **Drag controller dedup:** `KanbanDragController.updateHover` must early-return when `columnId` + `hoverIndex` are unchanged. Nested `DragTarget` layers re-fire `onWillAcceptWithDetails` during gap-animation layout shifts — dedup at the controller prevents oscillation. Don't add caller-side guards that assume hit-test ordering.
+- **Drag index convention:** Gap/card indices are pre-removal. For N cards: N+1 gaps (indices 0..N). Last gap (index N) is reachable only via the column-level `DragTarget` fallback, not its own hit area (height 0 when inactive).
 - **Limits:** Max 10 columns per board, 100 cards per column. Enforced in repository `create` methods.
 - **Tests:** `FakeBoardRepository` in `test/helpers/` for widget tests (accepts optional `initialBoards`, `initialColumns`, `initialCards`). Real Hive + temp dir for repository integration tests.
 - **Widget decomposition:** Prefer private widget classes over helper methods returning `Widget` — methods lose their own Element/lifecycle. Exception: builder callbacks.
