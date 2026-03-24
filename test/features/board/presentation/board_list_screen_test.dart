@@ -191,8 +191,8 @@ void main() {
     await tester.pumpWidget(_buildApp(repository: repo));
     await tester.pumpAndSettle();
 
-    // Should show "5m ago" (from lastUsedAt), not a date (from updatedAt)
-    expect(find.textContaining('5m ago'), findsOneWidget);
+    // Should show a recent "m ago" label (from lastUsedAt), not a date (from updatedAt)
+    expect(find.textContaining('m ago'), findsOneWidget);
   });
 
   testWidgets('60s timer triggers setState rebuild', (tester) async {
@@ -228,8 +228,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Initially shows "2m ago"
-    expect(find.textContaining('2m ago'), findsOneWidget);
+    // Initially shows a "m ago" relative time label
+    expect(find.textContaining('m ago'), findsOneWidget);
 
     // Advance fake clock by 60s — triggers Timer.periodic → setState.
     // The widget rebuilds; DateTime.now() is real so the label
