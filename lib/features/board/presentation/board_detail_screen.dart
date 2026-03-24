@@ -1,15 +1,17 @@
 import 'dart:async';
 
-import 'package:drag_and_drop_lists/drag_and_drop_lists.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban_board/core/reorder_helpers.dart';
 import 'package:kanban_board/features/board/domain/board_repository.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:kanban_board/features/board/domain/kanban_column.dart';
+import 'package:kanban_board/features/board/presentation/auto_scroll_handler.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
 import 'package:kanban_board/features/board/presentation/providers/card_providers.dart';
 import 'package:kanban_board/features/board/presentation/providers/column_providers.dart';
+import 'package:kanban_board/features/board/presentation/providers/drag_providers.dart';
 import 'package:kanban_board/features/board/presentation/widgets/board_form_sheet.dart';
 import 'package:kanban_board/features/board/presentation/widgets/card_form_sheet.dart';
 import 'package:kanban_board/features/board/presentation/widgets/column_form_sheet.dart';
@@ -175,7 +177,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
                   ),
                 );
               }
-              return _BoardDragContent(
+              return _BoardScrollView(
                 boardId: widget.boardId,
                 columns: columns,
               );
@@ -187,8 +189,10 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
   }
 }
 
-class _BoardDragContent extends ConsumerWidget {
-  const _BoardDragContent({
+/// 2D scrollable surface hosting columns horizontally and cards vertically.
+/// Owns both [ScrollController]s and the [AutoScrollHandler].
+class _BoardScrollView extends ConsumerStatefulWidget {
+  const _BoardScrollView({
     required this.boardId,
     required this.columns,
   });
@@ -196,66 +200,36 @@ class _BoardDragContent extends ConsumerWidget {
   final String boardId;
   final List<KanbanColumn> columns;
 
-  Future<void> _onItemReorder({
-    required WidgetRef ref,
-    required int oldItemIndex,
-    required int oldListIndex,
-    required int newItemIndex,
-    required int newListIndex,
-    required Map<String, List<KanbanCard>> columnCards,
-  }) async {
-    final sourceColumn = columns[oldListIndex];
-    final targetColumn = columns[newListIndex];
+  @override
+  ConsumerState<_BoardScrollView> createState() => _BoardScrollViewState();
+}
 
-    // Reject drops when source or target cards haven't loaded.
-    if (!columnCards.containsKey(sourceColumn.id) ||
-        !columnCards.containsKey(targetColumn.id)) {
-      return;
-    }
+class _BoardScrollViewState extends ConsumerState<_BoardScrollView>
+    with SingleTickerProviderStateMixin {
+  final _horizontalController = ScrollController();
+  final _verticalController = ScrollController();
+  late final AutoScrollHandler _autoScroll;
 
-    if (oldListIndex == newListIndex) {
-      // Same-column reorder.
-      await ref
-          .read(cardListProvider(sourceColumn.id).notifier)
-          .reorderCard(oldItemIndex, newItemIndex);
-    } else {
-      // Cross-column move.
-      final sourceCards = columnCards[sourceColumn.id] ?? [];
-      final targetCards = columnCards[targetColumn.id] ?? [];
-      if (oldItemIndex >= sourceCards.length) return;
-
-      final card = sourceCards[oldItemIndex];
-      final targetOrders = targetCards.map((c) => c.order).toList();
-      final newOrder = computeOrderKeyAtInsert(targetOrders, newItemIndex);
-
-      await ref
-          .read(boardRepositoryProvider)
-          .updateCard(
-            card.copyWith(
-              columnId: targetColumn.id,
-              order: newOrder,
-              updatedAt: DateTime.now(),
-            ),
-          );
-    }
+  @override
+  void initState() {
+    super.initState();
+    _autoScroll = AutoScrollHandler(
+      horizontalController: _horizontalController,
+      verticalController: _verticalController,
+      vsync: this,
+    );
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Track each column's async state so we can render
-    // loading/error/data per column.
-    final columnStates = <String, AsyncValue<List<KanbanCard>>>{};
-    final columnCards = <String, List<KanbanCard>>{};
-    for (final column in columns) {
-      final cardsAsync = ref.watch(cardListProvider(column.id));
-      columnStates[column.id] = cardsAsync;
-      final cards = cardsAsync.value;
-      if (cards != null) {
-        columnCards[column.id] = cards;
-      }
-    }
+  void dispose() {
+    _autoScroll.dispose();
+    _horizontalController.dispose();
+    _verticalController.dispose();
+    super.dispose();
+  }
 
-    final colorScheme = Theme.of(context).colorScheme;
+  @override
+  Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.paddingOf(context).bottom;
 
     return SafeArea(
@@ -265,90 +239,420 @@ class _BoardDragContent extends ConsumerWidget {
       minimum: EdgeInsets.only(
         bottom: bottomPadding > 0 ? 0 : 12,
       ),
-      child: DragAndDropLists(
-        children: [
-          for (final column in columns)
-            DragAndDropList(
-              header: _ColumnHeader(
-                column: column,
-                cardCount: columnCards[column.id]?.length ?? 0,
-                boardId: boardId,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          _autoScroll.viewportSize = constraints.biggest;
+
+          return SingleChildScrollView(
+            controller: _horizontalController,
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              controller: _verticalController,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final column in widget.columns)
+                      _KanbanColumnDropTarget(
+                        column: column,
+                        boardId: widget.boardId,
+                        autoScroll: _autoScroll,
+                        // Minimum column height = viewport height so columns
+                        // fill the screen even with few cards.
+                        minHeight: constraints.maxHeight,
+                      ),
+                  ],
+                ),
               ),
-              footer: columnStates[column.id] is AsyncData
-                  ? _AddCardFooter(columnId: column.id)
-                  : const SizedBox.shrink(),
-              contentsWhenEmpty: _ColumnEmptyContent(
-                state: columnStates[column.id]!,
-              ),
-              children: [
-                for (final card in columnCards[column.id] ?? <KanbanCard>[])
-                  DragAndDropItem(
-                    child: _KanbanCardTile(
-                      card: card,
-                      columnId: column.id,
-                    ),
-                  ),
-              ],
             ),
-        ],
-        onItemReorder:
-            (
-              oldItemIndex,
-              oldListIndex,
-              newItemIndex,
-              newListIndex,
-            ) async {
-              await _onItemReorder(
-                ref: ref,
-                oldItemIndex: oldItemIndex,
-                oldListIndex: oldListIndex,
-                newItemIndex: newItemIndex,
-                newListIndex: newListIndex,
-                columnCards: columnCards,
-              );
-            },
-        onListReorder: (oldListIndex, newListIndex) async {
-          await ref
-              .read(columnListProvider(boardId).notifier)
-              .reorderColumn(oldListIndex, newListIndex);
+          );
         },
-        axis: Axis.horizontal,
-        listWidth: 300,
-        listPadding: const EdgeInsets.symmetric(
-          horizontal: 6,
-          vertical: 12,
-        ),
-        listInnerDecoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        listDecorationWhileDragging: BoxDecoration(
-          color: colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        itemDecorationWhileDragging: BoxDecoration(
-          color: colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        lastItemTargetHeight: 24,
-        lastListTargetSize: 0,
       ),
     );
   }
+}
+
+/// [DragTarget] wrapping an entire column. Accepts cross-column drops on the
+/// column body (below cards or on an empty column) — appends to end.
+class _KanbanColumnDropTarget extends ConsumerWidget {
+  const _KanbanColumnDropTarget({
+    required this.column,
+    required this.boardId,
+    required this.autoScroll,
+    required this.minHeight,
+  });
+
+  final KanbanColumn column;
+  final String boardId;
+  final AutoScrollHandler autoScroll;
+  final double minHeight;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final cardsAsync = ref.watch(cardListProvider(column.id));
+    final cardCount = cardsAsync.value?.length ?? 0;
+
+    return DragTarget<KanbanCard>(
+      onWillAcceptWithDetails: (details) {
+        // Accept any card — column body is the fallback target.
+        ref
+            .read(kanbanDragControllerProvider.notifier)
+            .updateHover(columnId: column.id, index: cardCount);
+        return true;
+      },
+      onAcceptWithDetails: (details) async {
+        final dragState = ref.read(kanbanDragControllerProvider);
+        final card = dragState.draggedCard;
+        if (card == null) return;
+
+        // Append to end of target column.
+        final targetCards = cardsAsync.value ?? [];
+        final targetOrders = targetCards.map((c) => c.order).toList();
+        final newOrder = computeOrderKeyAtInsert(
+          targetOrders,
+          targetOrders.length,
+        );
+
+        await ref.read(boardRepositoryProvider).updateCard(
+              card.copyWith(
+                columnId: column.id,
+                order: newOrder,
+                updatedAt: DateTime.now(),
+              ),
+            );
+
+        ref.read(kanbanDragControllerProvider.notifier).endDrag();
+      },
+      onLeave: (_) {
+        ref.read(kanbanDragControllerProvider.notifier).clearHover();
+      },
+      builder: (context, candidateData, rejectedData) {
+        return Container(
+          width: 300,
+          constraints: BoxConstraints(minHeight: minHeight),
+          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ColumnHeader(
+                column: column,
+                cardCount: cardCount,
+                boardId: boardId,
+              ),
+              Flexible(
+                child: _CardListView(
+                  column: column,
+                  boardId: boardId,
+                  autoScroll: autoScroll,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Per-column card list. Watches only [cardListProvider] for its own column
+/// (fixes Slice 4c — previously all columns re-watched together).
+class _CardListView extends ConsumerWidget {
+  const _CardListView({
+    required this.column,
+    required this.boardId,
+    required this.autoScroll,
+  });
+
+  final KanbanColumn column;
+  final String boardId;
+  final AutoScrollHandler autoScroll;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cardsAsync = ref.watch(cardListProvider(column.id));
+
+    return cardsAsync.when(
+      loading: () => _ColumnEmptyContent(state: cardsAsync),
+      error: (_, _) => _ColumnEmptyContent(state: cardsAsync),
+      data: (cards) {
+        if (cards.isEmpty) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ColumnEmptyContent(state: cardsAsync),
+              _AddCardFooter(columnId: column.id),
+            ],
+          );
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < cards.length; i++) ...[
+              _InsertionGap(columnId: column.id, index: i),
+              _DraggableCardSlot(
+                card: cards[i],
+                index: i,
+                columnId: column.id,
+                boardId: boardId,
+                autoScroll: autoScroll,
+              ),
+            ],
+            // Final gap after last card — allows dropping at end.
+            _InsertionGap(columnId: column.id, index: cards.length),
+            _AddCardFooter(columnId: column.id),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Animated gap between cards. Opens when the drag controller's hover index
+/// matches this slot's index.
+class _InsertionGap extends ConsumerWidget {
+  const _InsertionGap({
+    required this.columnId,
+    required this.index,
+  });
+
+  final String columnId;
+  final int index;
+
+  static const _gapHeight = 52.0;
+  static const _animDuration = Duration(milliseconds: 200);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isActive = ref.watch(
+      kanbanDragControllerProvider.select((state) {
+        return state.isDragging &&
+            state.hoverColumnId == columnId &&
+            state.hoverIndex == index;
+      }),
+    );
+
+    return AnimatedContainer(
+      duration: _animDuration,
+      curve: Curves.easeInOut,
+      height: isActive ? _gapHeight : 0,
+    );
+  }
+}
+
+/// A card slot that is both draggable (source) and a drop target (destination).
+///
+/// Detects pointer kind at runtime: [LongPressDraggable] for touch,
+/// [Draggable] for mouse/stylus.
+class _DraggableCardSlot extends ConsumerStatefulWidget {
+  const _DraggableCardSlot({
+    required this.card,
+    required this.index,
+    required this.columnId,
+    required this.boardId,
+    required this.autoScroll,
+  });
+
+  final KanbanCard card;
+  final int index;
+  final String columnId;
+  final String boardId;
+  final AutoScrollHandler autoScroll;
+
+  @override
+  ConsumerState<_DraggableCardSlot> createState() =>
+      _DraggableCardSlotState();
+}
+
+class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot>
+    with SingleTickerProviderStateMixin {
+  PointerDeviceKind? _lastPointerKind;
+
+  void _onPointerDown(PointerDownEvent event) {
+    _lastPointerKind = event.kind;
+  }
+
+  void _onDragStarted() {
+    ref.read(kanbanDragControllerProvider.notifier).startDrag(
+          card: widget.card,
+          sourceColumnId: widget.columnId,
+          originalIndex: widget.index,
+        );
+    widget.autoScroll.startAutoScroll(this);
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    // Convert global position to viewport-local for auto-scroll.
+    final renderBox = context.findAncestorRenderObjectOfType<RenderBox>();
+    if (renderBox == null) return;
+
+    // Walk up to the _BoardScrollView's RenderBox for viewport-local coords.
+    final scrollViewBox =
+        _findAncestorRenderBox(context, '_BoardScrollViewState');
+    final localPos = (scrollViewBox ?? renderBox)
+        .globalToLocal(details.globalPosition);
+
+    widget.autoScroll.pointerPosition = localPos;
+    ref
+        .read(kanbanDragControllerProvider.notifier)
+        .updatePosition(details.globalPosition);
+  }
+
+  void _onDragEnd(DraggableDetails details) {
+    widget.autoScroll.stopAutoScroll();
+    // endDrag is called by the accepting DragTarget, not here,
+    // so state is still available for the onAccept callback.
+  }
+
+  void _onDraggableCanceled(Velocity velocity, Offset offset) {
+    widget.autoScroll.stopAutoScroll();
+    ref.read(kanbanDragControllerProvider.notifier).endDrag();
+  }
+
+  void _handleDrop(DragTargetDetails<KanbanCard> details) {
+    final dragState = ref.read(kanbanDragControllerProvider);
+    final draggedCard = dragState.draggedCard;
+    if (draggedCard == null) return;
+
+    final hoverIndex = dragState.hoverIndex;
+    if (hoverIndex == null) {
+      // Adjacency-suppressed — no-op.
+      ref.read(kanbanDragControllerProvider.notifier).endDrag();
+      return;
+    }
+
+    if (dragState.sourceColumnId == widget.columnId) {
+      // Same-column reorder: convert pre-removal to post-removal index.
+      final originalIndex = dragState.originalIndex!;
+      final postRemovalIndex =
+          hoverIndex > originalIndex ? hoverIndex - 1 : hoverIndex;
+      unawaited(
+        ref
+            .read(cardListProvider(widget.columnId).notifier)
+            .reorderCard(originalIndex, postRemovalIndex),
+      );
+    } else {
+      // Cross-column move: insert at hover position.
+      final targetCards =
+          ref.read(cardListProvider(widget.columnId)).value ?? [];
+      final targetOrders = targetCards.map((c) => c.order).toList();
+      final newOrder = computeOrderKeyAtInsert(targetOrders, hoverIndex);
+
+      unawaited(
+        ref.read(boardRepositoryProvider).updateCard(
+              draggedCard.copyWith(
+                columnId: widget.columnId,
+                order: newOrder,
+                updatedAt: DateTime.now(),
+              ),
+            ),
+      );
+    }
+
+    ref.read(kanbanDragControllerProvider.notifier).endDrag();
+  }
+
+  Widget _buildDraggable({
+    required Widget child,
+    required Widget ghost,
+    required Widget feedback,
+  }) {
+    final isTouch = _lastPointerKind == null ||
+        _lastPointerKind == PointerDeviceKind.touch;
+
+    if (isTouch) {
+      return LongPressDraggable<KanbanCard>(
+        data: widget.card,
+        feedback: feedback,
+        childWhenDragging: ghost,
+        onDragStarted: _onDragStarted,
+        onDragUpdate: _onDragUpdate,
+        onDragEnd: _onDragEnd,
+        onDraggableCanceled: _onDraggableCanceled,
+        child: child,
+      );
+    }
+
+    return Draggable<KanbanCard>(
+      data: widget.card,
+      feedback: feedback,
+      childWhenDragging: ghost,
+      onDragStarted: _onDragStarted,
+      onDragUpdate: _onDragUpdate,
+      onDragEnd: _onDragEnd,
+      onDraggableCanceled: _onDraggableCanceled,
+      child: child,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final child = _KanbanCardTile(
+      card: widget.card,
+      columnId: widget.columnId,
+    );
+
+    // Ghost: the card left behind at the original position during drag.
+    final ghost = Opacity(
+      opacity: 0.4,
+      child: IgnorePointer(child: child),
+    );
+
+    // Feedback: the widget that follows the pointer.
+    final feedback = Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(
+        width: 300 - 12, // Column width minus margins
+        child: Transform.scale(scale: 1.05, child: child),
+      ),
+    );
+
+    return DragTarget<KanbanCard>(
+      onWillAcceptWithDetails: (details) {
+        ref
+            .read(kanbanDragControllerProvider.notifier)
+            .updateHover(columnId: widget.columnId, index: widget.index);
+        return true;
+      },
+      onAcceptWithDetails: _handleDrop,
+      onLeave: (_) {},
+      builder: (context, candidateData, rejectedData) {
+        return Listener(
+          onPointerDown: _onPointerDown,
+          child: _buildDraggable(
+            child: child,
+            ghost: ghost,
+            feedback: feedback,
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Walk up the element tree to find a [RenderBox] whose state matches
+/// [stateTypeName]. Used to get the viewport-local coordinates for
+/// auto-scroll calculations.
+RenderBox? _findAncestorRenderBox(BuildContext context, String stateTypeName) {
+  RenderBox? result;
+  context.visitAncestorElements((element) {
+    if (element is StatefulElement &&
+        element.state.runtimeType.toString() == stateTypeName) {
+      final renderObject = element.renderObject;
+      if (renderObject is RenderBox) {
+        result = renderObject;
+        return false;
+      }
+    }
+    return true;
+  });
+  return result;
 }
 
 class _ColumnEmptyContent extends StatelessWidget {

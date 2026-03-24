@@ -1,9 +1,9 @@
-import 'package:drag_and_drop_lists/drag_and_drop_lists.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban_board/core/theme.dart';
 import 'package:kanban_board/features/board/domain/board.dart';
+import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:kanban_board/features/board/presentation/board_detail_screen.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
 
@@ -27,11 +27,11 @@ Widget _buildApp({
   );
 }
 
-/// Find the column PopupMenuButton inside the DragAndDropLists subtree
+/// Find the column PopupMenuButton inside a [DragTarget]
 /// (not the app bar's PopupMenuButton).
 Finder _columnPopup() {
   return find.descendant(
-    of: find.byType(DragAndDropLists),
+    of: find.byType(DragTarget<KanbanCard>),
     matching: find.byType(PopupMenuButton<String>),
   );
 }
