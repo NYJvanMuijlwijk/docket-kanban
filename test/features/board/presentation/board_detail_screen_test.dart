@@ -92,7 +92,9 @@ void main() {
     await tester.pumpAndSettle();
 
     // Open popup menu
-    await tester.tap(find.byType(PopupMenuButton<String>));
+    await tester.tap(
+      find.byWidgetPredicate((w) => w is PopupMenuButton),
+    );
     await tester.pumpAndSettle();
 
     // Tap rename

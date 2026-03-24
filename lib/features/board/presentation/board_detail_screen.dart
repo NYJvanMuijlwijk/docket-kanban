@@ -19,6 +19,10 @@ import 'package:kanban_board/features/board/presentation/widgets/column_form_she
 const _kColumnWidth = 300.0;
 const _kColumnMarginH = 6.0;
 
+enum _BoardMenuAction { rename }
+
+enum _ColumnMenuAction { rename, delete }
+
 class BoardDetailScreen extends ConsumerStatefulWidget {
   const BoardDetailScreen({required this.boardId, super.key});
 
@@ -149,15 +153,16 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
           appBar: AppBar(
             title: Text(board.name),
             actions: [
-              PopupMenuButton<String>(
-                onSelected: (value) async {
-                  if (value == 'rename') {
-                    await _renameBoard(board.name);
+              PopupMenuButton<_BoardMenuAction>(
+                onSelected: (action) async {
+                  switch (action) {
+                    case _BoardMenuAction.rename:
+                      await _renameBoard(board.name);
                   }
                 },
                 itemBuilder: (_) => const [
                   PopupMenuItem(
-                    value: 'rename',
+                    value: _BoardMenuAction.rename,
                     child: Text('Rename'),
                   ),
                 ],
@@ -298,8 +303,10 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final cardsAsync = ref.watch(cardListProvider(column.id));
-    final cardCount = cardsAsync.value?.length ?? 0;
+    final cardCount = ref.watch(
+      cardListProvider(column.id)
+          .select((async) => async.value?.length ?? 0),
+    );
 
     final isHoverTarget = ref.watch(
       kanbanDragControllerProvider.select((state) {
@@ -320,12 +327,12 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
         return true;
       },
       onAcceptWithDetails: (_) => _executeDrop(ref, column.id),
-      // No clearHover — hover is only overwritten by updateHover() or
-      // reset by endDrag(). Clearing here caused oscillation: the column
-      // onLeave fires spuriously during gap animations as layout shifts
-      // change hit-test results between nested DragTargets.
+      // No-op: hover is only overwritten by updateHover() or reset by
+      // endDrag(). Clearing here caused oscillation — the column onLeave
+      // fires spuriously during gap animations as layout shifts change
+      // hit-test results between nested DragTargets.
       onLeave: (_) {},
-      builder: (context, candidateData, rejectedData) {
+      builder: (context, accepted, rejected) {
         final baseColor = colorScheme.surfaceContainerLow;
         final highlightColor = Color.lerp(
           baseColor,
@@ -462,7 +469,7 @@ class _InsertionGap extends ConsumerWidget {
       onAcceptWithDetails: (_) => _executeDrop(ref, columnId),
       // No-op — hover state managed by updateHover(), not by leave events.
       onLeave: (_) {},
-      builder: (context, candidateData, rejectedData) {
+      builder: (context, accepted, rejected) {
         return AnimatedContainer(
           duration: _animDuration,
           curve: Curves.easeInOut,
@@ -592,7 +599,7 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
       onAcceptWithDetails: _handleDrop,
       // No-op — hover state managed by updateHover(), not by leave events.
       onLeave: (_) {},
-      builder: (context, candidateData, rejectedData) {
+      builder: (context, accepted, rejected) {
         return _AdaptiveDraggable<KanbanCard>(
           data: widget.card,
           feedback: feedback,
@@ -669,7 +676,11 @@ class _AdaptiveDraggableState<T extends Object>
 
     return Listener(
       onPointerDown: (event) {
-        _lastPointerKind = event.kind;
+        if (_lastPointerKind != event.kind) {
+          setState(() {
+            _lastPointerKind = event.kind;
+          });
+        }
       },
       child: draggable,
     );
@@ -827,23 +838,23 @@ class _ColumnHeader extends ConsumerWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          PopupMenuButton<String>(
-            onSelected: (value) async {
-              switch (value) {
-                case 'rename':
+          PopupMenuButton<_ColumnMenuAction>(
+            onSelected: (action) async {
+              switch (action) {
+                case _ColumnMenuAction.rename:
                   await _renameColumn(context, ref);
-                case 'delete':
+                case _ColumnMenuAction.delete:
                   if (!context.mounted) return;
                   await _deleteColumn(context, ref);
               }
             },
             itemBuilder: (_) => const [
               PopupMenuItem(
-                value: 'rename',
+                value: _ColumnMenuAction.rename,
                 child: Text('Rename'),
               ),
               PopupMenuItem(
-                value: 'delete',
+                value: _ColumnMenuAction.delete,
                 child: Text('Delete'),
               ),
             ],
