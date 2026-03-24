@@ -41,6 +41,15 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
   }
 
   @override
+  void didUpdateWidget(BoardDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.boardId != widget.boardId) {
+      _stampLastUsed();
+      _hasStamped = false;
+    }
+  }
+
+  @override
   void dispose() {
     _stampLastUsed();
     _lifecycleListener.dispose();
@@ -76,11 +85,8 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
           );
         }
       }).catchError(
-        // Ignore disposal-related errors: StateError (stream controller
-        // closed) and HiveError (box closed, extends Error). Both are
-        // Error subtypes, so catching Error lets us stay narrow without
-        // importing Hive in the presentation layer. Exceptions (e.g.
-        // programming bugs surfaced as Exception) still propagate.
+        // Swallow disposal-related Errors (StateError, HiveError);
+        // let Exceptions propagate.
         (_) {},
         test: (e) => e is Error,
       ),

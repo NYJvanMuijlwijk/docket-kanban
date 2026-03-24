@@ -14,7 +14,7 @@ class BoardListScreen extends ConsumerStatefulWidget {
 }
 
 class _BoardListScreenState extends ConsumerState<BoardListScreen> {
-  Timer? _refreshTimer;
+  late final Timer _refreshTimer;
 
   @override
   void initState() {
@@ -27,7 +27,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
 
   @override
   void dispose() {
-    _refreshTimer?.cancel();
+    _refreshTimer.cancel();
     super.dispose();
   }
 
