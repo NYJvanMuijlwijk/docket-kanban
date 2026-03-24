@@ -241,9 +241,12 @@ Auto-scroll behavior — `Ticker`-driven scroll offsets are impractical in widge
 - `_BoardDragContent` widget removed (was the all-column watcher)
 - `onListReorder` callback removed — no column drag/reorder in this implementation. Column reorder is out of scope and will be handled separately.
 
-## Unresolved Questions
+## Resolved Questions
 
-1. **2D scroll widget** — nested `SingleChildScrollView`s (horizontal wrapping vertical) or a single `InteractiveViewer` with pan enabled but zoom disabled? Need to verify drag gesture conflicts with each approach.
-2. **Gap animation duration** — 200ms? 150ms? Needs feel-testing once implemented.
-3. **Column body drop vs inter-card drop priority** — when pointer is between cards near the bottom of a column, does the `_DraggableCardSlot` DragTarget or the `_KanbanColumnDropTarget` win? Need to verify `DragTarget` hit-test ordering (inner wins over outer in Flutter's hit test).
-4. **Auto-scroll tuning** — 40px edge zone, 50-600 px/s range are starting values. May need adjustment per platform (touch vs mouse feel different).
+1. **2D scroll widget** — **Nested `SingleChildScrollView`s** (horizontal wrapping vertical). Spike-tested: `LongPressDraggable` initiates cleanly inside nested scroll views with no gesture arena conflict. `ScrollController.jumpTo()` bypasses the gesture arena entirely (imperative API, not a gesture) so `AutoScrollHandler` will not compete with active drags. `InteractiveViewer` rejected — its `TransformationController` (matrix-based) is incompatible with the `ScrollController`-based `AutoScrollHandler` design and risks pointer coordinate desync with `Overlay`-based drag feedback.
+3. **Column body drop vs inter-card drop priority** — **Inner `DragTarget` wins exclusively.** Spike-tested: Flutter's hit-test is depth-first — the innermost `DragTarget` receives the event and the outer target is completely suppressed (`onWillAcceptWithDetails` never called). This means `_KanbanColumnDropTarget` only fires in areas not covered by any `_DraggableCardSlot` — empty space below the last card, or an entirely empty column. This is exactly the desired behavior for "drop on column body appends to end." No widget tree restructuring needed; full-height columns naturally expose the outer target below the card list.
+
+## Unresolved Questions (deferred — tune after first working prototype)
+
+2. **Gap animation duration** — 200ms? 150ms? Use 200ms const, tune by feel.
+4. **Auto-scroll tuning** — 40px edge zone, 50-600 px/s range are starting values. May need per-platform adjustment (touch vs mouse). Use spec defaults as consts, tune by feel.

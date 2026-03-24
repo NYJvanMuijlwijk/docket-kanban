@@ -191,7 +191,8 @@ void main() {
     await tester.pumpWidget(_buildApp(repository: repo));
     await tester.pumpAndSettle();
 
-    // Should show a recent "m ago" label (from lastUsedAt), not a date (from updatedAt)
+    // Should show a recent "m ago" label (from lastUsedAt),
+    // not a date (from updatedAt)
     expect(find.textContaining('m ago'), findsOneWidget);
   });
 
