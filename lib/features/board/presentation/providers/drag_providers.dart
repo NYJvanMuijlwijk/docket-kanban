@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart' show immutable;
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'drag_providers.g.dart';
 
 /// Immutable snapshot of the current drag state.
+@immutable
 class KanbanDragState {
   const KanbanDragState({
     this.draggedCard,
@@ -32,6 +34,25 @@ class KanbanDragState {
     if (hoverIndex == null || originalIndex == null) return false;
     return hoverIndex == originalIndex || hoverIndex == originalIndex! + 1;
   }
+
+  @override
+  int get hashCode => Object.hash(
+        draggedCard,
+        sourceColumnId,
+        originalIndex,
+        hoverColumnId,
+        hoverIndex,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is KanbanDragState &&
+          draggedCard == other.draggedCard &&
+          sourceColumnId == other.sourceColumnId &&
+          originalIndex == other.originalIndex &&
+          hoverColumnId == other.hoverColumnId &&
+          hoverIndex == other.hoverIndex;
 }
 
 @riverpod
@@ -82,15 +103,6 @@ class KanbanDragController extends _$KanbanDragController {
       originalIndex: state.originalIndex,
       hoverColumnId: columnId,
       hoverIndex: suppressedIndex,
-    );
-  }
-
-  void clearHover() {
-    if (!state.isDragging) return;
-    state = KanbanDragState(
-      draggedCard: state.draggedCard,
-      sourceColumnId: state.sourceColumnId,
-      originalIndex: state.originalIndex,
     );
   }
 

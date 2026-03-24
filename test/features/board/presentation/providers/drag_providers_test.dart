@@ -202,20 +202,6 @@ void main() {
       );
     });
 
-    test('clearHover nulls hover fields', () {
-      readNotifier().startDrag(
-        card: makeCard(),
-        sourceColumnId: 'col-a',
-        originalIndex: 0,
-      );
-      readNotifier()
-        ..updateHover(columnId: 'col-b', index: 1)
-        ..clearHover();
-      expect(readState().hoverColumnId, isNull);
-      expect(readState().hoverIndex, isNull);
-      expect(readState().isDragging, isTrue);
-    });
-
     test('updateHover when not dragging is no-op', () {
       readNotifier().updateHover(columnId: 'col-a', index: 0);
       expect(readState().hoverColumnId, isNull);

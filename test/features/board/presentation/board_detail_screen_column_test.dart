@@ -32,7 +32,7 @@ Widget _buildApp({
 Finder _columnPopup() {
   return find.descendant(
     of: find.byType(DragTarget<KanbanCard>),
-    matching: find.byType(PopupMenuButton<String>),
+    matching: find.byWidgetPredicate((w) => w is PopupMenuButton),
   );
 }
 
