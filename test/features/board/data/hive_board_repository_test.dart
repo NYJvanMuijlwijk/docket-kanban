@@ -50,6 +50,11 @@ void main() {
       expect(board.name, 'My Board');
       expect(board.createdAt, isA<DateTime>());
       expect(board.updatedAt, isA<DateTime>());
+      expect(board.lastUsedAt, isA<DateTime>());
+      expect(
+        board.lastUsedAt.millisecondsSinceEpoch,
+        board.createdAt.millisecondsSinceEpoch,
+      );
     });
 
     test('board appears in subsequent getBoards()', () async {
@@ -112,6 +117,7 @@ void main() {
         name: 'Ghost',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        lastUsedAt: DateTime.now(),
       );
 
       expect(
@@ -139,30 +145,49 @@ void main() {
   });
 
   group('watchBoards', () {
-    test('boards sorted by updatedAt descending', () async {
+    test('boards sorted by lastUsedAt descending', () async {
       final first = await repository.createBoard('First');
       await repository.createBoard('Second');
 
-      // Update first board so it has the most recent updatedAt
+      // Update first board so it has the most recent lastUsedAt
       await repository.updateBoard(
         first.copyWith(
-          name: 'First Updated',
-          updatedAt: DateTime.now().add(const Duration(seconds: 1)),
+          lastUsedAt: DateTime.now().add(const Duration(seconds: 1)),
         ),
       );
 
       final boards = await repository.getBoards();
-      expect(boards.first.name, 'First Updated');
+      expect(boards.first.name, 'First');
       expect(boards.last.name, 'Second');
+    });
+
+    test('lastUsedAt update moves board to top of list', () async {
+      await repository.createBoard('Alpha');
+      await repository.createBoard('Beta');
+
+      // Beta was created second, so it has a later lastUsedAt already.
+      // Now give Alpha a newer lastUsedAt.
+      final alpha = (await repository.getBoards()).last;
+      await repository.updateBoard(
+        alpha.copyWith(
+          lastUsedAt: DateTime.now().add(const Duration(seconds: 2)),
+        ),
+      );
+
+      final boards = await repository.getBoards();
+      expect(boards.first.name, 'Alpha');
+      expect(boards.last.name, 'Beta');
     });
   });
 
   group('toJson/fromJson round-trip', () {
     test('preserves all fields through serialization', () async {
       final created = await repository.createBoard('Round Trip');
+      final lastUsed = DateTime.now().add(const Duration(hours: 1));
       final updated = created.copyWith(
         name: 'Updated Name',
         updatedAt: DateTime.now(),
+        lastUsedAt: lastUsed,
       );
 
       await repository.updateBoard(updated);
@@ -177,6 +202,61 @@ void main() {
         restored.createdAt.millisecondsSinceEpoch,
         updated.createdAt.millisecondsSinceEpoch,
       );
+      expect(
+        restored.lastUsedAt.millisecondsSinceEpoch,
+        lastUsed.millisecondsSinceEpoch,
+      );
+    });
+  });
+
+  group('Board.fromJson migration', () {
+    test('falls back to createdAt when lastUsedAt is missing', () {
+      final createdAt = DateTime(2024, 6, 15);
+      final json = <String, dynamic>{
+        'id': 'test-id',
+        'name': 'Legacy Board',
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': createdAt.toIso8601String(),
+        // No lastUsedAt key — simulates pre-migration data
+      };
+
+      final board = Board.fromJson(json);
+
+      expect(board.lastUsedAt, createdAt);
+    });
+
+    test('parses lastUsedAt when present', () {
+      final createdAt = DateTime(2024, 6, 15);
+      final lastUsedAt = DateTime(2024, 12, 25);
+      final json = <String, dynamic>{
+        'id': 'test-id',
+        'name': 'Modern Board',
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': createdAt.toIso8601String(),
+        'lastUsedAt': lastUsedAt.toIso8601String(),
+      };
+
+      final board = Board.fromJson(json);
+
+      expect(board.lastUsedAt, lastUsedAt);
+    });
+
+    test('copyWith updates lastUsedAt independently', () {
+      final now = DateTime.now();
+      final board = Board(
+        id: 'id',
+        name: 'name',
+        createdAt: now,
+        updatedAt: now,
+        lastUsedAt: now,
+      );
+
+      final later = now.add(const Duration(hours: 1));
+      final updated = board.copyWith(lastUsedAt: later);
+
+      expect(updated.lastUsedAt, later);
+      expect(updated.updatedAt, now);
+      expect(updated.name, 'name');
     });
   });
 }

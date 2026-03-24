@@ -53,6 +53,7 @@ class HiveBoardRepository implements BoardRepository {
       name: name,
       createdAt: now,
       updatedAt: now,
+      lastUsedAt: now,
     );
     await _boardBox.put(board.id, board.toJson());
     return board;
@@ -268,7 +269,7 @@ class HiveBoardRepository implements BoardRepository {
           (raw) => Board.fromJson(Map<String, dynamic>.from(raw)),
         )
         .toList()
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      ..sort((a, b) => b.lastUsedAt.compareTo(a.lastUsedAt));
   }
 
   List<KanbanColumn> _readColumnsByBoard(String boardId) {

@@ -7,14 +7,20 @@ class Board {
     required this.name,
     required this.createdAt,
     required this.updatedAt,
+    required this.lastUsedAt,
   });
 
   factory Board.fromJson(Map<String, dynamic> json) {
+    final createdAt = DateTime.parse(json['createdAt'] as String);
     return Board(
       id: json['id'] as String,
       name: json['name'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: createdAt,
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      // Migration: existing boards without lastUsedAt fall back to createdAt.
+      lastUsedAt: json['lastUsedAt'] != null
+          ? DateTime.parse(json['lastUsedAt'] as String)
+          : createdAt,
     );
   }
 
@@ -22,9 +28,10 @@ class Board {
   final String name;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime lastUsedAt;
 
   @override
-  int get hashCode => Object.hash(id, name, createdAt, updatedAt);
+  int get hashCode => Object.hash(id, name, createdAt, updatedAt, lastUsedAt);
 
   @override
   bool operator ==(Object other) =>
@@ -34,7 +41,8 @@ class Board {
           id == other.id &&
           name == other.name &&
           createdAt == other.createdAt &&
-          updatedAt == other.updatedAt;
+          updatedAt == other.updatedAt &&
+          lastUsedAt == other.lastUsedAt;
 
   @override
   String toString() => 'Board(id: $id, name: $name)';
@@ -45,6 +53,7 @@ class Board {
       'name': name,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'lastUsedAt': lastUsedAt.toIso8601String(),
     };
   }
 
@@ -53,12 +62,14 @@ class Board {
     String? name,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? lastUsedAt,
   }) {
     return Board(
       id: id ?? this.id,
       name: name ?? this.name,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      lastUsedAt: lastUsedAt ?? this.lastUsedAt,
     );
   }
 }

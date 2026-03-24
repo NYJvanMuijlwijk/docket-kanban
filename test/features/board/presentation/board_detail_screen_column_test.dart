@@ -47,6 +47,7 @@ void main() {
           name: 'Test Board',
           createdAt: now,
           updatedAt: now,
+          lastUsedAt: now,
         ),
       ],
     );

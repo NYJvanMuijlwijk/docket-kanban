@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban_board/core/theme.dart';
 import 'package:kanban_board/features/board/domain/board.dart';
+import 'package:kanban_board/features/board/presentation/board_list_screen.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
 import 'package:kanban_board/router/app_router.dart';
 
@@ -40,12 +41,14 @@ void main() {
         name: 'Work Board',
         createdAt: now,
         updatedAt: now,
+        lastUsedAt: now,
       ),
       Board(
         id: '2',
         name: 'Personal Board',
         createdAt: now,
         updatedAt: now,
+        lastUsedAt: now,
       ),
     ]);
 
@@ -127,6 +130,7 @@ void main() {
         name: 'Test Board',
         createdAt: now,
         updatedAt: now,
+        lastUsedAt: now,
       ),
     ]);
 
@@ -151,6 +155,7 @@ void main() {
         name: 'Board to Delete',
         createdAt: now,
         updatedAt: now,
+        lastUsedAt: now,
       ),
     ]);
 
@@ -165,5 +170,62 @@ void main() {
 
     // Should show empty state
     expect(find.text('No boards yet. Tap + to create one.'), findsOneWidget);
+  });
+
+  testWidgets('subtitle shows lastUsedAt, not updatedAt', (tester) async {
+    final created = DateTime(2024);
+    final updated = DateTime(2024, 6);
+    // lastUsedAt is much more recent than updatedAt
+    final lastUsed = DateTime.now().subtract(const Duration(minutes: 5));
+
+    final repo = FakeBoardRepository(initialBoards: [
+      Board(
+        id: '1',
+        name: 'My Board',
+        createdAt: created,
+        updatedAt: updated,
+        lastUsedAt: lastUsed,
+      ),
+    ]);
+
+    await tester.pumpWidget(_buildApp(repository: repo));
+    await tester.pumpAndSettle();
+
+    // Should show "5m ago" (from lastUsedAt), not a date (from updatedAt)
+    expect(find.textContaining('5m ago'), findsOneWidget);
+  });
+
+  testWidgets('60s timer refreshes relative timestamps', (tester) async {
+    await tester.runAsync(() async {
+      // Board last used "just now"
+      final repo = FakeBoardRepository(initialBoards: [
+        Board(
+          id: '1',
+          name: 'Timer Board',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          lastUsedAt: DateTime.now(),
+        ),
+      ]);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            boardRepositoryProvider.overrideWith((ref) {
+              ref.onDispose(repo.dispose);
+              return repo;
+            }),
+          ],
+          child: MaterialApp(
+            theme: buildDarkTheme(),
+            home: const BoardListScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Initially shows "just now"
+      expect(find.textContaining('just now'), findsOneWidget);
+    });
   });
 }

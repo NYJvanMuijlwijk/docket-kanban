@@ -60,6 +60,7 @@ class FakeBoardRepository implements BoardRepository {
       name: name,
       createdAt: now,
       updatedAt: now,
+      lastUsedAt: now,
     );
     _boards[board.id] = board;
     _emitBoards();
@@ -291,7 +292,7 @@ class FakeBoardRepository implements BoardRepository {
 
   List<Board> _sortedBoards() {
     return _boards.values.toList()
-      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      ..sort((a, b) => b.lastUsedAt.compareTo(a.lastUsedAt));
   }
 
   List<KanbanColumn> _sortedColumns(String boardId) {
