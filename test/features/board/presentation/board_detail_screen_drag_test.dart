@@ -76,11 +76,11 @@ void main() {
           .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
-      // One DragTarget per card slot + one wrapping the column body.
-      // 2 card slots + 1 column-level = 3 DragTarget<KanbanCard>.
+      // DragTargets: 2 card slots + 3 insertion gaps (before each card +
+      // trailing) + 1 column-level = 6 DragTarget<KanbanCard>.
       expect(
         find.byType(DragTarget<KanbanCard>),
-        findsNWidgets(3),
+        findsNWidgets(6),
       );
     });
 
@@ -94,10 +94,11 @@ void main() {
       await tester.pumpAndSettle();
 
       // Column-level DragTarget wraps the entire column even when empty,
-      // so cross-column drops onto an empty column work.
+      // so cross-column drops onto an empty column work. The insertion
+      // gap also renders its own DragTarget for the drop indicator.
       expect(
         find.byType(DragTarget<KanbanCard>),
-        findsOneWidget,
+        findsNWidgets(2),
       );
     });
   });
@@ -301,10 +302,10 @@ void main() {
           .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
-      // 3 card-level DragTargets + 1 column-level DragTarget = 4
+      // 3 card-level + 4 insertion gap + 1 column-level = 8 DragTargets
       expect(
         find.byType(DragTarget<KanbanCard>),
-        findsNWidgets(4),
+        findsNWidgets(8),
       );
     });
   });

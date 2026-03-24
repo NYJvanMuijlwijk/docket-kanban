@@ -80,18 +80,21 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
 
     // Best-effort: repository may already be disposed during teardown.
     unawaited(
-      _repository.getBoard(widget.boardId).then((board) async {
-        if (board != null) {
-          await _repository.updateBoard(
-            board.copyWith(lastUsedAt: DateTime.now()),
-          );
-        }
-      }).catchError(
-        // Swallow disposal-related Errors (StateError, HiveError);
-        // let Exceptions propagate.
-        (_) {},
-        test: (e) => e is Error,
-      ),
+      _repository
+          .getBoard(widget.boardId)
+          .then((board) async {
+            if (board != null) {
+              await _repository.updateBoard(
+                board.copyWith(lastUsedAt: DateTime.now()),
+              );
+            }
+          })
+          .catchError(
+            // Swallow disposal-related Errors (StateError, HiveError);
+            // let Exceptions propagate.
+            (_) {},
+            test: (e) => e is Error,
+          ),
     );
   }
 
@@ -293,47 +296,53 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
     final cardsAsync = ref.watch(cardListProvider(column.id));
     final cardCount = cardsAsync.value?.length ?? 0;
 
+    final isHoverTarget = ref.watch(
+      kanbanDragControllerProvider.select((state) {
+        return state.isDragging && state.hoverColumnId == column.id;
+      }),
+    );
+
     return DragTarget<KanbanCard>(
       onWillAcceptWithDetails: (details) {
-        // Accept any card — column body is the fallback target.
-        ref
-            .read(kanbanDragControllerProvider.notifier)
-            .updateHover(columnId: column.id, index: cardCount);
+        // Column body is the fallback target — only update hover to
+        // "append" position if no card-level target in this column is
+        // already active. Without this guard, the column DragTarget
+        // can steal hover from card/gap DragTargets during layout
+        // shifts caused by gap animations.
+        final current = ref.read(kanbanDragControllerProvider);
+        final hasCardLevelHover =
+            current.hoverColumnId == column.id &&
+            current.hoverIndex != null &&
+            current.hoverIndex! <= cardCount;
+        if (!hasCardLevelHover) {
+          ref
+              .read(kanbanDragControllerProvider.notifier)
+              .updateHover(columnId: column.id, index: cardCount);
+        }
         return true;
       },
-      onAcceptWithDetails: (details) async {
-        final dragState = ref.read(kanbanDragControllerProvider);
-        final card = dragState.draggedCard;
-        if (card == null) return;
-
-        // Append to end of target column.
-        final targetCards = cardsAsync.value ?? [];
-        final targetOrders = targetCards.map((c) => c.order).toList();
-        final newOrder = computeOrderKeyAtInsert(
-          targetOrders,
-          targetOrders.length,
-        );
-
-        await ref.read(boardRepositoryProvider).updateCard(
-              card.copyWith(
-                columnId: column.id,
-                order: newOrder,
-                updatedAt: DateTime.now(),
-              ),
-            );
-
-        ref.read(kanbanDragControllerProvider.notifier).endDrag();
-      },
-      onLeave: (_) {
-        ref.read(kanbanDragControllerProvider.notifier).clearHover();
-      },
+      onAcceptWithDetails: (_) => _executeDrop(ref, column.id),
+      // No clearHover — hover is only overwritten by updateHover() or
+      // reset by endDrag(). Clearing here caused oscillation: the column
+      // onLeave fires spuriously during gap animations as layout shifts
+      // change hit-test results between nested DragTargets.
+      onLeave: (_) {},
       builder: (context, candidateData, rejectedData) {
-        return Container(
+        final baseColor = colorScheme.surfaceContainerLow;
+        final highlightColor = Color.lerp(
+          baseColor,
+          colorScheme.primary,
+          0.08,
+        )!;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
           width: 300,
           constraints: BoxConstraints(minHeight: minHeight),
           margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
           decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerLow,
+            color: isHoverTarget ? highlightColor : baseColor,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -384,6 +393,7 @@ class _CardListView extends ConsumerWidget {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              _InsertionGap(columnId: column.id, index: 0),
               _ColumnEmptyContent(state: cardsAsync),
               _AddCardFooter(columnId: column.id),
             ],
@@ -415,6 +425,10 @@ class _CardListView extends ConsumerWidget {
 
 /// Animated gap between cards. Opens when the drag controller's hover index
 /// matches this slot's index.
+///
+/// Also acts as a [DragTarget] so the gap "catches" the pointer as it
+/// animates open — preventing the layout shift from invalidating the
+/// hit-test that caused the gap to open in the first place.
 class _InsertionGap extends ConsumerWidget {
   const _InsertionGap({
     required this.columnId,
@@ -437,10 +451,53 @@ class _InsertionGap extends ConsumerWidget {
       }),
     );
 
-    return AnimatedContainer(
-      duration: _animDuration,
-      curve: Curves.easeInOut,
-      height: isActive ? _gapHeight : 0,
+    return DragTarget<KanbanCard>(
+      onWillAcceptWithDetails: (details) {
+        ref
+            .read(kanbanDragControllerProvider.notifier)
+            .updateHover(columnId: columnId, index: index);
+        return true;
+      },
+      onAcceptWithDetails: (_) => _executeDrop(ref, columnId),
+      onLeave: (_) {},
+      builder: (context, candidateData, rejectedData) {
+        return AnimatedContainer(
+          duration: _animDuration,
+          curve: Curves.easeInOut,
+          height: isActive ? _gapHeight : 0,
+          child: AnimatedOpacity(
+            duration: _animDuration,
+            curve: Curves.easeInOut,
+            opacity: isActive ? 1.0 : 0.0,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: _InsertionLine(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Accent-colored horizontal line with rounded pill ends.
+class _InsertionLine extends StatelessWidget {
+  const _InsertionLine({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 3,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(1.5),
+      ),
     );
   }
 }
@@ -465,12 +522,10 @@ class _DraggableCardSlot extends ConsumerStatefulWidget {
   final AutoScrollHandler autoScroll;
 
   @override
-  ConsumerState<_DraggableCardSlot> createState() =>
-      _DraggableCardSlotState();
+  ConsumerState<_DraggableCardSlot> createState() => _DraggableCardSlotState();
 }
 
-class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot>
-    with SingleTickerProviderStateMixin {
+class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
   PointerDeviceKind? _lastPointerKind;
 
   void _onPointerDown(PointerDownEvent event) {
@@ -478,12 +533,14 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot>
   }
 
   void _onDragStarted() {
-    ref.read(kanbanDragControllerProvider.notifier).startDrag(
+    ref
+        .read(kanbanDragControllerProvider.notifier)
+        .startDrag(
           card: widget.card,
           sourceColumnId: widget.columnId,
           originalIndex: widget.index,
         );
-    widget.autoScroll.startAutoScroll(this);
+    widget.autoScroll.startAutoScroll();
   }
 
   void _onDragUpdate(DragUpdateDetails details) {
@@ -492,10 +549,13 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot>
     if (renderBox == null) return;
 
     // Walk up to the _BoardScrollView's RenderBox for viewport-local coords.
-    final scrollViewBox =
-        _findAncestorRenderBox(context, '_BoardScrollViewState');
-    final localPos = (scrollViewBox ?? renderBox)
-        .globalToLocal(details.globalPosition);
+    final scrollViewBox = _findAncestorRenderBox(
+      context,
+      '_BoardScrollViewState',
+    );
+    final localPos = (scrollViewBox ?? renderBox).globalToLocal(
+      details.globalPosition,
+    );
 
     widget.autoScroll.pointerPosition = localPos;
     ref
@@ -515,46 +575,7 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot>
   }
 
   void _handleDrop(DragTargetDetails<KanbanCard> details) {
-    final dragState = ref.read(kanbanDragControllerProvider);
-    final draggedCard = dragState.draggedCard;
-    if (draggedCard == null) return;
-
-    final hoverIndex = dragState.hoverIndex;
-    if (hoverIndex == null) {
-      // Adjacency-suppressed — no-op.
-      ref.read(kanbanDragControllerProvider.notifier).endDrag();
-      return;
-    }
-
-    if (dragState.sourceColumnId == widget.columnId) {
-      // Same-column reorder: convert pre-removal to post-removal index.
-      final originalIndex = dragState.originalIndex!;
-      final postRemovalIndex =
-          hoverIndex > originalIndex ? hoverIndex - 1 : hoverIndex;
-      unawaited(
-        ref
-            .read(cardListProvider(widget.columnId).notifier)
-            .reorderCard(originalIndex, postRemovalIndex),
-      );
-    } else {
-      // Cross-column move: insert at hover position.
-      final targetCards =
-          ref.read(cardListProvider(widget.columnId)).value ?? [];
-      final targetOrders = targetCards.map((c) => c.order).toList();
-      final newOrder = computeOrderKeyAtInsert(targetOrders, hoverIndex);
-
-      unawaited(
-        ref.read(boardRepositoryProvider).updateCard(
-              draggedCard.copyWith(
-                columnId: widget.columnId,
-                order: newOrder,
-                updatedAt: DateTime.now(),
-              ),
-            ),
-      );
-    }
-
-    ref.read(kanbanDragControllerProvider.notifier).endDrag();
+    _executeDrop(ref, widget.columnId);
   }
 
   Widget _buildDraggable({
@@ -562,8 +583,8 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot>
     required Widget ghost,
     required Widget feedback,
   }) {
-    final isTouch = _lastPointerKind == null ||
-        _lastPointerKind == PointerDeviceKind.touch;
+    final isTouch =
+        _lastPointerKind == null || _lastPointerKind == PointerDeviceKind.touch;
 
     if (isTouch) {
       return LongPressDraggable<KanbanCard>(
@@ -636,6 +657,55 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot>
   }
 }
 
+/// Shared drop handler used by all three DragTarget layers (column, card, gap).
+///
+/// Reads the current [KanbanDragState], computes the new order key based on
+/// the hover position, persists the move, and resets drag state.
+void _executeDrop(WidgetRef ref, String targetColumnId) {
+  final dragState = ref.read(kanbanDragControllerProvider);
+  final draggedCard = dragState.draggedCard;
+  if (draggedCard == null) return;
+
+  final hoverIndex = dragState.hoverIndex;
+  if (hoverIndex == null) {
+    // Adjacency-suppressed — no-op.
+    ref.read(kanbanDragControllerProvider.notifier).endDrag();
+    return;
+  }
+
+  if (dragState.sourceColumnId == targetColumnId) {
+    // Same-column reorder: convert pre-removal to post-removal index.
+    final originalIndex = dragState.originalIndex!;
+    final postRemovalIndex = hoverIndex > originalIndex
+        ? hoverIndex - 1
+        : hoverIndex;
+    unawaited(
+      ref
+          .read(cardListProvider(targetColumnId).notifier)
+          .reorderCard(originalIndex, postRemovalIndex),
+    );
+  } else {
+    // Cross-column move: insert at hover position.
+    final targetCards = ref.read(cardListProvider(targetColumnId)).value ?? [];
+    final targetOrders = targetCards.map((c) => c.order).toList();
+    final newOrder = computeOrderKeyAtInsert(targetOrders, hoverIndex);
+
+    unawaited(
+      ref
+          .read(boardRepositoryProvider)
+          .updateCard(
+            draggedCard.copyWith(
+              columnId: targetColumnId,
+              order: newOrder,
+              updatedAt: DateTime.now(),
+            ),
+          ),
+    );
+  }
+
+  ref.read(kanbanDragControllerProvider.notifier).endDrag();
+}
+
 /// Walk up the element tree to find a [RenderBox] whose state matches
 /// [stateTypeName]. Used to get the viewport-local coordinates for
 /// auto-scroll calculations.
@@ -667,10 +737,10 @@ class _ColumnEmptyContent extends StatelessWidget {
       child: Center(
         child: switch (state) {
           AsyncLoading() => const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
           AsyncError() => const Icon(Icons.error_outline),
           _ => const Text('No cards yet'),
         },
