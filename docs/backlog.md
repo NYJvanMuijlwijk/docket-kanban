@@ -7,7 +7,7 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 - **Framework:** Flutter (web + Android)
 - **State management:** Riverpod 3.0 with codegen
 - **Local persistence:** Hive (web + Android compatible)
-- **Drag-and-drop:** `drag_and_drop_lists`
+- **Drag-and-drop:** Custom `Draggable`/`DragTarget` + Riverpod `KanbanDragController`
 - **Routing:** GoRouter
 - **Linting:** `very_good_analysis` + strict-casts/inference/raw-types
   - **Note:** `riverpod_lint` excluded due to `analyzer` version conflict with `riverpod_generator` 4.x. Revisit when `custom_lint` supports `analyzer ^9.0.0`. Until then, manually check: `ProviderScope` at root, no `BuildContext` in providers, proper `Notifier` encapsulation, correct codegen annotations.
@@ -76,26 +76,14 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 
 **Notes:** `lastUsedAt` stamped via `dispose()` + `AppLifecycleListener` (paused/hidden). Repository cached in `initState` since `ref.read()` is invalid in `dispose()` for Riverpod 3.x `ConsumerStatefulWidget`. Stamp is fire-and-forget with `catchError` — best-effort for app kill scenarios. `Board.fromJson` migration: missing `lastUsedAt` falls back to `createdAt`. `BoardListScreen` uses 60s `Timer.periodic` for timestamp refresh.
 
-### Slice 4c: Drag-and-Drop Rebuild Optimization — PRIORITY: later
-- [ ] `_BoardDragContent` watches all column card providers in `build()` — any card change in any column triggers a full widget rebuild
-- [ ] Decompose so each column watches only its own cards (push `ref.watch(cardListProvider)` into per-column child widgets)
+### Slice 4c: Drag-and-Drop Rebuild Optimization — DONE (Slice 4 rework)
+- [x] Decomposed: each column watches only its own cards via `_CardListView`
 
-**Acceptance:** Editing a card in column A does not rebuild columns B/C/D. Verify with `debugPrintRebuildDirtyWidgets` or DevTools rebuild tracker.
-
-### Slice 4d: Drag-and-Drop UX Improvements — PRIORITY: later
-- [ ] Columns don't fill screen height — `DragAndDropList.generateWidget()` hardcodes `Column(mainAxisSize: MainAxisSize.min)`, columns shrink to content
-- [ ] Horizontal auto-scroll during drag is too slow — library hardcodes velocity (`_overDragCoefficient = 3.3`, `_scrollAreaSize = 20px`, `_duration = 30ms`), no parameter exposed
-- [ ] Cannot drop a card onto the empty-state widget ("No cards yet") to add to an empty column — only the `lastItemTargetHeight` zone accepts drops
-- [ ] UI issues when dragging a column to the last position — revisit
-
-**Options:** Fork `drag_and_drop_lists` and patch (smallest diff), or replace with a custom implementation using `LongPressDraggable` + `DragTarget` + horizontal `ListView` (more control, more work).
-
-**If forking:**
-- Column height: change `MainAxisSize.min` → `MainAxisSize.max` in `drag_and_drop_list.dart`, or expose as parameter
-- Scroll speed: expose `_overDragCoefficient` and `_scrollAreaSize` as constructor params in `drag_and_drop_lists.dart`
-- Empty-state drop: make `contentsWhenEmpty` a valid `DragTarget`
-
-**Acceptance:** Columns stretch to full screen height. Dragging horizontally feels responsive. Cards can be dropped onto empty columns via the empty-state widget. All existing drag tests still pass.
+### Slice 4d: Drag-and-Drop UX Improvements — DONE (Slice 4 rework)
+- [x] Replaced `drag_and_drop_lists` with custom `Draggable`/`DragTarget` + `AutoScrollHandler`
+- [x] Columns fill screen height via `IntrinsicHeight` + `minHeight` constraint
+- [x] Auto-scroll with configurable edge zones and linear speed interpolation
+- [x] Drop onto empty columns works via column-level `DragTarget` fallback
 
 ### Slice 5: Polish — PRIORITY: later
 - [ ] Material 3 theme: dark-mode-first, zen/minimal palette
