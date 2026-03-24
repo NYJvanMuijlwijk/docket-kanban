@@ -164,11 +164,12 @@ void main() {
       expect(readState().hoverIndex, 3);
     });
 
-    test('last gap (index == cardCount) is a valid hover target', () {
-      // Scenario: 3 cards in target column, drag from another column.
-      // The last gap has index 3 (== cardCount). The column-level
-      // DragTarget guard must treat this as a card-level hover and
-      // not override it with its own "append" updateHover call.
+    test('column append after card-level hover updates to cardCount', () {
+      // Scenario: drag from col-a into col-b (3 cards). Pointer first
+      // hovers over a card (index 1), then moves below all cards into
+      // the column body — column DragTarget fires updateHover with
+      // index = cardCount. The controller must accept the update so
+      // the last gap (index == cardCount) activates.
       const cardCount = 3;
 
       readNotifier().startDrag(
@@ -177,24 +178,38 @@ void main() {
         originalIndex: 0,
       );
 
-      // Gap at index == cardCount fires updateHover.
-      readNotifier().updateHover(columnId: 'col-b', index: cardCount);
-      expect(readState().hoverColumnId, 'col-b');
-      expect(readState().hoverIndex, cardCount);
+      // Card-level target sets hover to a card index.
+      readNotifier().updateHover(columnId: 'col-b', index: 1);
+      expect(readState().hoverIndex, 1);
 
-      // Simulate the column-level guard check that runs in
-      // _KanbanColumnDropTarget.onWillAcceptWithDetails.
-      // The guard should detect that hoverIndex <= cardCount
-      // means a card/gap-level target already set a valid hover.
-      final current = readState();
-      final hasCardLevelHover = current.hoverColumnId == 'col-b' &&
-          current.hoverIndex != null &&
-          current.hoverIndex! <= cardCount; // BUG: was < cardCount
+      // Column body target fires — must update to cardCount.
+      readNotifier().updateHover(columnId: 'col-b', index: cardCount);
       expect(
-        hasCardLevelHover,
+        readState().hoverIndex,
+        cardCount,
+        reason: 'Column-level updateHover(cardCount) must not be blocked '
+            'by a prior card-level hover',
+      );
+    });
+
+    test('duplicate updateHover is a no-op (prevents oscillation)', () {
+      readNotifier().startDrag(
+        card: makeCard(),
+        sourceColumnId: 'col-a',
+        originalIndex: 0,
+      );
+
+      readNotifier().updateHover(columnId: 'col-b', index: 2);
+      final stateAfterFirst = readState();
+
+      // Same column + index again — state object should be identical
+      // (no rebuild triggered).
+      readNotifier().updateHover(columnId: 'col-b', index: 2);
+      expect(
+        identical(readState(), stateAfterFirst),
         isTrue,
-        reason: 'Last gap (index == cardCount) must be recognized as '
-            'a card-level hover so the column fallback does not override it',
+        reason: 'Duplicate updateHover must not create a new state '
+            'object — prevents rebuild oscillation from layout shifts',
       );
     });
 

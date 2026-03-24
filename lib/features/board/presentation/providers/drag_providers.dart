@@ -81,6 +81,16 @@ class KanbanDragController extends _$KanbanDragController {
         ? null
         : index;
 
+    // Skip no-op updates. Gap animations shift layout, which can
+    // re-fire DragTarget.onWillAcceptWithDetails for the same
+    // position. Without this guard, each re-fire creates a new
+    // state object → triggers rebuilds → causes further layout
+    // shifts → oscillation.
+    if (state.hoverColumnId == columnId &&
+        state.hoverIndex == suppressedIndex) {
+      return;
+    }
+
     state = KanbanDragState(
       draggedCard: state.draggedCard,
       sourceColumnId: state.sourceColumnId,
