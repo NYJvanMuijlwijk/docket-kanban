@@ -16,10 +16,10 @@ class AutoScrollHandler {
     this.edgeZone = 40.0,
     this.minSpeed = 50.0,
     this.maxSpeed = 600.0,
-  }) : _ticker = vsync.createTicker(_noOp) {
-    // Ticker callback is replaced on start; this placeholder satisfies the
-    // non-null constructor requirement.
-    _ticker.stop();
+  }) {
+    // Single ticker for the handler's lifetime. Started/stopped per drag;
+    // disposed once in dispose().
+    _ticker = vsync.createTicker(_onTick);
   }
 
   final ScrollController horizontalController;
@@ -46,17 +46,15 @@ class AutoScrollHandler {
     _pointerPosition = localPosition;
   }
 
-  Ticker _ticker;
+  late final Ticker _ticker;
   Offset? _pointerPosition;
   Size? _viewportSize;
   Duration? _lastTick;
   bool _disposed = false;
 
   /// Begin monitoring the pointer for auto-scroll. Called when drag starts.
-  void startAutoScroll(TickerProvider vsync) {
+  void startAutoScroll() {
     if (_disposed) return;
-    _ticker.dispose();
-    _ticker = vsync.createTicker(_onTick);
     _lastTick = null;
     unawaited(_ticker.start());
   }
@@ -72,8 +70,6 @@ class AutoScrollHandler {
     _disposed = true;
     _ticker.dispose();
   }
-
-  static void _noOp(Duration _) {}
 
   void _onTick(Duration elapsed) {
     final pointer = _pointerPosition;

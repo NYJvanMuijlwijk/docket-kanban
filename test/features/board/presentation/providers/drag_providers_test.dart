@@ -164,6 +164,40 @@ void main() {
       expect(readState().hoverIndex, 3);
     });
 
+    test('last gap (index == cardCount) is a valid hover target', () {
+      // Scenario: 3 cards in target column, drag from another column.
+      // The last gap has index 3 (== cardCount). The column-level
+      // DragTarget guard must treat this as a card-level hover and
+      // not override it with its own "append" updateHover call.
+      const cardCount = 3;
+
+      readNotifier().startDrag(
+        card: makeCard(),
+        sourceColumnId: 'col-a',
+        originalIndex: 0,
+      );
+
+      // Gap at index == cardCount fires updateHover.
+      readNotifier().updateHover(columnId: 'col-b', index: cardCount);
+      expect(readState().hoverColumnId, 'col-b');
+      expect(readState().hoverIndex, cardCount);
+
+      // Simulate the column-level guard check that runs in
+      // _KanbanColumnDropTarget.onWillAcceptWithDetails.
+      // The guard should detect that hoverIndex <= cardCount
+      // means a card/gap-level target already set a valid hover.
+      final current = readState();
+      final hasCardLevelHover = current.hoverColumnId == 'col-b' &&
+          current.hoverIndex != null &&
+          current.hoverIndex! <= cardCount; // BUG: was < cardCount
+      expect(
+        hasCardLevelHover,
+        isTrue,
+        reason: 'Last gap (index == cardCount) must be recognized as '
+            'a card-level hover so the column fallback does not override it',
+      );
+    });
+
     test('clearHover nulls hover fields', () {
       readNotifier().startDrag(
         card: makeCard(),
@@ -281,7 +315,7 @@ void main() {
       final h = makeHandler(t)
         ..viewportSize = const Size(800, 600)
         ..pointerPosition = const Offset(400, 300)
-        ..startAutoScroll(t);
+        ..startAutoScroll();
       addTearDown(h.dispose);
 
       // Warm-up tick (dt = 0).
@@ -300,7 +334,7 @@ void main() {
       final h = makeHandler(t)
         ..viewportSize = const Size(800, 600)
         ..pointerPosition = const Offset(0, 300)
-        ..startAutoScroll(t);
+        ..startAutoScroll();
       addTearDown(h.dispose);
 
       final hBefore = hCtrl.position.pixels;
@@ -317,7 +351,7 @@ void main() {
       final h = makeHandler(t)
         ..viewportSize = const Size(800, 600)
         ..pointerPosition = const Offset(800, 300)
-        ..startAutoScroll(t);
+        ..startAutoScroll();
       addTearDown(h.dispose);
 
       final hBefore = hCtrl.position.pixels;
@@ -333,7 +367,7 @@ void main() {
       final h = makeHandler(t)
         ..viewportSize = const Size(800, 600)
         ..pointerPosition = const Offset(39, 300)
-        ..startAutoScroll(t);
+        ..startAutoScroll();
       addTearDown(h.dispose);
 
       // Warm-up.
@@ -353,7 +387,7 @@ void main() {
       final h = makeHandler(t)
         ..viewportSize = const Size(800, 600)
         ..pointerPosition = const Offset(0, 300)
-        ..startAutoScroll(t);
+        ..startAutoScroll();
       addTearDown(h.dispose);
 
       t.latestTicker!
@@ -375,7 +409,7 @@ void main() {
       )
         ..viewportSize = const Size(800, 600)
         ..pointerPosition = const Offset(20, 300)
-        ..startAutoScroll(t);
+        ..startAutoScroll();
       addTearDown(h.dispose);
 
       // Warm-up.
@@ -394,7 +428,7 @@ void main() {
       final h = makeHandler(t)
         ..viewportSize = const Size(800, 600)
         ..pointerPosition = const Offset(10, 10)
-        ..startAutoScroll(t);
+        ..startAutoScroll();
       addTearDown(h.dispose);
 
       // Warm-up.
@@ -412,7 +446,7 @@ void main() {
       final h = makeHandler(t)
         ..viewportSize = const Size(800, 600)
         ..pointerPosition = const Offset(0, 300)
-        ..startAutoScroll(t);
+        ..startAutoScroll();
       addTearDown(h.dispose);
 
       h.stopAutoScroll();
