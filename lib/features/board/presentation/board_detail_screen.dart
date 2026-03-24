@@ -51,6 +51,11 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.hidden) {
       _stampLastUsed();
+    } else if (state == AppLifecycleState.resumed) {
+      // User returned to the app — allow a fresh stamp on next
+      // pause/dispose so lastUsedAt reflects the final exit, not
+      // the first background event.
+      _hasStamped = false;
     }
   }
 
@@ -70,9 +75,15 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
             board.copyWith(lastUsedAt: DateTime.now()),
           );
         }
-      }).catchError((_) {
-        // Silently ignore — stamp is best-effort.
-      }),
+      }).catchError(
+        // Ignore disposal-related errors: StateError (stream controller
+        // closed) and HiveError (box closed, extends Error). Both are
+        // Error subtypes, so catching Error lets us stay narrow without
+        // importing Hive in the presentation layer. Exceptions (e.g.
+        // programming bugs surfaced as Exception) still propagate.
+        (_) {},
+        test: (e) => e is Error,
+      ),
     );
   }
 

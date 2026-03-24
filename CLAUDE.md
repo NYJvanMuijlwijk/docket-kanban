@@ -71,6 +71,9 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - **Tests:** `FakeBoardRepository` in `test/helpers/` for widget tests (accepts optional `initialBoards`, `initialColumns`, `initialCards`). Real Hive + temp dir for repository integration tests.
 - **Widget decomposition:** Prefer private widget classes over helper methods returning `Widget` — methods lose their own Element/lifecycle. Exception: builder callbacks.
 - **System UI insets:** Use granular `MediaQuery.*Of(context)`. Bottom sheets: `math.max(viewInsets.bottom, padding.bottom)`. Scrollable bodies: add `padding.bottom`. Scaffold/AppBar handle top inset.
+- **ConsumerStatefulWidget + dispose:** `ref.read()` is invalid in `dispose()` — cache provider values (e.g., repository) in `initState` if needed during teardown.
+- **Fire-and-forget in dispose:** Wrap with `catchError` — stream controllers may be closed during widget tree teardown.
+- **Timestamps:** `updatedAt` = data mutation only (rename, edit). `lastUsedAt` = stamped on board exit (dispose + AppLifecycleListener). Sort board list by `lastUsedAt`.
 
 ## Don't
 
@@ -87,3 +90,5 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - Riverpod codegen providers: import `riverpod_annotation` only, not `flutter_riverpod`
 - Riverpod 3.x `AsyncValue`: use `.value` (nullable), not `.valueOrNull`
 - `FractionalIndexer.generateKeyBetween` returns `String?` — use `!` with `// ignore: unnecessary_null_checks` and a documenting comment. The analyzer sometimes infers non-null but the declared return type is nullable.
+- Riverpod 3.x `ConsumerStatefulElement` asserts `ref` not used after deactivation — crashes in `dispose()`, not just a warning.
+- `very_good_analysis` treats `info`-level diagnostics as failures (`flutter analyze` exits 1). Fix all infos, not just warnings.
