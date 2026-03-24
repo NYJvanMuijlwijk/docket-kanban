@@ -304,21 +304,14 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
 
     return DragTarget<KanbanCard>(
       onWillAcceptWithDetails: (details) {
-        // Column body is the fallback target — only update hover to
-        // "append" position if no card-level target in this column is
-        // already active. Without this guard, the column DragTarget
-        // can steal hover from card/gap DragTargets during layout
-        // shifts caused by gap animations.
-        final current = ref.read(kanbanDragControllerProvider);
-        final hasCardLevelHover =
-            current.hoverColumnId == column.id &&
-            current.hoverIndex != null &&
-            current.hoverIndex! <= cardCount;
-        if (!hasCardLevelHover) {
-          ref
-              .read(kanbanDragControllerProvider.notifier)
-              .updateHover(columnId: column.id, index: cardCount);
-        }
+        // Column body is the outermost DragTarget — Flutter's depth-first
+        // hit-test means this only fires when the pointer is NOT over any
+        // card or gap DragTarget (i.e., empty space below cards or an
+        // empty column). Oscillation from gap-animation layout shifts is
+        // prevented by the no-op guard in updateHover().
+        ref
+            .read(kanbanDragControllerProvider.notifier)
+            .updateHover(columnId: column.id, index: cardCount);
         return true;
       },
       onAcceptWithDetails: (_) => _executeDrop(ref, column.id),

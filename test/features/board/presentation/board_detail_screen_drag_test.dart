@@ -45,15 +45,14 @@ void main() {
   }
 
   group('drag widget structure', () {
-    testWidgets('cards render as LongPressDraggable<KanbanCard>',
-        (tester) async {
+    testWidgets('cards render as LongPressDraggable<KanbanCard>', (
+      tester,
+    ) async {
       final repo = makeRepoWithBoard();
-      final column =
-          await repo.createColumn(boardId: 'board-1', name: 'Todo');
+      final column = await repo.createColumn(boardId: 'board-1', name: 'Todo');
       await repo.createCard(columnId: column.id, title: 'Task A');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       // Default pointer kind is null, which maps to touch path =>
@@ -64,16 +63,13 @@ void main() {
       );
     });
 
-    testWidgets('each card slot has a DragTarget<KanbanCard>',
-        (tester) async {
+    testWidgets('each card slot has a DragTarget<KanbanCard>', (tester) async {
       final repo = makeRepoWithBoard();
-      final column =
-          await repo.createColumn(boardId: 'board-1', name: 'Todo');
+      final column = await repo.createColumn(boardId: 'board-1', name: 'Todo');
       await repo.createCard(columnId: column.id, title: 'Task A');
       await repo.createCard(columnId: column.id, title: 'Task B');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       // DragTargets: 2 card slots + 3 insertion gaps (before each card +
@@ -84,13 +80,13 @@ void main() {
       );
     });
 
-    testWidgets('empty column has a column-level DragTarget<KanbanCard>',
-        (tester) async {
+    testWidgets('empty column has a column-level DragTarget<KanbanCard>', (
+      tester,
+    ) async {
       final repo = makeRepoWithBoard();
       await repo.createColumn(boardId: 'board-1', name: 'Empty');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       // Column-level DragTarget wraps the entire column even when empty,
@@ -110,8 +106,7 @@ void main() {
       await repo.createColumn(boardId: 'board-1', name: 'In Progress');
       await repo.createColumn(boardId: 'board-1', name: 'Done');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       expect(find.text('Todo'), findsOneWidget);
@@ -123,8 +118,7 @@ void main() {
       final repo = makeRepoWithBoard();
       await repo.createColumn(boardId: 'board-1', name: 'Empty Column');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       expect(find.text('No cards yet'), findsOneWidget);
@@ -132,11 +126,11 @@ void main() {
   });
 
   group('card rendering', () {
-    testWidgets('cards render inside columns with titles and descriptions',
-        (tester) async {
+    testWidgets('cards render inside columns with titles and descriptions', (
+      tester,
+    ) async {
       final repo = makeRepoWithBoard();
-      final column =
-          await repo.createColumn(boardId: 'board-1', name: 'Todo');
+      final column = await repo.createColumn(boardId: 'board-1', name: 'Todo');
       await repo.createCard(columnId: column.id, title: 'Task A');
       await repo.createCard(
         columnId: column.id,
@@ -144,8 +138,7 @@ void main() {
         description: 'Some detail',
       );
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       expect(find.text('Task A'), findsOneWidget);
@@ -153,18 +146,16 @@ void main() {
       expect(find.text('Some detail'), findsOneWidget);
     });
 
-    testWidgets('cards across multiple columns render independently',
-        (tester) async {
+    testWidgets('cards across multiple columns render independently', (
+      tester,
+    ) async {
       final repo = makeRepoWithBoard();
-      final col1 =
-          await repo.createColumn(boardId: 'board-1', name: 'Todo');
-      final col2 =
-          await repo.createColumn(boardId: 'board-1', name: 'Done');
+      final col1 = await repo.createColumn(boardId: 'board-1', name: 'Todo');
+      final col2 = await repo.createColumn(boardId: 'board-1', name: 'Done');
       await repo.createCard(columnId: col1.id, title: 'Alpha');
       await repo.createCard(columnId: col2.id, title: 'Beta');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       expect(find.text('Alpha'), findsOneWidget);
@@ -173,19 +164,18 @@ void main() {
   });
 
   group('card interaction', () {
-    testWidgets('card onTap opens detail sheet with edit/delete buttons',
-        (tester) async {
+    testWidgets('card onTap opens detail sheet with edit/delete buttons', (
+      tester,
+    ) async {
       final repo = makeRepoWithBoard();
-      final column =
-          await repo.createColumn(boardId: 'board-1', name: 'Todo');
+      final column = await repo.createColumn(boardId: 'board-1', name: 'Todo');
       await repo.createCard(
         columnId: column.id,
         title: 'Tappable Card',
         description: 'Card description',
       );
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       // Tap the card to open detail sheet.
@@ -200,27 +190,24 @@ void main() {
   });
 
   group('add card footer', () {
-    testWidgets('Add Card button is visible in empty column',
-        (tester) async {
+    testWidgets('Add Card button is visible in empty column', (tester) async {
       final repo = makeRepoWithBoard();
       await repo.createColumn(boardId: 'board-1', name: 'Todo');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       expect(find.text('Add Card'), findsOneWidget);
     });
 
-    testWidgets('Add Card button is visible in column with cards',
-        (tester) async {
+    testWidgets('Add Card button is visible in column with cards', (
+      tester,
+    ) async {
       final repo = makeRepoWithBoard();
-      final column =
-          await repo.createColumn(boardId: 'board-1', name: 'Todo');
+      final column = await repo.createColumn(boardId: 'board-1', name: 'Todo');
       await repo.createCard(columnId: column.id, title: 'Existing');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       expect(find.text('Add Card'), findsOneWidget);
@@ -230,8 +217,7 @@ void main() {
       final repo = makeRepoWithBoard();
       await repo.createColumn(boardId: 'board-1', name: 'Todo');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Add Card'));
@@ -265,17 +251,15 @@ void main() {
     //
     // The reorderCard logic itself is tested at the provider/unit level.
 
-    testWidgets(
-        'each card has LongPressDraggable with correct data payload',
-        (tester) async {
+    testWidgets('each card has LongPressDraggable with correct data payload', (
+      tester,
+    ) async {
       final repo = makeRepoWithBoard();
-      final column =
-          await repo.createColumn(boardId: 'board-1', name: 'Todo');
+      final column = await repo.createColumn(boardId: 'board-1', name: 'Todo');
       await repo.createCard(columnId: column.id, title: 'First');
       await repo.createCard(columnId: column.id, title: 'Second');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       final draggables = tester
@@ -289,17 +273,16 @@ void main() {
       expect(draggables[1].data?.title, 'Second');
     });
 
-    testWidgets('DragTargets exist for each card slot plus trailing gap',
-        (tester) async {
+    testWidgets('DragTargets exist for each card slot plus trailing gap', (
+      tester,
+    ) async {
       final repo = makeRepoWithBoard();
-      final column =
-          await repo.createColumn(boardId: 'board-1', name: 'Todo');
+      final column = await repo.createColumn(boardId: 'board-1', name: 'Todo');
       await repo.createCard(columnId: column.id, title: 'A');
       await repo.createCard(columnId: column.id, title: 'B');
       await repo.createCard(columnId: column.id, title: 'C');
 
-      await tester
-          .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
       // 3 card-level + 4 insertion gap + 1 column-level = 8 DragTargets
