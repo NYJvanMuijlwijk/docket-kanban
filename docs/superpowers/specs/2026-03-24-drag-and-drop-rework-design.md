@@ -46,7 +46,7 @@ Approach 3 from brainstorming: Flutter's `Draggable` + `DragTarget` primitives w
 | `_BoardScrollView` | 2D scrollable surface (horizontal + vertical). Owns `ScrollController`s. Hosts `AutoScrollHandler`. |
 | `_KanbanColumnDropTarget` | `DragTarget<KanbanCard>` wrapping each column. Full height. Accepts cross-column drops on the column body (appends to end). |
 | `_CardListView` | `ConsumerWidget` per column. Watches only `cardListProvider(column.id)`. Renders card slots + insertion gaps. Fixes Slice 4c. |
-| `_DraggableCardSlot` | Adaptive: `LongPressDraggable` on touch, `Draggable` on mouse. Also a `DragTarget` for same-column reorder and cross-column inter-card drops. Feedback: elevated + 1.05x scale. `childWhenDragging`: ghost at 0.4 opacity. |
+| `_DraggableCardSlot` | `StatefulWidget`. Listens for `PointerDownEvent` to detect pointer kind at runtime. Builds `LongPressDraggable` for `PointerDeviceKind.touch`, `Draggable` for mouse/stylus. Also a `DragTarget` for same-column reorder and cross-column inter-card drops. Feedback: elevated + 1.05x scale. `childWhenDragging`: ghost at 0.4 opacity. |
 | `_InsertionGap` | `AnimatedContainer` between card slots. Reads hover index from `kanbanDragControllerProvider` via `select()`. Opens to card height at insertion point, collapses otherwise. |
 
 ### New non-widget classes
@@ -68,6 +68,26 @@ Approach 3 from brainstorming: Flutter's `Draggable` + `DragTarget` primitives w
 
 - `_BoardDragContent` — the widget that watches all column providers
 - `drag_and_drop_lists` package dependency
+
+## Index Convention: Pre-Removal vs Post-Removal
+
+The existing `reorderCard()` and `computeOrderKeyBetween()` use **post-removal indexing** — `newIndex` is the target position after the dragged item is removed from the list. This convention is documented in CLAUDE.md.
+
+With raw `DragTarget`, the hover index computed from pointer Y position is a **pre-removal index** — the ghost occupies the original slot, so the visible list still includes the dragged item.
+
+**Resolution:** `hoverIndex` in the controller is stored as **pre-removal**. The conversion to post-removal happens at the call site when invoking `reorderCard()`:
+
+```
+postRemovalIndex = hoverIndex > originalIndex
+    ? hoverIndex - 1
+    : hoverIndex
+```
+
+Cross-column moves do not need conversion — `computeOrderKeyAtInsert()` operates on the target column's order list which does not contain the dragged card.
+
+Adjacency suppression also uses pre-removal convention:
+- `hoverIndex == originalIndex` -> suppress (same position)
+- `hoverIndex == originalIndex + 1` -> suppress (directly below = same position after removal)
 
 ## Drag Lifecycle
 
@@ -108,7 +128,9 @@ Pointer moves across the board
 ```
 SAME-COLUMN REORDER:
   _DraggableCardSlot.onAcceptWithDetails fires
-  -> ref.read(cardListProvider(columnId).notifier).reorderCard(oldIndex, newIndex)
+  -> Convert hoverIndex (pre-removal) to post-removal:
+     postRemovalIndex = hoverIndex > originalIndex ? hoverIndex - 1 : hoverIndex
+  -> ref.read(cardListProvider(columnId).notifier).reorderCard(originalIndex, postRemovalIndex)
   -> Uses existing computeOrderKeyBetween()
   -> kanbanDragControllerProvider.notifier.endDrag()
 
@@ -213,10 +235,15 @@ Single 2D scrollable surface:
 
 Auto-scroll behavior — `Ticker`-driven scroll offsets are impractical in widget tests. Verified manually or via integration tests.
 
+## Explicit Removals
+
+- `drag_and_drop_lists` package dependency removed from `pubspec.yaml`
+- `_BoardDragContent` widget removed (was the all-column watcher)
+- `onListReorder` callback removed — no column drag/reorder in this implementation. Column reorder is out of scope and will be handled separately.
+
 ## Unresolved Questions
 
-1. **Pointer type detection** — `Draggable` vs `LongPressDraggable` decision needs to happen at build time. Use `kIsWeb` heuristic, or detect pointer kind from the first `PointerDownEvent` and switch dynamically?
-2. **2D scroll widget** — nested `SingleChildScrollView`s (horizontal wrapping vertical) or a single `InteractiveViewer` with pan enabled but zoom disabled? Need to verify drag gesture conflicts with each approach.
-3. **Gap animation duration** — 200ms? 150ms? Needs feel-testing once implemented.
-4. **Column body drop vs inter-card drop priority** — when pointer is between cards near the bottom of a column, does the `_DraggableCardSlot` DragTarget or the `_KanbanColumnDropTarget` win? Need to verify `DragTarget` hit-test ordering (inner wins over outer in Flutter's hit test).
-5. **Auto-scroll tuning** — 40px edge zone, 50-600 px/s range are starting values. May need adjustment per platform (touch vs mouse feel different).
+1. **2D scroll widget** — nested `SingleChildScrollView`s (horizontal wrapping vertical) or a single `InteractiveViewer` with pan enabled but zoom disabled? Need to verify drag gesture conflicts with each approach.
+2. **Gap animation duration** — 200ms? 150ms? Needs feel-testing once implemented.
+3. **Column body drop vs inter-card drop priority** — when pointer is between cards near the bottom of a column, does the `_DraggableCardSlot` DragTarget or the `_KanbanColumnDropTarget` win? Need to verify `DragTarget` hit-test ordering (inner wins over outer in Flutter's hit test).
+4. **Auto-scroll tuning** — 40px edge zone, 50-600 px/s range are starting values. May need adjustment per platform (touch vs mouse feel different).
