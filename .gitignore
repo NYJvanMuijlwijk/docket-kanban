@@ -25,6 +25,8 @@ migrate_working_dir/
 
 # Local Claude config (not committed)
 .claude/local.md
+.superpowers
+**/superpowers
 
 # Flutter/Dart/Pub related
 **/doc/api/
