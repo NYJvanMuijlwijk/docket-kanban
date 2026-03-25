@@ -131,8 +131,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
   }
 
   Future<void> _addCardToFirstColumn() async {
-    final columns =
-        ref.read(columnListProvider(widget.boardId)).value;
+    final columns = ref.read(columnListProvider(widget.boardId)).value;
     if (columns == null || columns.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -163,7 +162,6 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final boardAsync = ref.watch(boardProvider(widget.boardId));
-
     return boardAsync.when(
       loading: () => const _BoardLoadingSkeleton(),
       error: (_, _) => Scaffold(
@@ -225,8 +223,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
           body: columnsAsync.when(
             loading: () => const _ColumnListSkeleton(),
             error: (_, _) => _BoardErrorContent(
-              onRetry: () =>
-                  ref.invalidate(columnListProvider(widget.boardId)),
+              onRetry: () => ref.invalidate(columnListProvider(widget.boardId)),
             ),
             data: (columns) {
               if (columns.isEmpty) {
@@ -319,21 +316,41 @@ class _SkeletonColumn extends StatelessWidget {
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Column header shimmer.
-            const ShimmerBlock(width: 100, height: 16),
-            const SizedBox(height: 12),
-            // Card shimmers.
-            for (var i = 0; i < cardCount; i++) ...[
-              const _SkeletonCard(),
-              if (i < cardCount - 1) const SizedBox(height: 8),
-            ],
-          ],
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header shimmer — matches _ColumnHeader padding exactly:
+          // left: 16, right: 4, top: 8, bottom: 4.
+          const Padding(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 4,
+              top: 8,
+              bottom: 4,
+            ),
+            child: Row(
+              children: [
+                Expanded(child: ShimmerBlock(width: 100, height: 16)),
+                SizedBox(width: 8),
+                // PopupMenuButton touch target placeholder.
+                ShimmerBlock(
+                  width: 24,
+                  height: 24,
+                  borderRadius: 12,
+                ),
+              ],
+            ),
+          ),
+          // Card shimmers — inside column body padding matching _CardListView.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Column(
+              children: [
+                for (var i = 0; i < cardCount; i++) const _SkeletonCard(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -344,15 +361,21 @@ class _SkeletonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ShimmerBlock(width: 200, height: 14),
-          SizedBox(height: 6),
-          ShimmerBlock(width: 140, height: 10),
-        ],
+    // Matches _KanbanCardTile: Card(surfaceContainerHigh) >
+    // ListTile(borderRadius: 12). ListTile has 16px horizontal
+    // and ~12px vertical content padding.
+    return Card(
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
+      child: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ShimmerBlock(height: 14),
+            SizedBox(height: 8),
+            ShimmerBlock(width: 140, height: 10),
+          ],
+        ),
       ),
     );
   }

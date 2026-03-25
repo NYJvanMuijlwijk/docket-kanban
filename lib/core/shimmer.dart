@@ -84,13 +84,14 @@ class _SlidingGradientTransform extends GradientTransform {
 /// (never cached in initState) for hot-reload and theme-switch correctness.
 class ShimmerBlock extends StatelessWidget {
   const ShimmerBlock({
-    required this.width,
     required this.height,
+    this.width,
     this.borderRadius = 4,
     super.key,
   });
 
-  final double width;
+  /// Block width. When `null`, expands to fill available horizontal space.
+  final double? width;
   final double height;
   final double borderRadius;
 
