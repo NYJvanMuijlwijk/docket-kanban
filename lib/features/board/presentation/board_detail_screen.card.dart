@@ -27,7 +27,6 @@ class _CardListView extends ConsumerWidget {
             children: [
               _InsertionGap(columnId: column.id, index: 0),
               _ColumnEmptyContent(state: cardsAsync),
-              _AddCardFooter(columnId: column.id),
             ],
           );
         }
@@ -47,7 +46,6 @@ class _CardListView extends ConsumerWidget {
             ],
             // Final gap after last card — allows dropping at end.
             _InsertionGap(columnId: column.id, index: cards.length),
-            _AddCardFooter(columnId: column.id),
           ],
         );
       },
@@ -111,38 +109,6 @@ class _KanbanCardTile extends ConsumerWidget {
               break;
           }
         },
-      ),
-    );
-  }
-}
-
-class _AddCardFooter extends ConsumerWidget {
-  const _AddCardFooter({required this.columnId});
-
-  final String columnId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: TextButton.icon(
-        onPressed: () async {
-          final result = await CardFormSheet.show(context);
-          if (result != null && context.mounted) {
-            await guardMutation(
-              context,
-              () => ref
-                  .read(cardListProvider(columnId).notifier)
-                  .createCard(
-                    title: result.title,
-                    description: result.description,
-                  ),
-              'Failed to create card',
-            );
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Card'),
       ),
     );
   }
