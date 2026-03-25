@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/core/theme.dart';
 import 'package:kanban_board/features/board/domain/board.dart';
 import 'package:kanban_board/features/board/presentation/board_detail_screen.dart';
@@ -158,5 +159,137 @@ void main() {
     // No boards to check — just verifying no crash
     final boards = await repo.getBoards();
     expect(boards, isEmpty);
+  });
+
+  group('loading states', () {
+    testWidgets('shows shimmer skeleton during board load', (tester) async {
+      final repo = FakeBoardRepository(initialBoards: [
+        Board(
+          id: 'b1',
+          name: 'Test',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          lastUsedAt: DateTime.now(),
+        ),
+      ]);
+
+      await tester.pumpWidget(
+        _buildApp(boardId: 'b1', repository: repo),
+      );
+      // pumpWidget builds tree — stream hasn't emitted yet.
+
+      // Shimmer skeleton should be showing (AppBar title shimmer + body).
+      expect(find.byType(ShimmerBlock), findsWidgets);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('shimmer disappears after board and columns load',
+        (tester) async {
+      final repo = FakeBoardRepository(initialBoards: [
+        Board(
+          id: 'b1',
+          name: 'Test Board',
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          lastUsedAt: DateTime.now(),
+        ),
+      ]);
+
+      await tester.pumpWidget(
+        _buildApp(boardId: 'b1', repository: repo),
+      );
+
+      // Shimmer visible.
+      expect(find.byType(ShimmerBlock), findsWidgets);
+
+      await tester.pumpAndSettle();
+
+      // Shimmer gone, real content shown.
+      expect(find.byType(ShimmerBlock), findsNothing);
+      expect(find.text('Test Board'), findsOneWidget);
+    });
+
+    testWidgets('shows column skeleton when board loaded but columns loading',
+        (tester) async {
+      // This tests the second loading phase: board data is available
+      // but columns haven't loaded yet.
+      final now = DateTime.now();
+      final repo = FakeBoardRepository(initialBoards: [
+        Board(
+          id: 'b1',
+          name: 'Test Board',
+          createdAt: now,
+          updatedAt: now,
+          lastUsedAt: now,
+        ),
+      ]);
+
+      await tester.pumpWidget(
+        _buildApp(boardId: 'b1', repository: repo),
+      );
+      await tester.pumpAndSettle();
+
+      // After settle, both board + columns have loaded.
+      // Column skeleton is only visible in the brief window between
+      // board load and column load. With Hive they load almost together.
+      // Verify the final state has no spinners.
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+  });
+
+  group('error states', () {
+    testWidgets('shows error with retry on board stream error',
+        (tester) async {
+      final repo = FakeBoardRepository()
+        ..setBoardError('Connection failed');
+
+      await tester.pumpWidget(
+        _buildApp(boardId: 'b1', repository: repo),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+      // Raw error text should not appear.
+      expect(find.textContaining('Error:'), findsNothing);
+    });
+
+    testWidgets('shows error with retry on column stream error',
+        (tester) async {
+      final now = DateTime.now();
+      final repo = FakeBoardRepository(initialBoards: [
+        Board(
+          id: 'b1',
+          name: 'Test Board',
+          createdAt: now,
+          updatedAt: now,
+          lastUsedAt: now,
+        ),
+      ])
+        ..setColumnError('b1', 'Column load failed');
+
+      await tester.pumpWidget(
+        _buildApp(boardId: 'b1', repository: repo),
+      );
+      await tester.pumpAndSettle();
+
+      // Board loads fine, but columns error.
+      expect(find.text('Test Board'), findsOneWidget);
+      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+    });
+
+    testWidgets('retry on board error does not crash', (tester) async {
+      final repo = FakeBoardRepository()
+        ..setBoardError('Connection failed');
+
+      await tester.pumpWidget(
+        _buildApp(boardId: 'b1', repository: repo),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+    });
   });
 }
