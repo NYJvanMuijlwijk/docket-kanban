@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/reorder_helpers.dart';
+import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/features/board/domain/board_repository.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:kanban_board/features/board/domain/kanban_column.dart';
@@ -46,6 +47,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
   /// without touching ref (which is invalid after deactivation).
   late final BoardRepository _repository;
   bool _hasStamped = false;
+  bool _isMutating = false;
 
   @override
   void initState() {
@@ -140,16 +142,21 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
     }
     final result = await CardFormSheet.show(context);
     if (result != null && mounted) {
-      await guardMutation(
-        context,
-        () => ref
-            .read(cardListProvider(columns.first.id).notifier)
-            .createCard(
-              title: result.title,
-              description: result.description,
-            ),
-        'Failed to create card',
-      );
+      setState(() => _isMutating = true);
+      try {
+        await guardMutation(
+          context,
+          () => ref
+              .read(cardListProvider(columns.first.id).notifier)
+              .createCard(
+                title: result.title,
+                description: result.description,
+              ),
+          'Failed to create card',
+        );
+      } finally {
+        if (mounted) setState(() => _isMutating = false);
+      }
     }
   }
 
@@ -158,13 +165,12 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
     final boardAsync = ref.watch(boardProvider(widget.boardId));
 
     return boardAsync.when(
-      loading: () => Scaffold(
+      loading: () => const _BoardLoadingSkeleton(),
+      error: (_, __) => Scaffold(
         appBar: AppBar(),
-        body: const Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, _) => Scaffold(
-        appBar: AppBar(),
-        body: Center(child: Text('Error: $error')),
+        body: _BoardErrorContent(
+          onRetry: () => ref.invalidate(boardProvider(widget.boardId)),
+        ),
       ),
       data: (board) {
         if (board == null) {
@@ -207,15 +213,20 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: _addCardToFirstColumn,
-            child: const Icon(Icons.note_add),
+            onPressed: _isMutating ? null : _addCardToFirstColumn,
+            child: _isMutating
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.note_add),
           ),
           body: columnsAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(),
-            ),
-            error: (error, _) => Center(
-              child: Text('Error: $error'),
+            loading: () => const _ColumnListSkeleton(),
+            error: (_, __) => _BoardErrorContent(
+              onRetry: () =>
+                  ref.invalidate(columnListProvider(widget.boardId)),
             ),
             data: (columns) {
               if (columns.isEmpty) {
@@ -233,6 +244,148 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Full-screen skeleton shown while the board stream is loading.
+/// Includes shimmer AppBar title and 3 column outlines with varied card counts.
+class _BoardLoadingSkeleton extends StatelessWidget {
+  const _BoardLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const ShimmerScope(
+          child: ShimmerBlock(width: 120, height: 20, borderRadius: 4),
+        ),
+      ),
+      body: const ShimmerScope(
+        child: _SkeletonColumns(),
+      ),
+    );
+  }
+}
+
+/// Body-only skeleton shown when board is loaded but columns are loading.
+class _ColumnListSkeleton extends StatelessWidget {
+  const _ColumnListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerScope(
+      child: _SkeletonColumns(),
+    );
+  }
+}
+
+class _SkeletonColumns extends StatelessWidget {
+  const _SkeletonColumns();
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const NeverScrollableScrollPhysics(),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SkeletonColumn(cardCount: 3),
+          _SkeletonColumn(cardCount: 2),
+          _SkeletonColumn(cardCount: 4),
+        ],
+      ),
+    );
+  }
+}
+
+class _SkeletonColumn extends StatelessWidget {
+  const _SkeletonColumn({required this.cardCount});
+
+  final int cardCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: _kColumnWidth,
+      margin: const EdgeInsets.symmetric(
+        horizontal: _kColumnMarginH,
+        vertical: _kColumnMarginV,
+      ),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Column header shimmer.
+            const ShimmerBlock(width: 100, height: 16, borderRadius: 4),
+            const SizedBox(height: 12),
+            // Card shimmers.
+            for (var i = 0; i < cardCount; i++) ...[
+              const _SkeletonCard(),
+              if (i < cardCount - 1) const SizedBox(height: 8),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SkeletonCard extends StatelessWidget {
+  const _SkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ShimmerBlock(width: 200, height: 14, borderRadius: 4),
+          SizedBox(height: 6),
+          ShimmerBlock(width: 140, height: 10, borderRadius: 4),
+        ],
+      ),
+    );
+  }
+}
+
+class _BoardErrorContent extends StatelessWidget {
+  const _BoardErrorContent({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 48,
+            color: Theme.of(context).colorScheme.error,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Something went wrong',
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: onRetry,
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -187,14 +187,28 @@ class _ColumnEmptyContent extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
       child: Center(
         child: switch (state) {
-          AsyncLoading() => const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
+          AsyncLoading() => const _ColumnCardsSkeleton(),
           AsyncError() => const Icon(Icons.error_outline),
           _ => const Text('No cards yet'),
         },
+      ),
+    );
+  }
+}
+
+class _ColumnCardsSkeleton extends StatelessWidget {
+  const _ColumnCardsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerScope(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ShimmerBlock(width: 200, height: 14, borderRadius: 4),
+          SizedBox(height: 10),
+          ShimmerBlock(width: 160, height: 14, borderRadius: 4),
+        ],
       ),
     );
   }
