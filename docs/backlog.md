@@ -89,7 +89,12 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 - [ ] Material 3 theme: dark-mode-first, zen/minimal palette
 - [ ] Responsive layout (mobile vs. desktop/tablet breakpoints)
 - [ ] Empty states (no boards, no columns, no cards)
-- [ ] Loading states
+- [x] Loading states
+  - [x] Custom shimmer infrastructure (`ShimmerScope` + `ShimmerBlock`) — shared `AnimationController` via `InheritedNotifier`, theme-aware dark/light colors
+  - [x] Board list screen: shimmer skeleton (4 list tile shapes), error with retry, FAB loading state
+  - [x] Board detail screen: board loading skeleton (shimmer AppBar title + 3 columns with 3/2/4 cards), column loading skeleton (body-only), error with retry on both, FAB loading state
+  - [x] Per-column card loading: shimmer blocks instead of small spinner
+  - [x] Column management sheet: shimmer skeleton rows, error with retry
 - [x] Error handling UX (snackbars, retry)
   - [x] Add try-catch + SnackBar to rename flows (board, column, card) — currently unhandled `ArgumentError` on entity-not-found. Follow existing delete pattern in `board_list_screen.dart`.
 - [x] GoRouter `errorBuilder`: general error/404 screen with "Go Home" navigation
