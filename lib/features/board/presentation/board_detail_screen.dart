@@ -166,7 +166,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
 
     return boardAsync.when(
       loading: () => const _BoardLoadingSkeleton(),
-      error: (_, __) => Scaffold(
+      error: (_, _) => Scaffold(
         appBar: AppBar(),
         body: _BoardErrorContent(
           onRetry: () => ref.invalidate(boardProvider(widget.boardId)),
@@ -224,7 +224,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
           ),
           body: columnsAsync.when(
             loading: () => const _ColumnListSkeleton(),
-            error: (_, __) => _BoardErrorContent(
+            error: (_, _) => _BoardErrorContent(
               onRetry: () =>
                   ref.invalidate(columnListProvider(widget.boardId)),
             ),
@@ -258,7 +258,7 @@ class _BoardLoadingSkeleton extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const ShimmerScope(
-          child: ShimmerBlock(width: 120, height: 20, borderRadius: 4),
+          child: ShimmerBlock(width: 120, height: 20),
         ),
       ),
       body: const ShimmerScope(
@@ -285,9 +285,9 @@ class _SkeletonColumns extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return const SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      physics: const NeverScrollableScrollPhysics(),
+      physics: NeverScrollableScrollPhysics(),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -325,7 +325,7 @@ class _SkeletonColumn extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Column header shimmer.
-            const ShimmerBlock(width: 100, height: 16, borderRadius: 4),
+            const ShimmerBlock(width: 100, height: 16),
             const SizedBox(height: 12),
             // Card shimmers.
             for (var i = 0; i < cardCount; i++) ...[
@@ -349,9 +349,9 @@ class _SkeletonCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ShimmerBlock(width: 200, height: 14, borderRadius: 4),
+          ShimmerBlock(width: 200, height: 14),
           SizedBox(height: 6),
-          ShimmerBlock(width: 140, height: 10, borderRadius: 4),
+          ShimmerBlock(width: 140, height: 10),
         ],
       ),
     );

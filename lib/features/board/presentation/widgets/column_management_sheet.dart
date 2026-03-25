@@ -37,7 +37,7 @@ class ColumnManagementSheet extends ConsumerWidget {
         const SizedBox(height: 16),
         columnsAsync.when(
           loading: () => const _SheetColumnSkeleton(),
-          error: (_, __) => _SheetErrorContent(
+          error: (_, _) => _SheetErrorContent(
             onRetry: () => ref.invalidate(columnListProvider(boardId)),
           ),
           data: (columns) {
@@ -445,9 +445,9 @@ class _SkeletonColumnRow extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          ShimmerBlock(width: 24, height: 24, borderRadius: 4),
+          ShimmerBlock(width: 24, height: 24),
           SizedBox(width: 16),
-          ShimmerBlock(width: 140, height: 16, borderRadius: 4),
+          ShimmerBlock(width: 140, height: 16),
         ],
       ),
     );

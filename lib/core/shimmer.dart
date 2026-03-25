@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 /// Provides a shared [AnimationController] to descendant [ShimmerBlock]s
@@ -6,6 +8,9 @@ class ShimmerScope extends StatefulWidget {
   const ShimmerScope({required this.child, super.key});
 
   final Widget child;
+
+  @override
+  State<ShimmerScope> createState() => _ShimmerScopeState();
 
   static AnimationController of(BuildContext context) {
     final controller = maybeOf(context);
@@ -18,9 +23,6 @@ class ShimmerScope extends StatefulWidget {
         .dependOnInheritedWidgetOfExactType<_ShimmerInherited>()
         ?.notifier;
   }
-
-  @override
-  State<ShimmerScope> createState() => _ShimmerScopeState();
 }
 
 class _ShimmerScopeState extends State<ShimmerScope>
@@ -33,7 +35,8 @@ class _ShimmerScopeState extends State<ShimmerScope>
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
-    )..repeat();
+    );
+    unawaited(_controller.repeat());
   }
 
   @override

@@ -205,9 +205,9 @@ class _ColumnCardsSkeleton extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ShimmerBlock(width: 200, height: 14, borderRadius: 4),
+          ShimmerBlock(width: 200, height: 14),
           SizedBox(height: 10),
-          ShimmerBlock(width: 160, height: 14, borderRadius: 4),
+          ShimmerBlock(width: 160, height: 14),
         ],
       ),
     );
