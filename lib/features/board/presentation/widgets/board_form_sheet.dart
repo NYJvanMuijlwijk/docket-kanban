@@ -24,10 +24,9 @@ class BoardFormSheet extends StatefulWidget {
     BuildContext context, {
     String? initialName,
   }) {
-    return showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => BoardFormSheet(initialName: initialName),
+    return showAppBottomSheet<String>(
+      context,
+      child: BoardFormSheet(initialName: initialName),
     );
   }
 }

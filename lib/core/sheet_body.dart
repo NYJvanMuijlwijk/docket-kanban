@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:kanban_board/core/responsive.dart';
 
 /// Shared wrapper for modal bottom sheet content.
 ///
@@ -31,4 +32,17 @@ class SheetBody extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Centralized bottom sheet launcher with responsive width constraint.
+Future<T?> showAppBottomSheet<T>(
+  BuildContext context, {
+  required Widget child,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    isScrollControlled: true,
+    constraints: const BoxConstraints(maxWidth: kSheetMaxWidth),
+    builder: (_) => child,
+  );
 }

@@ -17,10 +17,9 @@ class ColumnFormSheet extends StatefulWidget {
     BuildContext context, {
     String? initialName,
   }) {
-    return showModalBottomSheet<String>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => ColumnFormSheet(initialName: initialName),
+    return showAppBottomSheet<String>(
+      context,
+      child: ColumnFormSheet(initialName: initialName),
     );
   }
 }

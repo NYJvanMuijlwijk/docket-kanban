@@ -32,10 +32,9 @@ class CardFormSheet extends StatefulWidget {
   static Future<({String title, String description})?> show(
     BuildContext context,
   ) {
-    return showModalBottomSheet<({String title, String description})>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => const CardFormSheet(),
+    return showAppBottomSheet<({String title, String description})>(
+      context,
+      child: const CardFormSheet(),
     );
   }
 }
@@ -132,10 +131,9 @@ class CardDetailSheet extends StatefulWidget {
     BuildContext context, {
     required KanbanCard card,
   }) {
-    return showModalBottomSheet<CardDetailResult>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => CardDetailSheet(card: card),
+    return showAppBottomSheet<CardDetailResult>(
+      context,
+      child: CardDetailSheet(card: card),
     );
   }
 }

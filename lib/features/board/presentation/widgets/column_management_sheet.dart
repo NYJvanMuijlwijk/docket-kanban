@@ -18,10 +18,9 @@ class ColumnManagementSheet extends ConsumerWidget {
     BuildContext context, {
     required String boardId,
   }) {
-    return showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => ColumnManagementSheet(boardId: boardId),
+    return showAppBottomSheet<void>(
+      context,
+      child: ColumnManagementSheet(boardId: boardId),
     );
   }
 
