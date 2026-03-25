@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
 import 'package:kanban_board/features/board/presentation/widgets/board_form_sheet.dart';
 
@@ -34,7 +35,11 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
   Future<void> _createBoard() async {
     final name = await BoardFormSheet.show(context);
     if (name != null && mounted) {
-      await ref.read(boardListProvider.notifier).createBoard(name);
+      await guardMutation(
+        context,
+        () => ref.read(boardListProvider.notifier).createBoard(name),
+        'Failed to create board',
+      );
     }
   }
 
