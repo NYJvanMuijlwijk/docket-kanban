@@ -24,6 +24,7 @@ part 'board_detail_screen.drag.dart';
 
 const _kColumnWidth = 300.0;
 const _kColumnMarginH = 6.0;
+const _kColumnMarginV = 12.0;
 
 enum _BoardMenuAction { rename, manageColumns }
 
