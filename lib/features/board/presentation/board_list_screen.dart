@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
+import 'package:kanban_board/core/responsive.dart';
 import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/core/status_content.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
@@ -80,67 +81,72 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
               )
             : const Icon(Icons.add),
       ),
-      body: boardsAsync.when(
-        loading: () => const _BoardListSkeleton(),
-        error: (_, _) => StatusContent(
-          icon: Icons.error_outline,
-          iconColor: Theme.of(context).colorScheme.error,
-          message: 'Something went wrong',
-          action: TextButton(
-            onPressed: () => ref.invalidate(boardListProvider),
-            child: const Text('Retry'),
-          ),
-        ),
-        data: (boards) {
-          if (boards.isEmpty) {
-            return const StatusContent(
-              icon: Icons.dashboard_outlined,
-              message: 'No boards yet',
-            );
-          }
-          return ListView.builder(
-            itemCount: boards.length,
-            itemBuilder: (context, index) {
-              final board = boards[index];
-              return Dismissible(
-                key: ValueKey(board.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 24),
-                  color: Theme.of(context).colorScheme.error,
-                  child: Icon(
-                    Icons.delete,
-                    color: Theme.of(context).colorScheme.onError,
-                  ),
-                ),
-                onDismissed: (_) async {
-                  try {
-                    await ref
-                        .read(boardListProvider.notifier)
-                        .deleteBoard(board.id);
-                  } on Object {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Failed to delete board'),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: kContentMaxWidth),
+          child: boardsAsync.when(
+            loading: () => const _BoardListSkeleton(),
+            error: (_, _) => StatusContent(
+              icon: Icons.error_outline,
+              iconColor: Theme.of(context).colorScheme.error,
+              message: 'Something went wrong',
+              action: TextButton(
+                onPressed: () => ref.invalidate(boardListProvider),
+                child: const Text('Retry'),
+              ),
+            ),
+            data: (boards) {
+              if (boards.isEmpty) {
+                return const StatusContent(
+                  icon: Icons.dashboard_outlined,
+                  message: 'No boards yet',
+                );
+              }
+              return ListView.builder(
+                itemCount: boards.length,
+                itemBuilder: (context, index) {
+                  final board = boards[index];
+                  return Dismissible(
+                    key: ValueKey(board.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 24),
+                      color: Theme.of(context).colorScheme.error,
+                      child: Icon(
+                        Icons.delete,
+                        color: Theme.of(context).colorScheme.onError,
                       ),
-                    );
-                    ref.invalidate(boardListProvider);
-                  }
+                    ),
+                    onDismissed: (_) async {
+                      try {
+                        await ref
+                            .read(boardListProvider.notifier)
+                            .deleteBoard(board.id);
+                      } on Object {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Failed to delete board'),
+                          ),
+                        );
+                        ref.invalidate(boardListProvider);
+                      }
+                    },
+                    child: ListTile(
+                      title: Text(board.name),
+                      subtitle: Text(
+                        'Last used ${_formatDate(board.lastUsedAt)}',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => context.push('/board/${board.id}'),
+                    ),
+                  );
                 },
-                child: ListTile(
-                  title: Text(board.name),
-                  subtitle: Text(
-                    'Last used ${_formatDate(board.lastUsedAt)}',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/board/${board.id}'),
-                ),
               );
             },
-          );
-        },
+          ),
+        ),
       ),
     );
   }
