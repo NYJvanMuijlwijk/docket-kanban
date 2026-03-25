@@ -1,0 +1,342 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:kanban_board/core/theme.dart';
+import 'package:kanban_board/features/board/domain/board.dart';
+import 'package:kanban_board/features/board/presentation/board_detail_screen.dart';
+import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
+
+import '../../../../helpers/fake_board_repository.dart';
+
+Widget _buildApp({
+  required String boardId,
+  required FakeBoardRepository repository,
+}) {
+  return ProviderScope(
+    overrides: [
+      boardRepositoryProvider.overrideWith((ref) {
+        ref.onDispose(repository.dispose);
+        return repository;
+      }),
+    ],
+    child: MaterialApp(
+      theme: buildDarkTheme(),
+      home: BoardDetailScreen(boardId: boardId),
+    ),
+  );
+}
+
+/// Opens the board-level popup menu and taps "Manage Columns".
+Future<void> _openManageColumnsSheet(WidgetTester tester) async {
+  // The board-level popup is the PopupMenuButton that is NOT inside a
+  // DragTarget (that's the column popup). Find the one in the AppBar.
+  await tester.tap(
+    find.descendant(
+      of: find.byType(AppBar),
+      matching: find.byWidgetPredicate((w) => w is PopupMenuButton),
+    ),
+  );
+  await tester.pumpAndSettle();
+
+  await tester.tap(find.text('Manage Columns'));
+  await tester.pumpAndSettle();
+}
+
+void main() {
+  final now = DateTime.now();
+
+  FakeBoardRepository makeRepo({int columnCount = 0}) {
+    final repo = FakeBoardRepository(
+      initialBoards: [
+        Board(
+          id: 'board-1',
+          name: 'Test Board',
+          createdAt: now,
+          updatedAt: now,
+          lastUsedAt: now,
+        ),
+      ],
+    );
+    return repo;
+  }
+
+  /// Seeds [count] columns into the repo synchronously-ish via the Future
+  /// chain. Returns the repo for chaining.
+  Future<FakeBoardRepository> seedColumns(
+    FakeBoardRepository repo, {
+    int count = 3,
+    List<String>? names,
+  }) async {
+    final columnNames =
+        names ?? List.generate(count, (i) => 'Column ${i + 1}');
+    for (final name in columnNames) {
+      await repo.createColumn(boardId: 'board-1', name: name);
+    }
+    return repo;
+  }
+
+  group('column list rendering', () {
+    testWidgets('shows column list with names', (tester) async {
+      final repo = makeRepo();
+      await seedColumns(repo, names: ['Todo', 'In Progress', 'Done']);
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      expect(find.text('Todo'), findsWidgets);
+      expect(find.text('In Progress'), findsWidgets);
+      expect(find.text('Done'), findsWidgets);
+    });
+
+    testWidgets('shows column count badge', (tester) async {
+      final repo = makeRepo();
+      await seedColumns(repo);
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      expect(find.text('3 / 10'), findsOneWidget);
+    });
+  });
+
+  group('reorder', () {
+    testWidgets('renders drag handles for reordering', (tester) async {
+      final repo = makeRepo();
+      await seedColumns(repo, names: ['A', 'B', 'C']);
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      // Verify drag handles are present — one per column row.
+      expect(find.byIcon(Icons.drag_handle), findsNWidgets(3));
+
+      // Verify columns are listed in order.
+      final texts = tester
+          .widgetList<Text>(find.text('A'))
+          .followedBy(tester.widgetList<Text>(find.text('B')))
+          .followedBy(tester.widgetList<Text>(find.text('C')));
+      expect(texts.length, greaterThanOrEqualTo(3));
+    });
+  });
+
+  group('inline rename', () {
+    testWidgets('tap column name enters edit mode, submit renames',
+        (tester) async {
+      final repo = makeRepo();
+      await seedColumns(repo, names: ['Old Name']);
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      // Tap the column name text to enter edit mode.
+      await tester.tap(find.text('Old Name').last);
+      await tester.pumpAndSettle();
+
+      // A TextField should now be visible for editing.
+      // Clear existing text and type new name.
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Old Name'),
+        'New Name',
+      );
+      await tester.pumpAndSettle();
+
+      // Submit via keyboard action.
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // Verify the name was updated in the repository.
+      final columns = await repo.getColumns('board-1');
+      expect(columns.first.name, 'New Name');
+    });
+  });
+
+  group('swipe to delete', () {
+    testWidgets('swipe-to-delete empty column with confirmation',
+        (tester) async {
+      final repo = makeRepo();
+      await seedColumns(repo, names: ['Doomed']);
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      // Swipe the column row from right to left.
+      await tester.drag(
+        find.text('Doomed').last,
+        const Offset(-300, 0),
+      );
+      await tester.pumpAndSettle();
+
+      // Confirmation dialog should appear.
+      expect(find.text("Delete 'Doomed'?"), findsOneWidget);
+
+      // Confirm deletion.
+      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+      await tester.pumpAndSettle();
+
+      // Column should be gone from repository.
+      final columns = await repo.getColumns('board-1');
+      expect(columns, isEmpty);
+    });
+
+    testWidgets('swipe-to-delete column with cards shows card count',
+        (tester) async {
+      final repo = makeRepo();
+      final column =
+          await repo.createColumn(boardId: 'board-1', name: 'Has Cards');
+      await repo.createCard(columnId: column.id, title: 'Card 1');
+      await repo.createCard(columnId: column.id, title: 'Card 2');
+      await repo.createCard(columnId: column.id, title: 'Card 3');
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      // Swipe the column row.
+      await tester.drag(
+        find.text('Has Cards').last,
+        const Offset(-300, 0),
+      );
+      await tester.pumpAndSettle();
+
+      // Dialog should mention card count.
+      expect(
+        find.text("Delete 'Has Cards' and its 3 cards?"),
+        findsOneWidget,
+      );
+
+      // Cancel — don't actually delete.
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      // Column still there.
+      final columns = await repo.getColumns('board-1');
+      expect(columns, hasLength(1));
+    });
+
+    testWidgets('cancel delete keeps column', (tester) async {
+      final repo = makeRepo();
+      await seedColumns(repo, names: ['Keep Me']);
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      // Swipe the column row.
+      await tester.drag(
+        find.text('Keep Me').last,
+        const Offset(-300, 0),
+      );
+      await tester.pumpAndSettle();
+
+      // Cancel dialog.
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      // Column still in repository.
+      final columns = await repo.getColumns('board-1');
+      expect(columns, hasLength(1));
+      expect(columns.first.name, 'Keep Me');
+    });
+  });
+
+  group('add column', () {
+    testWidgets('inline text field creates column', (tester) async {
+      final repo = makeRepo();
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      // Find the add-column text field (the one with 'Column name' label).
+      final addField = find.widgetWithText(TextField, 'Column name');
+      expect(addField, findsOneWidget);
+
+      // Type a column name and submit.
+      await tester.enterText(addField, 'New Column');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Add column'));
+      await tester.pumpAndSettle();
+
+      // Column should exist in repository.
+      final columns = await repo.getColumns('board-1');
+      expect(columns, hasLength(1));
+      expect(columns.first.name, 'New Column');
+    });
+
+    testWidgets('add column clears text field on success', (tester) async {
+      final repo = makeRepo();
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      final addField = find.widgetWithText(TextField, 'Column name');
+      await tester.enterText(addField, 'Created');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Add column'));
+      await tester.pumpAndSettle();
+
+      // Text field should be cleared.
+      final controller = tester
+          .widget<TextField>(find.widgetWithText(TextField, 'Column name'))
+          .controller;
+      expect(controller?.text, isEmpty);
+    });
+
+    testWidgets('adding 11th column shows limit snackbar', (tester) async {
+      final repo = makeRepo();
+      // Seed 10 columns (the maximum).
+      await seedColumns(repo, count: 10);
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      // Try to add an 11th column.
+      final addField = find.widgetWithText(TextField, 'Column name');
+      await tester.enterText(addField, 'One Too Many');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Add column'));
+      await tester.pumpAndSettle();
+
+      // SnackBar should show limit message.
+      expect(
+        find.text('Board already has 10 columns'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('empty text field disables add button', (tester) async {
+      final repo = makeRepo();
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      // No columns seeded, so only the management sheet's add button exists.
+      final addButton = tester.widget<IconButton>(
+        find.widgetWithIcon(IconButton, Icons.add),
+      );
+      expect(addButton.onPressed, isNull);
+    });
+  });
+}

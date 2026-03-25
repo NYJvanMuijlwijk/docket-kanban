@@ -142,7 +142,7 @@ void main() {
 
     // Should navigate to detail screen — empty board shows column empty state
     expect(
-      find.text('No columns yet. Tap + to add one.'),
+      find.text('No columns yet. Use the menu to add one.'),
       findsOneWidget,
     );
   });

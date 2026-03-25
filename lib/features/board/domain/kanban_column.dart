@@ -1,5 +1,8 @@
 import 'package:flutter/foundation.dart';
 
+/// Maximum length for column names, shared across creation and rename forms.
+const maxColumnNameLength = 50;
+
 @immutable
 class KanbanColumn {
   const KanbanColumn({

@@ -16,6 +16,7 @@ import 'package:kanban_board/features/board/presentation/providers/drag_provider
 import 'package:kanban_board/features/board/presentation/widgets/board_form_sheet.dart';
 import 'package:kanban_board/features/board/presentation/widgets/card_form_sheet.dart';
 import 'package:kanban_board/features/board/presentation/widgets/column_form_sheet.dart';
+import 'package:kanban_board/features/board/presentation/widgets/column_management_sheet.dart';
 
 part 'board_detail_screen.card.dart';
 part 'board_detail_screen.column.dart';
@@ -24,7 +25,7 @@ part 'board_detail_screen.drag.dart';
 const _kColumnWidth = 300.0;
 const _kColumnMarginH = 6.0;
 
-enum _BoardMenuAction { rename }
+enum _BoardMenuAction { rename, manageColumns }
 
 enum _ColumnMenuAction { rename, delete }
 
@@ -126,15 +127,27 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
     }
   }
 
-  Future<void> _addColumn() async {
-    final name = await ColumnFormSheet.show(context);
-    if (name != null && mounted) {
+  Future<void> _addCardToFirstColumn() async {
+    final columns =
+        ref.read(columnListProvider(widget.boardId)).value;
+    if (columns == null || columns.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Create a column first')),
+      );
+      return;
+    }
+    final result = await CardFormSheet.show(context);
+    if (result != null && mounted) {
       await guardMutation(
         context,
         () => ref
-            .read(columnListProvider(widget.boardId).notifier)
-            .createColumn(name),
-        'Failed to create column',
+            .read(cardListProvider(columns.first.id).notifier)
+            .createCard(
+              title: result.title,
+              description: result.description,
+            ),
+        'Failed to create card',
       );
     }
   }
@@ -171,6 +184,12 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
                   switch (action) {
                     case _BoardMenuAction.rename:
                       await _renameBoard(board.name);
+                    case _BoardMenuAction.manageColumns:
+                      if (!mounted) return;
+                      await ColumnManagementSheet.show(
+                        context,
+                        boardId: widget.boardId,
+                      );
                   }
                 },
                 itemBuilder: (_) => const [
@@ -178,13 +197,17 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
                     value: _BoardMenuAction.rename,
                     child: Text('Rename'),
                   ),
+                  PopupMenuItem(
+                    value: _BoardMenuAction.manageColumns,
+                    child: Text('Manage Columns'),
+                  ),
                 ],
               ),
             ],
           ),
           floatingActionButton: FloatingActionButton(
-            onPressed: _addColumn,
-            child: const Icon(Icons.add),
+            onPressed: _addCardToFirstColumn,
+            child: const Icon(Icons.note_add),
           ),
           body: columnsAsync.when(
             loading: () => const Center(
@@ -197,7 +220,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
               if (columns.isEmpty) {
                 return const Center(
                   child: Text(
-                    'No columns yet. Tap + to add one.',
+                    'No columns yet. Use the menu to add one.',
                   ),
                 );
               }
