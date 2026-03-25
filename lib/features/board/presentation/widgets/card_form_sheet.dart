@@ -1,6 +1,5 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:kanban_board/core/sheet_body.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 
 const _maxTitleLength = 100;
@@ -80,54 +79,41 @@ class _CardFormSheetState extends State<CardFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    final padding = MediaQuery.paddingOf(context);
-    final bottomInset = math.max(viewInsets.bottom, padding.bottom);
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
-        bottom: bottomInset + 24,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'New Card',
-            style: Theme.of(context).textTheme.titleLarge,
+    return SheetBody(
+      children: [
+        Text(
+          'New Card',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _titleController,
+          autofocus: true,
+          maxLength: _maxTitleLength,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Title',
+            border: OutlineInputBorder(),
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _titleController,
-            autofocus: true,
-            maxLength: _maxTitleLength,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Title',
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: _isValid ? (_) => _submit() : null,
+          onSubmitted: _isValid ? (_) => _submit() : null,
+        ),
+        const SizedBox(height: 12),
+        TextField(
+          controller: _descriptionController,
+          maxLength: _maxDescriptionLength,
+          maxLines: 3,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Description (optional)',
+            border: OutlineInputBorder(),
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _descriptionController,
-            maxLength: _maxDescriptionLength,
-            maxLines: 3,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Description (optional)',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: _isValid ? _submit : null,
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _isValid ? _submit : null,
+          child: const Text('Create'),
+        ),
+      ],
     );
   }
 }
@@ -221,28 +207,22 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    final padding = MediaQuery.paddingOf(context);
-    final bottomInset = math.max(viewInsets.bottom, padding.bottom);
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
-        bottom: bottomInset + 24,
-      ),
-      child: _editing
-          ? _CardEditView(
-              titleController: _titleController,
-              descriptionController: _descriptionController,
-              isValid: _isValid,
-              onSubmit: _submitEdit,
-            )
-          : _CardDetailView(
-              card: widget.card,
-              onEdit: () => setState(() => _editing = true),
-              onDelete: _confirmDelete,
-            ),
+    return SheetBody(
+      children: [
+        if (_editing)
+          _CardEditView(
+            titleController: _titleController,
+            descriptionController: _descriptionController,
+            isValid: _isValid,
+            onSubmit: _submitEdit,
+          )
+        else
+          _CardDetailView(
+            card: widget.card,
+            onEdit: () => setState(() => _editing = true),
+            onDelete: _confirmDelete,
+          ),
+      ],
     );
   }
 }

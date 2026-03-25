@@ -1,6 +1,5 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:kanban_board/core/sheet_body.dart';
 
 const _maxBoardNameLength = 50;
 
@@ -69,43 +68,30 @@ class _BoardFormSheetState extends State<BoardFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final viewInsets = MediaQuery.viewInsetsOf(context);
-    final padding = MediaQuery.paddingOf(context);
-    final bottomInset = math.max(viewInsets.bottom, padding.bottom);
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
-        top: 24,
-        bottom: bottomInset + 24,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            _isRename ? 'Rename Board' : 'New Board',
-            style: Theme.of(context).textTheme.titleLarge,
+    return SheetBody(
+      children: [
+        Text(
+          _isRename ? 'Rename Board' : 'New Board',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _controller,
+          autofocus: true,
+          maxLength: _maxBoardNameLength,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Board name',
+            border: OutlineInputBorder(),
           ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            maxLength: _maxBoardNameLength,
-            textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Board name',
-              border: OutlineInputBorder(),
-            ),
-            onSubmitted: _isValid ? (_) => _submit() : null,
-          ),
-          const SizedBox(height: 16),
-          FilledButton(
-            onPressed: _isValid ? _submit : null,
-            child: Text(_isRename ? 'Rename' : 'Create'),
-          ),
-        ],
-      ),
+          onSubmitted: _isValid ? (_) => _submit() : null,
+        ),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: _isValid ? _submit : null,
+          child: Text(_isRename ? 'Rename' : 'Create'),
+        ),
+      ],
     );
   }
 }

@@ -60,32 +60,73 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('No columns yet. Tap + to add one.'),
+      find.text('No columns yet. Use the menu to add one.'),
       findsOneWidget,
     );
   });
 
-  testWidgets('FAB opens column form, submit creates column',
-      (tester) async {
+  testWidgets('FAB opens card form for first column', (tester) async {
     final repo = makeRepo();
+    await repo.createColumn(boardId: 'board-1', name: 'Todo');
+
     await tester
         .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
     await tester.pumpAndSettle();
 
-    // Tap FAB
+    // Tap FAB (now creates a card in the first column)
     await tester.tap(find.byType(FloatingActionButton));
     await tester.pumpAndSettle();
 
-    // Enter column name
-    await tester.enterText(find.byType(TextField), 'Todo');
+    // CardFormSheet should open — enter card title
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Title'),
+      'My Card',
+    );
     await tester.pumpAndSettle();
 
     // Submit
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
 
-    // Column should appear
-    expect(find.text('Todo'), findsOneWidget);
+    // Card should appear in the first column
+    expect(find.text('My Card'), findsOneWidget);
+  });
+
+  testWidgets('FAB shows snackbar when no columns exist', (tester) async {
+    final repo = makeRepo();
+
+    await tester
+        .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+    await tester.pumpAndSettle();
+
+    // Tap FAB with no columns
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    // Snackbar should appear
+    expect(find.text('Create a column first'), findsOneWidget);
+  });
+
+  testWidgets('board menu shows Manage Columns option', (tester) async {
+    final repo = makeRepo();
+    await repo.createColumn(boardId: 'board-1', name: 'Todo');
+
+    await tester
+        .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+    await tester.pumpAndSettle();
+
+    // Open board popup menu (in the AppBar)
+    await tester.tap(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byWidgetPredicate((w) => w is PopupMenuButton),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Both menu items should be visible
+    expect(find.text('Rename'), findsOneWidget);
+    expect(find.text('Manage Columns'), findsOneWidget);
   });
 
   testWidgets('multiple columns render in horizontal list',
@@ -156,7 +197,7 @@ void main() {
     // Column should be gone
     expect(find.text('Todo'), findsNothing);
     expect(
-      find.text('No columns yet. Tap + to add one.'),
+      find.text('No columns yet. Use the menu to add one.'),
       findsOneWidget,
     );
   });
@@ -196,33 +237,5 @@ void main() {
 
     // Column still there
     expect(find.text('Todo'), findsOneWidget);
-  });
-
-  testWidgets('creating 11th column shows limit SnackBar', (tester) async {
-    final repo = makeRepo();
-    // Pre-seed 10 columns (the maximum).
-    for (var i = 0; i < 10; i++) {
-      await repo.createColumn(boardId: 'board-1', name: 'Col $i');
-    }
-
-    await tester
-        .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
-    await tester.pumpAndSettle();
-
-    // Tap FAB to open column form
-    await tester.tap(find.byType(FloatingActionButton));
-    await tester.pumpAndSettle();
-
-    // Enter name and submit
-    await tester.enterText(find.byType(TextField), 'One Too Many');
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Create'));
-    await tester.pumpAndSettle();
-
-    // SnackBar should show the StateError message from the repository
-    expect(
-      find.text('Board already has 10 columns'),
-      findsOneWidget,
-    );
   });
 }
