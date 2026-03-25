@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/sheet_body.dart';
 import 'package:kanban_board/core/shimmer.dart';
+import 'package:kanban_board/core/status_content.dart';
 import 'package:kanban_board/features/board/domain/kanban_column.dart';
 import 'package:kanban_board/features/board/presentation/providers/card_providers.dart';
 import 'package:kanban_board/features/board/presentation/providers/column_providers.dart';
@@ -37,14 +38,26 @@ class ColumnManagementSheet extends ConsumerWidget {
         const SizedBox(height: 16),
         columnsAsync.when(
           loading: () => const _SheetColumnSkeleton(),
-          error: (_, _) => _SheetErrorContent(
-            onRetry: () => ref.invalidate(columnListProvider(boardId)),
+          error: (_, _) => StatusContent(
+            icon: Icons.error_outline,
+            iconSize: 36,
+            iconColor: Theme.of(context).colorScheme.error,
+            message: 'Something went wrong',
+            textStyle: Theme.of(context).textTheme.bodyMedium,
+            action: TextButton(
+              onPressed: () => ref.invalidate(columnListProvider(boardId)),
+              child: const Text('Retry'),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 16),
           ),
           data: (columns) {
             if (columns.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
-                child: Center(child: Text('No columns yet')),
+              return StatusContent(
+                icon: Icons.view_column_outlined,
+                iconSize: 36,
+                message: 'No columns yet',
+                textStyle: Theme.of(context).textTheme.bodyMedium,
+                padding: const EdgeInsets.symmetric(vertical: 24),
               );
             }
             return ConstrainedBox(
@@ -443,41 +456,6 @@ class _SkeletonColumnRow extends StatelessWidget {
     return const ListTile(
       leading: ShimmerBlock(width: 24, height: 24),
       title: ShimmerBlock(width: 140, height: 16),
-    );
-  }
-}
-
-class _SheetErrorContent extends StatelessWidget {
-  const _SheetErrorContent({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 36,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Something went wrong',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: onRetry,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

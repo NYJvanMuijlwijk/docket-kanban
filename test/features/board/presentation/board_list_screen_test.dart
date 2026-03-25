@@ -31,7 +31,7 @@ void main() {
     await tester.pumpWidget(_buildApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('No boards yet. Tap + to create one.'), findsOneWidget);
+    expect(find.text('No boards yet'), findsOneWidget);
   });
 
   testWidgets('shows board names when boards exist', (tester) async {
@@ -143,7 +143,7 @@ void main() {
 
     // Should navigate to detail screen — empty board shows column empty state
     expect(
-      find.text('No columns yet. Use the menu to add one.'),
+      find.text('No columns yet'),
       findsOneWidget,
     );
   });
@@ -170,7 +170,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Should show empty state
-    expect(find.text('No boards yet. Tap + to create one.'), findsOneWidget);
+    expect(find.text('No boards yet'), findsOneWidget);
   });
 
   testWidgets('subtitle shows lastUsedAt, not updatedAt', (tester) async {
@@ -283,7 +283,7 @@ void main() {
 
       // Shimmer gone, empty state shown.
       expect(find.byType(ShimmerBlock), findsNothing);
-      expect(find.text('No boards yet. Tap + to create one.'), findsOneWidget);
+      expect(find.text('No boards yet'), findsOneWidget);
     });
   });
 

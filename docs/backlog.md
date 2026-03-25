@@ -88,7 +88,14 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 ### Slice 5: Polish — PRIORITY: later
 - [ ] Material 3 theme: dark-mode-first, zen/minimal palette
 - [ ] Responsive layout (mobile vs. desktop/tablet breakpoints)
-- [ ] Empty states (no boards, no columns, no cards)
+- [x] Empty states (no boards, no columns, no cards)
+  - [x] Shared `StatusContent` widget (`lib/core/status_content.dart`) — icon + message + optional action
+  - [x] Board list: `dashboard_outlined` icon, "No boards yet"
+  - [x] Board detail (columns): `view_column_outlined` icon, "No columns yet"
+  - [x] Column (cards): `note_outlined` icon, "No cards yet"
+  - [x] Column management sheet: `view_column_outlined` icon, "No columns yet"
+  - [x] Error states consolidated to use `StatusContent` (deleted 3 private error widget classes)
+  - [x] Column card error state upgraded from bare icon to icon + text + retry
 - [x] Loading states
   - [x] Custom shimmer infrastructure (`ShimmerScope` + `ShimmerBlock`) — shared `AnimationController` via `InheritedNotifier`, theme-aware dark/light colors
   - [x] Board list screen: shimmer skeleton (4 list tile shapes), error with retry, FAB loading state

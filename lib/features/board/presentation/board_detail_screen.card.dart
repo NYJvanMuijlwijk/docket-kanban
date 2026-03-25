@@ -17,16 +17,24 @@ class _CardListView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cardsAsync = ref.watch(cardListProvider(column.id));
 
+    void onRetry() => ref.invalidate(cardListProvider(column.id));
+
     return cardsAsync.when(
-      loading: () => _ColumnEmptyContent(state: cardsAsync),
-      error: (_, _) => _ColumnEmptyContent(state: cardsAsync),
+      loading: () => _ColumnEmptyContent(
+        state: cardsAsync,
+        onRetry: onRetry,
+      ),
+      error: (_, _) => _ColumnEmptyContent(
+        state: cardsAsync,
+        onRetry: onRetry,
+      ),
       data: (cards) {
         if (cards.isEmpty) {
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _InsertionGap(columnId: column.id, index: 0),
-              _ColumnEmptyContent(state: cardsAsync),
+              _ColumnEmptyContent(state: cardsAsync, onRetry: onRetry),
             ],
           );
         }

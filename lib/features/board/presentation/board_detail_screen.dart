@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/reorder_helpers.dart';
 import 'package:kanban_board/core/shimmer.dart';
+import 'package:kanban_board/core/status_content.dart';
 import 'package:kanban_board/features/board/domain/board_repository.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:kanban_board/features/board/domain/kanban_column.dart';
@@ -166,8 +167,14 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
       loading: () => const _BoardLoadingSkeleton(),
       error: (_, _) => Scaffold(
         appBar: AppBar(),
-        body: _BoardErrorContent(
-          onRetry: () => ref.invalidate(boardProvider(widget.boardId)),
+        body: StatusContent(
+          icon: Icons.error_outline,
+          iconColor: Theme.of(context).colorScheme.error,
+          message: 'Something went wrong',
+          action: TextButton(
+            onPressed: () => ref.invalidate(boardProvider(widget.boardId)),
+            child: const Text('Retry'),
+          ),
         ),
       ),
       data: (board) {
@@ -222,15 +229,21 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
           ),
           body: columnsAsync.when(
             loading: () => const _ColumnListSkeleton(),
-            error: (_, _) => _BoardErrorContent(
-              onRetry: () => ref.invalidate(columnListProvider(widget.boardId)),
+            error: (_, _) => StatusContent(
+              icon: Icons.error_outline,
+              iconColor: Theme.of(context).colorScheme.error,
+              message: 'Something went wrong',
+              action: TextButton(
+                onPressed: () =>
+                    ref.invalidate(columnListProvider(widget.boardId)),
+                child: const Text('Retry'),
+              ),
             ),
             data: (columns) {
               if (columns.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'No columns yet. Use the menu to add one.',
-                  ),
+                return const StatusContent(
+                  icon: Icons.view_column_outlined,
+                  message: 'No columns yet',
                 );
               }
               return _BoardScrollView(
@@ -376,38 +389,6 @@ class _SkeletonCard extends StatelessWidget {
             ShimmerBlock(width: 140, height: 10),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _BoardErrorContent extends StatelessWidget {
-  const _BoardErrorContent({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 48,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Something went wrong',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text('Retry'),
-          ),
-        ],
       ),
     );
   }

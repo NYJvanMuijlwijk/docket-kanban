@@ -64,8 +64,10 @@ void main() {
 
       // Should NOT show the empty-state text.
       expect(find.text('No cards yet'), findsNothing);
-      // Should show an error indicator.
+      // Should show an error indicator with message and retry.
       expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.text('Failed to load'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
     });
 
     testWidgets('hides Add Card button for errored column', (tester) async {
