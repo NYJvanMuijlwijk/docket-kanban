@@ -88,6 +88,7 @@ class _DraggableCardSlot extends ConsumerStatefulWidget {
     required this.columnId,
     required this.boardId,
     required this.autoScroll,
+    required this.columnWidth,
   });
 
   final KanbanCard card;
@@ -95,6 +96,7 @@ class _DraggableCardSlot extends ConsumerStatefulWidget {
   final String columnId;
   final String boardId;
   final AutoScrollHandler autoScroll;
+  final double columnWidth;
 
   @override
   ConsumerState<_DraggableCardSlot> createState() => _DraggableCardSlotState();
@@ -153,7 +155,7 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
       elevation: 8,
       borderRadius: BorderRadius.circular(12),
       child: SizedBox(
-        width: _kColumnWidth - _kColumnMarginH * 2,
+        width: widget.columnWidth - _kColumnMarginH * 2,
         child: Transform.scale(scale: 1.05, child: child),
       ),
     );

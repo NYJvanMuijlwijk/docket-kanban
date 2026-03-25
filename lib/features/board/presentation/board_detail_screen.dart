@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/reorder_helpers.dart';
+import 'package:kanban_board/core/responsive.dart';
 import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/core/status_content.dart';
 import 'package:kanban_board/features/board/domain/board_repository.dart';
@@ -24,7 +25,6 @@ part 'board_detail_screen.card.dart';
 part 'board_detail_screen.column.dart';
 part 'board_detail_screen.drag.dart';
 
-const _kColumnWidth = 300.0;
 const _kColumnMarginH = 6.0;
 const _kColumnMarginV = 12.0;
 
@@ -271,8 +271,17 @@ class _BoardLoadingSkeleton extends StatelessWidget {
           child: ShimmerBlock(width: 120, height: 20),
         ),
       ),
-      body: const ShimmerScope(
-        child: _SkeletonColumns(),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final columnWidth = computeColumnWidth(
+            viewportWidth: constraints.maxWidth,
+            columnCount: 3,
+            marginPerColumn: _kColumnMarginH * 2,
+          );
+          return ShimmerScope(
+            child: _SkeletonColumns(columnWidth: columnWidth),
+          );
+        },
       ),
     );
   }
@@ -284,26 +293,37 @@ class _ColumnListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ShimmerScope(
-      child: _SkeletonColumns(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columnWidth = computeColumnWidth(
+          viewportWidth: constraints.maxWidth,
+          columnCount: 3,
+          marginPerColumn: _kColumnMarginH * 2,
+        );
+        return ShimmerScope(
+          child: _SkeletonColumns(columnWidth: columnWidth),
+        );
+      },
     );
   }
 }
 
 class _SkeletonColumns extends StatelessWidget {
-  const _SkeletonColumns();
+  const _SkeletonColumns({required this.columnWidth});
+
+  final double columnWidth;
 
   @override
   Widget build(BuildContext context) {
-    return const SingleChildScrollView(
+    return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      physics: NeverScrollableScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SkeletonColumn(cardCount: 3),
-          _SkeletonColumn(cardCount: 2),
-          _SkeletonColumn(cardCount: 4),
+          _SkeletonColumn(cardCount: 3, width: columnWidth),
+          _SkeletonColumn(cardCount: 2, width: columnWidth),
+          _SkeletonColumn(cardCount: 4, width: columnWidth),
         ],
       ),
     );
@@ -311,16 +331,20 @@ class _SkeletonColumns extends StatelessWidget {
 }
 
 class _SkeletonColumn extends StatelessWidget {
-  const _SkeletonColumn({required this.cardCount});
+  const _SkeletonColumn({
+    required this.cardCount,
+    required this.width,
+  });
 
   final int cardCount;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      width: _kColumnWidth,
+      width: width,
       margin: const EdgeInsets.symmetric(
         horizontal: _kColumnMarginH,
         vertical: _kColumnMarginV,
