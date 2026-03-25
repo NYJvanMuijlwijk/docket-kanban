@@ -24,7 +24,7 @@ void main() {
 
     expect(find.text('My Boards'), findsOneWidget);
     expect(
-      find.text('No boards yet. Tap + to create one.'),
+      find.text('No boards yet'),
       findsOneWidget,
     );
   });

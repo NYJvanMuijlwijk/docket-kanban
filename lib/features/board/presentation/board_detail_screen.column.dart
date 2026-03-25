@@ -177,9 +177,13 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
 }
 
 class _ColumnEmptyContent extends StatelessWidget {
-  const _ColumnEmptyContent({required this.state});
+  const _ColumnEmptyContent({
+    required this.state,
+    required this.onRetry,
+  });
 
   final AsyncValue<List<KanbanCard>> state;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -188,8 +192,22 @@ class _ColumnEmptyContent extends StatelessWidget {
       child: Center(
         child: switch (state) {
           AsyncLoading() => const _ColumnCardsSkeleton(),
-          AsyncError() => const Icon(Icons.error_outline),
-          _ => const Text('No cards yet'),
+          AsyncError() => StatusContent(
+              icon: Icons.error_outline,
+              iconSize: 36,
+              iconColor: Theme.of(context).colorScheme.error,
+              message: 'Failed to load',
+              textStyle: Theme.of(context).textTheme.bodyMedium,
+              action: TextButton(
+                onPressed: onRetry,
+                child: const Text('Retry'),
+              ),
+            ),
+          _ => const StatusContent(
+              icon: Icons.note_outlined,
+              iconSize: 36,
+              message: 'No cards yet',
+            ),
         },
       ),
     );

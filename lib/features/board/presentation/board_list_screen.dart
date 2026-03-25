@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/shimmer.dart';
+import 'package:kanban_board/core/status_content.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
 import 'package:kanban_board/features/board/presentation/widgets/board_form_sheet.dart';
 
@@ -81,13 +82,20 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
       ),
       body: boardsAsync.when(
         loading: () => const _BoardListSkeleton(),
-        error: (_, _) => _ErrorContent(
-          onRetry: () => ref.invalidate(boardListProvider),
+        error: (_, _) => StatusContent(
+          icon: Icons.error_outline,
+          iconColor: Theme.of(context).colorScheme.error,
+          message: 'Something went wrong',
+          action: TextButton(
+            onPressed: () => ref.invalidate(boardListProvider),
+            child: const Text('Retry'),
+          ),
         ),
         data: (boards) {
           if (boards.isEmpty) {
-            return const Center(
-              child: Text('No boards yet. Tap + to create one.'),
+            return const StatusContent(
+              icon: Icons.dashboard_outlined,
+              message: 'No boards yet',
             );
           }
           return ListView.builder(
@@ -170,38 +178,6 @@ class _SkeletonListTile extends StatelessWidget {
         child: ShimmerBlock(width: 120, height: 12),
       ),
       trailing: ShimmerBlock(width: 24, height: 24, borderRadius: 12),
-    );
-  }
-}
-
-class _ErrorContent extends StatelessWidget {
-  const _ErrorContent({required this.onRetry});
-
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 48,
-            color: Theme.of(context).colorScheme.error,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Something went wrong',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: onRetry,
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
     );
   }
 }

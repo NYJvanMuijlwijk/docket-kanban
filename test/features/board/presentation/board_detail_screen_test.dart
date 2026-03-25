@@ -72,7 +72,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('No columns yet. Use the menu to add one.'),
+      find.text('No columns yet'),
       findsOneWidget,
     );
   });
