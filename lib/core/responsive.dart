@@ -23,6 +23,7 @@ double computeColumnWidth({
   required int columnCount,
   required double marginPerColumn,
 }) {
+  assert(columnCount > 0, 'columnCount must be positive');
   final availablePerColumn =
       (viewportWidth - columnCount * marginPerColumn) / columnCount;
   return availablePerColumn.clamp(kColumnMinWidth, kColumnMaxWidth);
