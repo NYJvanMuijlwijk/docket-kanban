@@ -37,7 +37,6 @@ class FakeBoardRepository implements BoardRepository {
   final Map<String, KanbanColumn> _columns = {};
   final Map<String, KanbanCard> _cards = {};
   final Map<String, String> _cardErrors = {};
-  String? _boardError;
   final Map<String, String> _columnErrors = {};
   final _boardController =
       StreamController<List<Board>>.broadcast();
@@ -45,6 +44,7 @@ class FakeBoardRepository implements BoardRepository {
       StreamController<List<KanbanColumn>>.broadcast();
   final _cardController =
       StreamController<List<KanbanCard>>.broadcast();
+  String? _boardError;
 
   // ── Boards ──────────────────────────────────────────────────────
 
@@ -294,6 +294,7 @@ class FakeBoardRepository implements BoardRepository {
   // ── Test helpers ──────────────────────────────────────────────
 
   /// Makes [watchBoards] emit an error instead of data.
+  // ignore: use_setters_to_change_properties
   void setBoardError(String message) {
     _boardError = message;
   }

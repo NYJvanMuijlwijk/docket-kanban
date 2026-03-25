@@ -81,7 +81,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
       ),
       body: boardsAsync.when(
         loading: () => const _BoardListSkeleton(),
-        error: (_, __) => _ErrorContent(
+        error: (_, _) => _ErrorContent(
           onRetry: () => ref.invalidate(boardListProvider),
         ),
         data: (boards) {
@@ -170,9 +170,9 @@ class _SkeletonListTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ShimmerBlock(width: 180, height: 16, borderRadius: 4),
+                ShimmerBlock(width: 180, height: 16),
                 SizedBox(height: 8),
-                ShimmerBlock(width: 120, height: 12, borderRadius: 4),
+                ShimmerBlock(width: 120, height: 12),
               ],
             ),
           ),
