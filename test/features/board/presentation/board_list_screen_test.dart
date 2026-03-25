@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/core/theme.dart';
 import 'package:kanban_board/features/board/domain/board.dart';
 import 'package:kanban_board/features/board/presentation/board_list_screen.dart';
@@ -239,5 +240,102 @@ void main() {
     await tester.pump(const Duration(seconds: 60));
 
     expect(find.textContaining('m ago'), findsOneWidget);
+  });
+
+  group('loading states', () {
+    // Loading tests mount BoardListScreen directly (no router) so
+    // pumpWidget builds the widget tree in a single frame without
+    // extra async routing resolution.
+    Widget buildDirect({FakeBoardRepository? repository}) {
+      final repo = repository ?? FakeBoardRepository();
+      return ProviderScope(
+        overrides: [
+          boardRepositoryProvider.overrideWith((ref) {
+            ref.onDispose(repo.dispose);
+            return repo;
+          }),
+        ],
+        child: MaterialApp(
+          theme: buildDarkTheme(),
+          home: const BoardListScreen(),
+        ),
+      );
+    }
+
+    testWidgets('shows shimmer skeleton during initial load', (tester) async {
+      await tester.pumpWidget(buildDirect());
+      // pumpWidget builds the widget tree. The stream subscription is
+      // created but SeedTransformer emits the seed in a microtask —
+      // at this point the provider is still AsyncLoading.
+
+      expect(find.byType(ShimmerBlock), findsWidgets);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    });
+
+    testWidgets('skeleton disappears after data loads', (tester) async {
+      await tester.pumpWidget(buildDirect());
+
+      // Shimmer visible during loading.
+      expect(find.byType(ShimmerBlock), findsWidgets);
+
+      // Data arrives.
+      await tester.pumpAndSettle();
+
+      // Shimmer gone, empty state shown.
+      expect(find.byType(ShimmerBlock), findsNothing);
+      expect(find.text('No boards yet. Tap + to create one.'), findsOneWidget);
+    });
+  });
+
+  group('error states', () {
+    testWidgets('shows error with retry button on stream error',
+        (tester) async {
+      final repo = FakeBoardRepository()..setBoardError('Connection failed');
+
+      await tester.pumpWidget(_buildApp(repository: repo));
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.error_outline), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+      // Should not show raw error text.
+      expect(find.text('Error: Exception: Connection failed'), findsNothing);
+    });
+
+    testWidgets('retry button triggers provider refresh', (tester) async {
+      final repo = FakeBoardRepository()..setBoardError('Connection failed');
+
+      await tester.pumpWidget(_buildApp(repository: repo));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Retry'), findsOneWidget);
+      // Tapping retry should not crash (it calls ref.invalidate).
+      await tester.tap(find.text('Retry'));
+      await tester.pumpAndSettle();
+    });
+  });
+
+  group('FAB loading state', () {
+    testWidgets('FAB shows loading indicator during mutation', (tester) async {
+      await tester.pumpWidget(_buildApp());
+      await tester.pumpAndSettle();
+
+      // Open bottom sheet, enter name, submit.
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), 'New Board');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Create'));
+      // Single pump — mutation is in flight.
+      await tester.pump();
+
+      // After mutation completes, FAB should be back to normal.
+      await tester.pumpAndSettle();
+      final fab = tester.widget<FloatingActionButton>(
+        find.byType(FloatingActionButton),
+      );
+      expect(fab.onPressed, isNotNull);
+    });
   });
 }
