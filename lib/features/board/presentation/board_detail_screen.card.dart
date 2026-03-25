@@ -7,11 +7,13 @@ class _CardListView extends ConsumerWidget {
     required this.column,
     required this.boardId,
     required this.autoScroll,
+    required this.columnWidth,
   });
 
   final KanbanColumn column;
   final String boardId;
   final AutoScrollHandler autoScroll;
+  final double columnWidth;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -50,6 +52,7 @@ class _CardListView extends ConsumerWidget {
                 columnId: column.id,
                 boardId: boardId,
                 autoScroll: autoScroll,
+                columnWidth: columnWidth,
               ),
             ],
             // Final gap after last card — allows dropping at end.

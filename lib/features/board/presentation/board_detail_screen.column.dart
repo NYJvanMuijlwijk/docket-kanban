@@ -56,26 +56,52 @@ class _BoardScrollViewState extends ConsumerState<_BoardScrollView>
           _autoScroll.viewportRenderBox =
               context.findRenderObject() as RenderBox?;
 
+          final columnCount = widget.columns.length;
+          final clampedWidth = computeColumnWidth(
+            viewportWidth: constraints.maxWidth,
+            columnCount: columnCount,
+            marginPerColumn: _kColumnMarginH * 2,
+          );
+          final totalContentWidth =
+              clampedWidth * columnCount +
+                  columnCount * _kColumnMarginH * 2;
+          final fitsViewport =
+              totalContentWidth <= constraints.maxWidth;
+
+          final columns = [
+            for (final column in widget.columns)
+              _KanbanColumnDropTarget(
+                column: column,
+                boardId: widget.boardId,
+                autoScroll: _autoScroll,
+                columnWidth: clampedWidth,
+                minHeight:
+                    constraints.maxHeight - _kColumnMarginV * 2,
+              ),
+          ];
+
           return SingleChildScrollView(
             controller: _horizontalController,
             scrollDirection: Axis.horizontal,
             child: SingleChildScrollView(
               controller: _verticalController,
               child: IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final column in widget.columns)
-                      _KanbanColumnDropTarget(
-                        column: column,
-                        boardId: widget.boardId,
-                        autoScroll: _autoScroll,
-                        // Minimum column height = viewport minus vertical
-                        // margin so column + margin exactly fills the screen.
-                        minHeight: constraints.maxHeight - _kColumnMarginV * 2,
+                child: fitsViewport
+                    ? SizedBox(
+                        width: constraints.maxWidth,
+                        child: Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center,
+                          crossAxisAlignment:
+                              CrossAxisAlignment.stretch,
+                          children: columns,
+                        ),
+                      )
+                    : Row(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.stretch,
+                        children: columns,
                       ),
-                  ],
-                ),
               ),
             ),
           );
@@ -92,12 +118,14 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
     required this.column,
     required this.boardId,
     required this.autoScroll,
+    required this.columnWidth,
     required this.minHeight,
   });
 
   final KanbanColumn column;
   final String boardId;
   final AutoScrollHandler autoScroll;
+  final double columnWidth;
   final double minHeight;
 
   @override
@@ -143,7 +171,7 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
-          width: _kColumnWidth,
+          width: columnWidth,
           constraints: BoxConstraints(minHeight: minHeight),
           margin: const EdgeInsets.symmetric(
             horizontal: _kColumnMarginH,
@@ -166,6 +194,7 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
                   column: column,
                   boardId: boardId,
                   autoScroll: autoScroll,
+                  columnWidth: columnWidth,
                 ),
               ),
             ],
