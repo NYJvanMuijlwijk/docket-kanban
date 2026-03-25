@@ -70,9 +70,9 @@ class _BoardScrollViewState extends ConsumerState<_BoardScrollView>
                         column: column,
                         boardId: widget.boardId,
                         autoScroll: _autoScroll,
-                        // Minimum column height = viewport height so columns
-                        // fill the screen even with few cards.
-                        minHeight: constraints.maxHeight,
+                        // Minimum column height = viewport minus vertical
+                        // margin so column + margin exactly fills the screen.
+                        minHeight: constraints.maxHeight - _kColumnMarginV * 2,
                       ),
                   ],
                 ),
@@ -147,7 +147,7 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
           constraints: BoxConstraints(minHeight: minHeight),
           margin: const EdgeInsets.symmetric(
             horizontal: _kColumnMarginH,
-            vertical: 12,
+            vertical: _kColumnMarginV,
           ),
           decoration: BoxDecoration(
             color: isHoverTarget ? highlightColor : baseColor,
