@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/core/theme.dart';
 import 'package:kanban_board/features/board/domain/board.dart';
 import 'package:kanban_board/features/board/presentation/board_detail_screen.dart';
@@ -337,6 +338,63 @@ void main() {
         find.widgetWithIcon(IconButton, Icons.add),
       );
       expect(addButton.onPressed, isNull);
+    });
+  });
+
+  group('loading and error states', () {
+    // Column errors show in both the board detail body AND the sheet.
+    // Scope finders to the BottomSheet to avoid ambiguous matches.
+    testWidgets('error state shows retry button in sheet', (tester) async {
+      final repo = makeRepo()
+        ..setColumnError('board-1', 'Connection failed');
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      // Find the sheet's retry button (scoped to BottomSheet).
+      final sheetFinder = find.byType(BottomSheet);
+      final retryInSheet = find.descendant(
+        of: sheetFinder,
+        matching: find.text('Retry'),
+      );
+      expect(retryInSheet, findsOneWidget);
+
+      // Error icon should appear in the sheet.
+      expect(
+        find.descendant(
+          of: sheetFinder,
+          matching: find.byIcon(Icons.error_outline),
+        ),
+        findsOneWidget,
+      );
+
+      // Raw error text should not appear in the sheet.
+      expect(
+        find.descendant(
+          of: sheetFinder,
+          matching: find.textContaining('Error:'),
+        ),
+        findsNothing,
+      );
+    });
+
+    testWidgets('retry button in sheet does not crash', (tester) async {
+      final repo = makeRepo()
+        ..setColumnError('board-1', 'Connection failed');
+
+      await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      final retryInSheet = find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.text('Retry'),
+      );
+      await tester.tap(retryInSheet);
+      await tester.pumpAndSettle();
     });
   });
 }

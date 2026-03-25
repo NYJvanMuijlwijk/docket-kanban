@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/sheet_body.dart';
+import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/features/board/domain/kanban_column.dart';
 import 'package:kanban_board/features/board/presentation/providers/card_providers.dart';
 import 'package:kanban_board/features/board/presentation/providers/column_providers.dart';
@@ -35,17 +36,9 @@ class ColumnManagementSheet extends ConsumerWidget {
         ),
         const SizedBox(height: 16),
         columnsAsync.when(
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: CircularProgressIndicator(),
-            ),
-          ),
-          error: (error, _) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text('Error: $error'),
-            ),
+          loading: () => const _SheetColumnSkeleton(),
+          error: (_, __) => _SheetErrorContent(
+            onRetry: () => ref.invalidate(columnListProvider(boardId)),
           ),
           data: (columns) {
             if (columns.isEmpty) {
@@ -417,6 +410,81 @@ class _AddColumnFieldState extends ConsumerState<_AddColumnField> {
           tooltip: 'Add column',
         ),
       ],
+    );
+  }
+}
+
+class _SheetColumnSkeleton extends StatelessWidget {
+  const _SheetColumnSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 12),
+      child: ShimmerScope(
+        child: Column(
+          children: [
+            _SkeletonColumnRow(),
+            SizedBox(height: 8),
+            _SkeletonColumnRow(),
+            SizedBox(height: 8),
+            _SkeletonColumnRow(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SkeletonColumnRow extends StatelessWidget {
+  const _SkeletonColumnRow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          ShimmerBlock(width: 24, height: 24, borderRadius: 4),
+          SizedBox(width: 16),
+          ShimmerBlock(width: 140, height: 16, borderRadius: 4),
+        ],
+      ),
+    );
+  }
+}
+
+class _SheetErrorContent extends StatelessWidget {
+  const _SheetErrorContent({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline,
+              size: 36,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Something went wrong',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: onRetry,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
