@@ -88,17 +88,25 @@ class _KanbanCardTile extends ConsumerWidget {
           if (!context.mounted) return;
           switch (result) {
             case CardEdited():
-              await ref
-                  .read(cardListProvider(columnId).notifier)
-                  .updateCard(
-                    id: card.id,
-                    title: result.title,
-                    description: result.description,
-                  );
+              await guardMutation(
+                context,
+                () => ref
+                    .read(cardListProvider(columnId).notifier)
+                    .updateCard(
+                      id: card.id,
+                      title: result.title,
+                      description: result.description,
+                    ),
+                'Failed to update card',
+              );
             case CardDeleted():
-              await ref
-                  .read(cardListProvider(columnId).notifier)
-                  .deleteCard(card.id);
+              await guardMutation(
+                context,
+                () => ref
+                    .read(cardListProvider(columnId).notifier)
+                    .deleteCard(card.id),
+                'Failed to delete card',
+              );
             case null:
               break;
           }
@@ -121,12 +129,16 @@ class _AddCardFooter extends ConsumerWidget {
         onPressed: () async {
           final result = await CardFormSheet.show(context);
           if (result != null && context.mounted) {
-            await ref
-                .read(cardListProvider(columnId).notifier)
-                .createCard(
-                  title: result.title,
-                  description: result.description,
-                );
+            await guardMutation(
+              context,
+              () => ref
+                  .read(cardListProvider(columnId).notifier)
+                  .createCard(
+                    title: result.title,
+                    description: result.description,
+                  ),
+              'Failed to create card',
+            );
           }
         },
         icon: const Icon(Icons.add),
