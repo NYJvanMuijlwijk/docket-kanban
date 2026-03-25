@@ -220,9 +220,13 @@ class _ColumnHeader extends ConsumerWidget {
       initialName: column.name,
     );
     if (newName != null && newName != column.name && context.mounted) {
-      await ref
-          .read(columnListProvider(boardId).notifier)
-          .renameColumn(column.id, newName);
+      await guardMutation(
+        context,
+        () => ref
+            .read(columnListProvider(boardId).notifier)
+            .renameColumn(column.id, newName),
+        'Failed to rename column',
+      );
     }
   }
 
@@ -254,9 +258,13 @@ class _ColumnHeader extends ConsumerWidget {
     );
 
     if (confirmed == true && context.mounted) {
-      await ref
-          .read(columnListProvider(boardId).notifier)
-          .deleteColumn(column.id);
+      await guardMutation(
+        context,
+        () => ref
+            .read(columnListProvider(boardId).notifier)
+            .deleteColumn(column.id),
+        'Failed to delete column',
+      );
     }
   }
 
