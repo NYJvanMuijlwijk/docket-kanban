@@ -106,8 +106,7 @@ class _ReorderableColumnList extends ConsumerWidget {
     WidgetRef ref,
     KanbanColumn column,
   ) async {
-    final cardCount =
-        ref.read(cardListProvider(column.id)).value?.length ?? 0;
+    final cardCount = ref.read(cardListProvider(column.id)).value?.length ?? 0;
     final message = cardCount > 0
         ? "Delete '${column.name}' and its $cardCount "
               '${cardCount == 1 ? 'card' : 'cards'}?'
@@ -156,8 +155,7 @@ class _ReorderableColumnList extends ConsumerWidget {
         // When moving downward, newIndex is one past the actual insertion
         // point because the removed item still occupies its original slot.
         // computeOrderKeyBetween expects post-removal indexing.
-        final adjustedNew =
-            oldIndex < newIndex ? newIndex - 1 : newIndex;
+        final adjustedNew = oldIndex < newIndex ? newIndex - 1 : newIndex;
         await guardMutation(
           context,
           () => ref
@@ -441,15 +439,10 @@ class _SkeletonColumnRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          ShimmerBlock(width: 24, height: 24),
-          SizedBox(width: 16),
-          ShimmerBlock(width: 140, height: 16),
-        ],
-      ),
+    // Uses real ListTile so height, leading gap, and padding match _ColumnRow.
+    return const ListTile(
+      leading: ShimmerBlock(width: 24, height: 24),
+      title: ShimmerBlock(width: 140, height: 16),
     );
   }
 }

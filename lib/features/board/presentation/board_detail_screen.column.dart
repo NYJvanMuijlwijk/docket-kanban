@@ -201,13 +201,12 @@ class _ColumnCardsSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Lightweight skeleton matching _SkeletonCard shape for per-column loading.
     return const ShimmerScope(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ShimmerBlock(width: 200, height: 14),
-          SizedBox(height: 10),
-          ShimmerBlock(width: 160, height: 14),
+          _SkeletonCard(),
+          _SkeletonCard(),
         ],
       ),
     );

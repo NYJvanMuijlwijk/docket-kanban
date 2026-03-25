@@ -162,23 +162,14 @@ class _SkeletonListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ShimmerBlock(width: 180, height: 16),
-                SizedBox(height: 8),
-                ShimmerBlock(width: 120, height: 12),
-              ],
-            ),
-          ),
-          ShimmerBlock(width: 24, height: 24, borderRadius: 12),
-        ],
+    // Uses real ListTile so padding, min-height, and spacing match exactly.
+    return const ListTile(
+      title: ShimmerBlock(width: 180, height: 16),
+      subtitle: Padding(
+        padding: EdgeInsets.only(top: 4),
+        child: ShimmerBlock(width: 120, height: 12),
       ),
+      trailing: ShimmerBlock(width: 24, height: 24, borderRadius: 12),
     );
   }
 }
