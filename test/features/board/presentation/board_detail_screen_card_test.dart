@@ -229,4 +229,52 @@ void main() {
     // Card should still exist
     expect(find.text('Keep Me'), findsOneWidget);
   });
+
+  testWidgets('creating 101st card shows limit SnackBar', (tester) async {
+    final repo = FakeBoardRepository(
+      initialBoards: [
+        Board(
+          id: 'board-1',
+          name: 'Test Board',
+          createdAt: now,
+          updatedAt: now,
+          lastUsedAt: now,
+        ),
+      ],
+    );
+    final column =
+        await repo.createColumn(boardId: 'board-1', name: 'Todo');
+    // Pre-seed 100 cards (the maximum).
+    for (var i = 0; i < 100; i++) {
+      await repo.createCard(columnId: column.id, title: 'Card $i');
+    }
+
+    await tester
+        .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+    await tester.pumpAndSettle();
+
+    // Scroll "Add Card" into view — 100 cards push it far off-screen.
+    await tester.scrollUntilVisible(
+      find.text('Add Card'),
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+
+    // Tap "Add Card"
+    await tester.tap(find.text('Add Card'));
+    await tester.pumpAndSettle();
+
+    // Enter title and submit
+    await tester.enterText(find.byType(TextField).first, 'One Too Many');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    // SnackBar should show the StateError message from the repository
+    expect(
+      find.text('Column already has 100 cards'),
+      findsOneWidget,
+    );
+  });
 }

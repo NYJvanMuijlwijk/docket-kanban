@@ -197,4 +197,32 @@ void main() {
     // Column still there
     expect(find.text('Todo'), findsOneWidget);
   });
+
+  testWidgets('creating 11th column shows limit SnackBar', (tester) async {
+    final repo = makeRepo();
+    // Pre-seed 10 columns (the maximum).
+    for (var i = 0; i < 10; i++) {
+      await repo.createColumn(boardId: 'board-1', name: 'Col $i');
+    }
+
+    await tester
+        .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
+    await tester.pumpAndSettle();
+
+    // Tap FAB to open column form
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    // Enter name and submit
+    await tester.enterText(find.byType(TextField), 'One Too Many');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    // SnackBar should show the StateError message from the repository
+    expect(
+      find.text('Board already has 10 columns'),
+      findsOneWidget,
+    );
+  });
 }
