@@ -23,7 +23,7 @@ Future<void> guardMutation(
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(e.message)),
     );
-  } on Object {
+  } on Exception {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(failureMessage)),
