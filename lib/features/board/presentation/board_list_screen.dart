@@ -42,7 +42,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
           () => ref.read(boardListProvider.notifier).createBoard(name),
           'Failed to create board',
         );
-        await HapticFeedback.mediumImpact();
+        unawaited(HapticFeedback.mediumImpact());
       } finally {
         if (mounted) setState(() => _isMutating = false);
       }
@@ -122,7 +122,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                         ),
                       ),
                       onDismissed: (_) async {
-                        await HapticFeedback.mediumImpact();
+                        unawaited(HapticFeedback.mediumImpact());
                         try {
                           await ref
                               .read(boardListProvider.notifier)

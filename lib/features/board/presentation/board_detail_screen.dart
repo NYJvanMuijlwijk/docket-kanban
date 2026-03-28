@@ -164,7 +164,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
               ),
           'Failed to create card',
         );
-        await HapticFeedback.mediumImpact();
+        unawaited(HapticFeedback.mediumImpact());
       } finally {
         if (mounted) setState(() => _isMutating = false);
       }
