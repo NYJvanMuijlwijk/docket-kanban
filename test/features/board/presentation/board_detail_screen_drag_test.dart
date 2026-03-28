@@ -109,9 +109,10 @@ void main() {
       await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
-      expect(find.text('Todo'), findsOneWidget);
-      expect(find.text('In Progress'), findsOneWidget);
-      expect(find.text('Done'), findsOneWidget);
+      // Column headers render names uppercased.
+      expect(find.text('TODO'), findsOneWidget);
+      expect(find.text('IN PROGRESS'), findsOneWidget);
+      expect(find.text('DONE'), findsOneWidget);
     });
 
     testWidgets('empty column shows "No cards yet" text', (tester) async {

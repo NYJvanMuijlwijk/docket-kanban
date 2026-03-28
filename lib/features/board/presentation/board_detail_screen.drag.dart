@@ -65,7 +65,7 @@ class _InsertionGap extends ConsumerWidget {
   }
 }
 
-/// Accent-colored horizontal line with rounded pill ends.
+/// Accent-colored horizontal line with rounded pill ends and a soft glow.
 class _InsertionLine extends StatelessWidget {
   const _InsertionLine({required this.color});
 
@@ -74,10 +74,17 @@ class _InsertionLine extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 3,
+      height: 4,
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(1.5),
+        borderRadius: BorderRadius.circular(2),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.4),
+            blurRadius: 8,
+            spreadRadius: 1,
+          ),
+        ],
       ),
     );
   }
@@ -155,12 +162,32 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
     );
 
     // Feedback: the widget that follows the pointer.
-    final feedback = Material(
-      elevation: 8,
-      borderRadius: BorderRadius.circular(12),
-      child: SizedBox(
+    // Primary-tinted shadow for depth; slight scale increase.
+    final colorScheme = Theme.of(context).colorScheme;
+    final feedback = Transform.scale(
+      scale: 1.04,
+      child: Container(
         width: widget.columnWidth - _kColumnMarginH * 2,
-        child: Transform.scale(scale: 1.05, child: child),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.primary.withValues(alpha: 0.15),
+              blurRadius: 16,
+              spreadRadius: 2,
+            ),
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          borderRadius: BorderRadius.circular(12),
+          color: colorScheme.surfaceContainerHigh,
+          child: child,
+        ),
       ),
     );
 

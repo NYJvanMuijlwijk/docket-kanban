@@ -110,17 +110,30 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                         ref.invalidate(boardListProvider);
                       }
                     },
-                    child: ListTile(
-                      title: Text(
-                        board.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: _RelativeTimestamp(
-                        dateTime: board.lastUsedAt,
-                      ),
-                      trailing: const Icon(Icons.chevron_right),
-                      onTap: () => context.push('/board/${board.id}'),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          title: Text(
+                            board.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: _RelativeTimestamp(
+                            dateTime: board.lastUsedAt,
+                          ),
+                          trailing: Icon(
+                            Icons.chevron_right,
+                            color:
+                                Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                          onTap: () => context.push('/board/${board.id}'),
+                        ),
+                        const Divider(height: 1, indent: 16, endIndent: 16),
+                      ],
                     ),
                   );
                 },

@@ -140,9 +140,10 @@ void main() {
         .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('Todo'), findsOneWidget);
-    expect(find.text('In Progress'), findsOneWidget);
-    expect(find.text('Done'), findsOneWidget);
+    // Column headers render names uppercased.
+    expect(find.text('TODO'), findsOneWidget);
+    expect(find.text('IN PROGRESS'), findsOneWidget);
+    expect(find.text('DONE'), findsOneWidget);
   });
 
   testWidgets('rename column via popup menu', (tester) async {
@@ -168,7 +169,7 @@ void main() {
     await tester.tap(find.text('Rename'));
     await tester.pumpAndSettle();
 
-    expect(find.text('New Name'), findsOneWidget);
+    expect(find.text('NEW NAME'), findsOneWidget);
   });
 
   testWidgets('delete empty column via popup menu', (tester) async {
@@ -235,7 +236,7 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
 
-    // Column still there
-    expect(find.text('Todo'), findsOneWidget);
+    // Column still there (header renders uppercase).
+    expect(find.text('TODO'), findsOneWidget);
   });
 }

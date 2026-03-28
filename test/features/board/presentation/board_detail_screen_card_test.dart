@@ -107,10 +107,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('No desc'), findsOneWidget);
-    // Only 1 ListTile, it shouldn't have a subtitle widget with text
-    final listTile =
-        tester.widget<ListTile>(find.byType(ListTile).first);
-    expect(listTile.subtitle, isNull);
+    // Card tile uses a custom Column layout — a missing description means
+    // only the title Text widget is present (no second Text child).
+    final cardTexts = find.descendant(
+      of: find.byType(Card),
+      matching: find.byType(Text),
+    );
+    // Title only — no description text rendered.
+    expect(cardTexts, findsOneWidget);
   });
 
   testWidgets('tap card opens detail view with title and description',

@@ -165,7 +165,7 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
         final highlightColor = Color.lerp(
           baseColor,
           colorScheme.primary,
-          0.08,
+          0.14,
         )!;
 
         final reduceMotion = MediaQuery.disableAnimationsOf(context);
@@ -316,20 +316,52 @@ class _ColumnHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(
         left: 16,
         right: 4,
-        top: 8,
-        bottom: 4,
+        top: 10,
+        bottom: 6,
       ),
       child: Row(
         children: [
           Expanded(
-            child: Text(
-              column.name,
-              style: Theme.of(context).textTheme.titleMedium,
-              overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    column.name.toUpperCase(),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          letterSpacing: 1.2,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Card count badge — always visible for at-a-glance density.
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 1,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    '$cardCount',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10,
+                        ),
+                  ),
+                ),
+              ],
             ),
           ),
           PopupMenuButton<_ColumnMenuAction>(

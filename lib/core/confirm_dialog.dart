@@ -20,6 +20,10 @@ Future<bool> showConfirmDeleteDialog(
         ),
         FilledButton(
           onPressed: () => Navigator.of(context).pop(true),
+          style: FilledButton.styleFrom(
+            backgroundColor: Theme.of(context).colorScheme.error,
+            foregroundColor: Theme.of(context).colorScheme.onError,
+          ),
           child: const Text('Delete'),
         ),
       ],
