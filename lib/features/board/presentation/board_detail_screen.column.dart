@@ -333,11 +333,7 @@ class _ColumnHeader extends ConsumerWidget {
                 Flexible(
                   child: Text(
                     column.name.toUpperCase(),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          letterSpacing: 1.2,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    style: Theme.of(context).textTheme.titleMedium,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
