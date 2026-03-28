@@ -10,6 +10,7 @@ class _InsertionGap extends ConsumerWidget {
   const _InsertionGap({
     required this.columnId,
     required this.index,
+    super.key,
   });
 
   final String columnId;
@@ -91,6 +92,7 @@ class _DraggableCardSlot extends ConsumerStatefulWidget {
     required this.boardId,
     required this.autoScroll,
     required this.columnWidth,
+    super.key,
   });
 
   final KanbanCard card;
