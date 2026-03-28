@@ -46,15 +46,18 @@ class _CardListView extends ConsumerWidget {
                 columnId: column.id,
                 index: i,
               ),
-              _DraggableCardSlot(
+              AnimatedListItem(
                 key: ValueKey(cards[i].id),
-                card: cards[i],
-                index: i,
-                columnId: column.id,
-                columnIndex: columnIndex,
-                boardId: boardId,
-                autoScroll: autoScroll,
-                columnWidth: columnWidth,
+                staggerIndex: i,
+                child: _DraggableCardSlot(
+                  card: cards[i],
+                  index: i,
+                  columnId: column.id,
+                  columnIndex: columnIndex,
+                  boardId: boardId,
+                  autoScroll: autoScroll,
+                  columnWidth: columnWidth,
+                ),
               ),
             ],
             // Final gap after last card — allows dropping at end.
