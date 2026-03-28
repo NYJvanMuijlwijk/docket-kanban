@@ -19,6 +19,7 @@ class AnimatedListItem extends StatefulWidget {
     this.staggerDelay = const Duration(milliseconds: 50),
     this.maxStaggerIndex = 8,
     this.slideOffset = 12.0,
+    this.skipAnimation = false,
     super.key,
   });
 
@@ -27,6 +28,11 @@ class AnimatedListItem extends StatefulWidget {
   final Duration duration;
   final Duration staggerDelay;
   final int maxStaggerIndex;
+
+  /// When true, the child renders immediately with no animation.
+  /// Used for items that have already been seen and should not replay
+  /// the entrance animation on provider rebuilds.
+  final bool skipAnimation;
 
   /// Vertical offset in logical pixels. Positive = starts below final position.
   final double slideOffset;
@@ -45,6 +51,8 @@ class _AnimatedListItemState extends State<AnimatedListItem>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_controller != null) return; // Already initialized.
+
+    if (widget.skipAnimation) return; // Already-seen item — no animation.
 
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     if (reduceMotion) return; // Skip — build() renders child directly.
@@ -75,9 +83,11 @@ class _AnimatedListItemState extends State<AnimatedListItem>
     final clampedIndex = widget.staggerIndex.clamp(0, widget.maxStaggerIndex);
     final delay = widget.staggerDelay * clampedIndex;
 
-    unawaited(Future.delayed(delay, () {
-      if (mounted) unawaited(_controller!.forward());
-    }));
+    unawaited(
+      Future.delayed(delay, () {
+        if (mounted) unawaited(_controller!.forward());
+      }),
+    );
   }
 
   @override
@@ -93,16 +103,16 @@ class _AnimatedListItemState extends State<AnimatedListItem>
 
     return AnimatedBuilder(
       animation: _controller!,
+      child: widget.child,
       builder: (context, child) {
         return Transform.translate(
           offset: _slideAnimation.value,
-          child: Opacity(
-            opacity: _fadeAnimation.value,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
             child: child,
           ),
         );
       },
-      child: widget.child,
     );
   }
 }

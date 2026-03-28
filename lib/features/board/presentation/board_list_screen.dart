@@ -20,8 +20,14 @@ class BoardListScreen extends ConsumerStatefulWidget {
 }
 
 class _BoardListScreenState extends ConsumerState<BoardListScreen> {
+  /// Board IDs already rendered at least once. Items not in this set
+  /// get the entrance animation; items already seen render immediately.
+  /// This prevents the stagger animation from replaying on every rebuild
+  /// (e.g., when a new board is added and the provider emits a new list).
+  final Set<String> _seenBoardIds = {};
   bool _isMutating = false;
   bool _isSheetOpen = false;
+  bool _initialLoadDone = false;
 
   Future<void> _createBoard() async {
     if (_isSheetOpen) return;
@@ -87,12 +93,22 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                   ),
                 );
               }
+              final isInitialLoad = !_initialLoadDone;
+              if (!_initialLoadDone) _initialLoadDone = true;
               return ListView.builder(
                 itemCount: boards.length,
                 itemBuilder: (context, index) {
                   final board = boards[index];
+                  final alreadySeen = !_seenBoardIds.add(board.id);
+                  // Initial load: stagger all items. After that: only
+                  // animate items we haven't rendered before.
+                  final shouldAnimate = isInitialLoad || !alreadySeen;
                   return AnimatedListItem(
-                    staggerIndex: index,
+                    key: ValueKey('anim_${board.id}'),
+                    staggerIndex: isInitialLoad ? index : 0,
+                    skipAnimation: !shouldAnimate,
+                    // New boards insert at top — slide down from above.
+                    slideOffset: isInitialLoad ? 12.0 : -12.0,
                     child: Dismissible(
                       key: ValueKey(board.id),
                       direction: DismissDirection.endToStart,
@@ -128,9 +144,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                               board.name,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
+                              style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(fontWeight: FontWeight.w600),
                             ),
                             subtitle: _RelativeTimestamp(
@@ -138,9 +152,9 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                             ),
                             trailing: Icon(
                               Icons.chevron_right,
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurfaceVariant,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                             onTap: () => context.push('/board/${board.id}'),
                           ),
