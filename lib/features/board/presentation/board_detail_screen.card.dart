@@ -34,13 +34,7 @@ class _CardListView extends ConsumerWidget {
       ),
       data: (cards) {
         if (cards.isEmpty) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _InsertionGap(columnId: column.id, index: 0),
-              _ColumnEmptyContent(state: cardsAsync, onRetry: onRetry),
-            ],
-          );
+          return _InsertionGap(columnId: column.id, index: 0);
         }
 
         return Column(

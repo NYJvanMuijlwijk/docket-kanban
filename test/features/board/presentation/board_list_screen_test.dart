@@ -34,6 +34,24 @@ void main() {
     expect(find.text('No boards yet'), findsOneWidget);
   });
 
+  testWidgets('empty state shows Create board button', (tester) async {
+    await tester.pumpWidget(_buildApp());
+    await tester.pumpAndSettle();
+
+    expect(find.widgetWithText(FilledButton, 'Create board'), findsOneWidget);
+  });
+
+  testWidgets('tapping Create board button opens form sheet', (tester) async {
+    await tester.pumpWidget(_buildApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Create board'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('New Board'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
+  });
+
   testWidgets('shows board names when boards exist', (tester) async {
     final now = DateTime.now();
     final repo = FakeBoardRepository(initialBoards: [

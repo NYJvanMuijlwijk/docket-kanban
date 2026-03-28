@@ -206,6 +206,7 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
                   columnWidth: columnWidth,
                 ),
               ),
+              _ColumnAddCardButton(columnId: column.id),
             ],
           ),
         );
@@ -241,12 +242,48 @@ class _ColumnEmptyContent extends StatelessWidget {
                 child: const Text('Retry'),
               ),
             ),
-          _ => const StatusContent(
-              icon: Icons.note_outlined,
-              iconSize: 36,
-              message: 'No cards yet',
-            ),
+          // Unreachable: empty-data case handled by _CardListView directly.
+          _ => const SizedBox.shrink(),
         },
+      ),
+    );
+  }
+}
+
+class _ColumnAddCardButton extends ConsumerWidget {
+  const _ColumnAddCardButton({required this.columnId});
+
+  final String columnId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cardsAsync = ref.watch(cardListProvider(columnId));
+    // Hide when cards failed to load — the error state has its own retry.
+    if (cardsAsync is AsyncError) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: SizedBox(
+        width: double.infinity,
+        child: TextButton.icon(
+          onPressed: () async {
+            final result = await CardFormSheet.show(context);
+            if (result != null && context.mounted) {
+              await guardMutation(
+                context,
+                () => ref
+                    .read(cardListProvider(columnId).notifier)
+                    .createCard(
+                      title: result.title,
+                      description: result.description,
+                    ),
+                'Failed to create card',
+              );
+            }
+          },
+          icon: const Icon(Icons.add, size: 18),
+          label: const Text('Add Card'),
+        ),
       ),
     );
   }

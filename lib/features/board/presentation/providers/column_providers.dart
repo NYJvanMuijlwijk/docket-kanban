@@ -21,6 +21,15 @@ class ColumnList extends _$ColumnList {
     return repository.createColumn(boardId: boardId, name: name);
   }
 
+  /// Creates Todo / In Progress / Done columns for a new board.
+  /// Sequential calls — Hive writes are sub-millisecond each.
+  Future<void> createTemplateColumns() async {
+    const names = ['Todo', 'In Progress', 'Done'];
+    for (final name in names) {
+      await createColumn(name);
+    }
+  }
+
   Future<void> renameColumn(String id, String newName) async {
     final repository = ref.read(boardRepositoryProvider);
     final column = await repository.getColumn(id);

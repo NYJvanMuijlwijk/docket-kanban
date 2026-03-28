@@ -74,9 +74,14 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
             ),
             data: (boards) {
               if (boards.isEmpty) {
-                return const StatusContent(
+                return StatusContent(
                   icon: Icons.dashboard_outlined,
                   message: 'No boards yet',
+                  action: FilledButton.icon(
+                    onPressed: _isMutating ? null : _createBoard,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Create board'),
+                  ),
                 );
               }
               return ListView.builder(

@@ -252,10 +252,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
             ),
             data: (columns) {
               if (columns.isEmpty) {
-                return const StatusContent(
-                  icon: Icons.view_column_outlined,
-                  message: 'No columns yet',
-                );
+                return _EmptyBoardContent(boardId: widget.boardId);
               }
               return _BoardScrollView(
                 boardId: widget.boardId,
@@ -265,6 +262,72 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Empty state shown when a board has no columns. Offers a one-tap
+/// template setup (Todo / In Progress / Done) or manual column management.
+class _EmptyBoardContent extends ConsumerStatefulWidget {
+  const _EmptyBoardContent({required this.boardId});
+
+  final String boardId;
+
+  @override
+  ConsumerState<_EmptyBoardContent> createState() =>
+      _EmptyBoardContentState();
+}
+
+class _EmptyBoardContentState extends ConsumerState<_EmptyBoardContent> {
+  bool _isMutating = false;
+
+  Future<void> _createTemplate() async {
+    setState(() => _isMutating = true);
+    try {
+      await guardMutation(
+        context,
+        () => ref
+            .read(columnListProvider(widget.boardId).notifier)
+            .createTemplateColumns(),
+        'Failed to create columns',
+      );
+    } finally {
+      if (mounted) setState(() => _isMutating = false);
+    }
+  }
+
+  Future<void> _openManageColumns() async {
+    await ColumnManagementSheet.show(context, boardId: widget.boardId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StatusContent(
+            icon: Icons.view_column_outlined,
+            message: 'No columns yet',
+            action: FilledButton.icon(
+              onPressed: _isMutating ? null : _createTemplate,
+              icon: _isMutating
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.auto_awesome_outlined),
+              label: const Text('Start with defaults'),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: _isMutating ? null : _openManageColumns,
+            child: const Text('Or add columns manually'),
+          ),
+        ],
+      ),
     );
   }
 }
