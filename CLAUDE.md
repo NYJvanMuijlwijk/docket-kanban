@@ -95,3 +95,26 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 - Riverpod 3.x `ConsumerStatefulElement` asserts `ref` not used after deactivation — crashes in `dispose()`, not just a warning.
 - `very_good_analysis` treats `info`-level diagnostics as failures (`flutter analyze` exits 1). Fix all infos, not just warnings.
 - Flutter widget tests: `tester.pump(duration)` advances `Timer`/`Future` scheduling but NOT `DateTime.now()`. Tests that depend on wall-clock changes need `clock` package or must verify rebuild happened, not time-dependent text.
+
+## Design Context
+
+### Users
+Solo developer using this as a personal task management tool. Also a portfolio piece showcasing Flutter expertise. The user is the only audience — no collaboration features yet.
+
+### Brand Personality
+Minimal, focused, calm. A zen productivity tool that stays out of the way.
+
+### Aesthetic Direction
+- **References:** Linear (dark palette, developer-focused hierarchy), Vercel Dashboard (restrained color, monospace touches), Raycast and Warp (subtle opacity/translucency layers for depth)
+- **Anti-references:** Jira/Trello (cluttered enterprise chrome), Monday.com/Asana (too colorful, too playful, too much visual noise)
+- **Theme:** Dark-mode-first. Muted blueGrey seed. Depth via subtle opacity differences rather than borders or shadows. Content breathes with generous whitespace.
+
+### Design Principles
+1. **Content over chrome** — UI elements recede; cards and columns are the focus.
+2. **Depth through opacity** — Layer surfaces using subtle alpha differences, not drop shadows or heavy borders.
+3. **Restrained color** — One accent color used sparingly for actions/state. Everything else is neutral.
+4. **Let it breathe** — Generous spacing and padding. Resist the urge to fill empty space.
+5. **Developer-grade polish** — Smooth animations, crisp typography, keyboard-friendly. Feels like a tool built by a developer for developers.
+
+### Accessibility
+Standard Material 3 defaults — M3 contrast ratios, touch targets, and semantic labels.
