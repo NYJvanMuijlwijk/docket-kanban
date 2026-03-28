@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart' show immutable;
+import 'package:flutter/services.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -71,6 +72,7 @@ class KanbanDragController extends _$KanbanDragController {
       originalIndex: originalIndex,
       hoverColumnId: sourceColumnId,
     );
+    HapticFeedback.lightImpact();
   }
 
   void updateHover({
@@ -104,6 +106,7 @@ class KanbanDragController extends _$KanbanDragController {
       hoverColumnId: columnId,
       hoverIndex: suppressedIndex,
     );
+    HapticFeedback.selectionClick();
   }
 
   void endDrag() {
