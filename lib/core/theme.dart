@@ -25,6 +25,25 @@ const _error = Color(0xFFE5736E); // warm red — destructive
 const _onError = Color(0xFF1A0F0F);
 const _errorContainer = Color(0xFF3D1F1D);
 
+// ── Column accent palette ─────────────────────────────────────────────
+// Six muted colors that sit comfortably against dark surfaces.
+// Deterministic rotation: column index % 6 picks the accent.
+// Kept desaturated to avoid fighting the zen aesthetic — these are
+// wayfinding cues, not primary UI chrome.
+const _columnAccents = <Color>[
+  Color(0xFF7CA8C6), // steel blue
+  Color(0xFF8EBD9E), // sage green
+  Color(0xFFC49A6C), // warm clay
+  Color(0xFFB08FC2), // muted lavender
+  Color(0xFFC27878), // dusty rose
+  Color(0xFF7AB5A0), // seafoam
+];
+
+/// Returns a muted accent color for a column based on its position index.
+/// Deterministic: same index always yields same color (modulo palette size).
+Color columnAccentColor(int index) =>
+    _columnAccents[index % _columnAccents.length];
+
 /// App theme — Material 3, dark-mode-first, minimal/zen aesthetic.
 ///
 /// Custom [ColorScheme.dark] for deliberate surface layering and a

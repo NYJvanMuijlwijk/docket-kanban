@@ -97,7 +97,8 @@ void main() {
       expect(icon.color, Colors.red);
     });
 
-    testWidgets('defaults iconColor to onSurfaceVariant', (tester) async {
+    testWidgets('defaults iconColor to warm-tinted onSurfaceVariant',
+        (tester) async {
       await tester.pumpWidget(_wrap(
         const StatusContent(
           icon: Icons.dashboard_outlined,
@@ -106,8 +107,14 @@ void main() {
       ));
 
       final theme = buildDarkTheme();
-      final icon = tester.widget<Icon>(find.byIcon(Icons.dashboard_outlined));
-      expect(icon.color, theme.colorScheme.onSurfaceVariant);
+      final expected = Color.lerp(
+        theme.colorScheme.onSurfaceVariant,
+        theme.colorScheme.primary,
+        0.25,
+      );
+      final icon =
+          tester.widget<Icon>(find.byIcon(Icons.dashboard_outlined));
+      expect(icon.color, expected);
     });
 
     testWidgets('wraps in Padding when padding is provided', (tester) async {

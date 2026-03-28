@@ -10,6 +10,7 @@ import 'package:kanban_board/core/responsive.dart';
 import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/core/status_content.dart';
 import 'package:kanban_board/core/string_utils.dart';
+import 'package:kanban_board/core/theme.dart';
 import 'package:kanban_board/features/board/domain/board_repository.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:kanban_board/features/board/domain/kanban_column.dart';
