@@ -18,24 +18,8 @@ class BoardListScreen extends ConsumerStatefulWidget {
 }
 
 class _BoardListScreenState extends ConsumerState<BoardListScreen> {
-  late final Timer _refreshTimer;
   bool _isMutating = false;
   bool _isSheetOpen = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _refreshTimer = Timer.periodic(
-      const Duration(seconds: 60),
-      (_) => setState(() {}),
-    );
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer.cancel();
-    super.dispose();
-  }
 
   Future<void> _createBoard() async {
     if (_isSheetOpen) return;
@@ -54,17 +38,6 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
         if (mounted) setState(() => _isMutating = false);
       }
     }
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final diff = date.isAfter(now) ? Duration.zero : now.difference(date);
-
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${date.month}/${date.day}/${date.year}';
   }
 
   @override
@@ -143,8 +116,8 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      subtitle: Text(
-                        'Last used ${_formatDate(board.lastUsedAt)}',
+                      subtitle: _RelativeTimestamp(
+                        dateTime: board.lastUsedAt,
                       ),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: () => context.push('/board/${board.id}'),
@@ -193,5 +166,59 @@ class _SkeletonListTile extends StatelessWidget {
       ),
       trailing: ShimmerBlock(width: 24, height: 24, borderRadius: 12),
     );
+  }
+}
+
+/// Self-contained timestamp that refreshes itself every 60 seconds.
+/// Each instance owns its own [Timer], scoping rebuilds to just the text.
+class _RelativeTimestamp extends StatefulWidget {
+  const _RelativeTimestamp({required this.dateTime});
+
+  final DateTime dateTime;
+
+  @override
+  State<_RelativeTimestamp> createState() => _RelativeTimestampState();
+}
+
+class _RelativeTimestampState extends State<_RelativeTimestamp> {
+  late final Timer _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(
+      const Duration(seconds: 60),
+      (_) => setState(() {}),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final diff = widget.dateTime.isAfter(now)
+        ? Duration.zero
+        : now.difference(widget.dateTime);
+
+    final String label;
+    if (diff.inMinutes < 1) {
+      label = 'just now';
+    } else if (diff.inHours < 1) {
+      label = '${diff.inMinutes}m ago';
+    } else if (diff.inDays < 1) {
+      label = '${diff.inHours}h ago';
+    } else if (diff.inDays < 7) {
+      label = '${diff.inDays}d ago';
+    } else {
+      label =
+          '${widget.dateTime.month}/${widget.dateTime.day}/${widget.dateTime.year}';
+    }
+
+    return Text('Last used $label');
   }
 }

@@ -45,8 +45,13 @@ class _CardListView extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             for (var i = 0; i < cards.length; i++) ...[
-              _InsertionGap(columnId: column.id, index: i),
+              _InsertionGap(
+                key: ValueKey('gap-${column.id}-$i'),
+                columnId: column.id,
+                index: i,
+              ),
               _DraggableCardSlot(
+                key: ValueKey(cards[i].id),
                 card: cards[i],
                 index: i,
                 columnId: column.id,
@@ -56,7 +61,11 @@ class _CardListView extends ConsumerWidget {
               ),
             ],
             // Final gap after last card — allows dropping at end.
-            _InsertionGap(columnId: column.id, index: cards.length),
+            _InsertionGap(
+              key: ValueKey('gap-${column.id}-${cards.length}'),
+              columnId: column.id,
+              index: cards.length,
+            ),
           ],
         );
       },
