@@ -36,7 +36,17 @@ class _ShimmerScopeState extends State<ShimmerScope>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     );
-    unawaited(_controller.repeat());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    if (reduceMotion) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      unawaited(_controller.repeat());
+    }
   }
 
   @override

@@ -299,7 +299,7 @@ void main() {
       expect(controller?.text, isEmpty);
     });
 
-    testWidgets('adding 11th column shows limit snackbar', (tester) async {
+    testWidgets('add button is disabled at column limit', (tester) async {
       final repo = makeRepo();
       // Seed 10 columns (the maximum).
       await seedColumns(repo, count: 10);
@@ -309,19 +309,19 @@ void main() {
 
       await _openManageColumnsSheet(tester);
 
-      // Try to add an 11th column.
+      // Enter text — button should still be disabled at limit.
       final addField = find.widgetWithText(TextField, 'Column name');
       await tester.enterText(addField, 'One Too Many');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byTooltip('Add column'));
-      await tester.pumpAndSettle();
-
-      // SnackBar should show limit message.
-      expect(
-        find.text('Board already has 10 columns'),
-        findsOneWidget,
+      // The add button should be disabled (onPressed == null).
+      final addButton = tester.widget<IconButton>(
+        find.ancestor(
+          of: find.byIcon(Icons.add),
+          matching: find.byType(IconButton),
+        ),
       );
+      expect(addButton.onPressed, isNull);
     });
 
     testWidgets('empty text field disables add button', (tester) async {

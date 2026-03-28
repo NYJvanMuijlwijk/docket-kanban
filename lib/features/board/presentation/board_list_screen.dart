@@ -20,6 +20,7 @@ class BoardListScreen extends ConsumerStatefulWidget {
 class _BoardListScreenState extends ConsumerState<BoardListScreen> {
   late final Timer _refreshTimer;
   bool _isMutating = false;
+  bool _isSheetOpen = false;
 
   @override
   void initState() {
@@ -37,7 +38,10 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
   }
 
   Future<void> _createBoard() async {
+    if (_isSheetOpen) return;
+    _isSheetOpen = true;
     final name = await BoardFormSheet.show(context);
+    _isSheetOpen = false;
     if (name != null && mounted) {
       setState(() => _isMutating = true);
       try {
@@ -134,7 +138,11 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                       }
                     },
                     child: ListTile(
-                      title: Text(board.name),
+                      title: Text(
+                        board.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       subtitle: Text(
                         'Last used ${_formatDate(board.lastUsedAt)}',
                       ),

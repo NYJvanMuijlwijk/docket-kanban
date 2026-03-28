@@ -5,6 +5,7 @@ import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/sheet_body.dart';
 import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/core/status_content.dart';
+import 'package:kanban_board/core/string_utils.dart';
 import 'package:kanban_board/features/board/domain/kanban_column.dart';
 import 'package:kanban_board/features/board/presentation/providers/card_providers.dart';
 import 'package:kanban_board/features/board/presentation/providers/column_providers.dart';
@@ -71,7 +72,11 @@ class ColumnManagementSheet extends ConsumerWidget {
           },
         ),
         const Divider(),
-        _AddColumnField(boardId: boardId),
+        _AddColumnField(
+          boardId: boardId,
+          atLimit:
+              (columnsAsync.value?.length ?? 0) >= maxColumnsPerBoard,
+        ),
       ],
     );
   }
@@ -94,7 +99,7 @@ class _SheetHeader extends StatelessWidget {
           ),
         ),
         Text(
-          '$columnCount / 10',
+          '$columnCount / $maxColumnsPerBoard',
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -119,10 +124,11 @@ class _ReorderableColumnList extends ConsumerWidget {
     KanbanColumn column,
   ) async {
     final cardCount = ref.read(cardListProvider(column.id)).value?.length ?? 0;
+    final displayName = truncateForDisplay(column.name);
     final message = cardCount > 0
-        ? "Delete '${column.name}' and its $cardCount "
+        ? "Delete '$displayName' and its $cardCount "
               '${cardCount == 1 ? 'card' : 'cards'}?'
-        : "Delete '${column.name}'?";
+        : "Delete '$displayName'?";
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -309,9 +315,12 @@ class _ColumnRowState extends State<_ColumnRow> {
         child: Icon(Icons.delete, color: colorScheme.onError),
       ),
       child: ListTile(
-        leading: ReorderableDragStartListener(
-          index: widget.index,
-          child: const Icon(Icons.drag_handle),
+        leading: Tooltip(
+          message: 'Reorder column',
+          child: ReorderableDragStartListener(
+            index: widget.index,
+            child: const Icon(Icons.drag_handle),
+          ),
         ),
         title: _isEditing
             ? KeyboardListener(
@@ -347,9 +356,10 @@ class _ColumnRowState extends State<_ColumnRow> {
 }
 
 class _AddColumnField extends ConsumerStatefulWidget {
-  const _AddColumnField({required this.boardId});
+  const _AddColumnField({required this.boardId, required this.atLimit});
 
   final String boardId;
+  final bool atLimit;
 
   @override
   ConsumerState<_AddColumnField> createState() => _AddColumnFieldState();
@@ -366,13 +376,19 @@ class _AddColumnFieldState extends ConsumerState<_AddColumnField> {
   }
 
   @override
+  void didUpdateWidget(_AddColumnField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.atLimit != widget.atLimit) _onChanged();
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
 
   void _onChanged() {
-    final valid = _controller.text.trim().isNotEmpty;
+    final valid = _controller.text.trim().isNotEmpty && !widget.atLimit;
     if (valid != _isValid) {
       setState(() => _isValid = valid);
     }
@@ -380,7 +396,7 @@ class _AddColumnFieldState extends ConsumerState<_AddColumnField> {
 
   Future<void> _submit() async {
     final name = _controller.text.trim();
-    if (name.isEmpty) return;
+    if (name.isEmpty || widget.atLimit) return;
 
     await guardMutation(
       context,

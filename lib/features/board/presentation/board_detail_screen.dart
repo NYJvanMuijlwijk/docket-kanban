@@ -8,6 +8,7 @@ import 'package:kanban_board/core/reorder_helpers.dart';
 import 'package:kanban_board/core/responsive.dart';
 import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/core/status_content.dart';
+import 'package:kanban_board/core/string_utils.dart';
 import 'package:kanban_board/features/board/domain/board_repository.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:kanban_board/features/board/domain/kanban_column.dart';
@@ -49,6 +50,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
   late final BoardRepository _repository;
   bool _hasStamped = false;
   bool _isMutating = false;
+  bool _isSheetOpen = false;
 
   @override
   void initState() {
@@ -132,6 +134,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
   }
 
   Future<void> _addCardToFirstColumn() async {
+    if (_isSheetOpen) return;
     final columns = ref.read(columnListProvider(widget.boardId)).value;
     if (columns == null || columns.isEmpty) {
       if (!mounted) return;
@@ -140,7 +143,9 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
       );
       return;
     }
+    _isSheetOpen = true;
     final result = await CardFormSheet.show(context);
+    _isSheetOpen = false;
     if (result != null && mounted) {
       setState(() => _isMutating = true);
       try {
@@ -189,7 +194,10 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(board.name),
+            title: Text(
+              board.name,
+              overflow: TextOverflow.ellipsis,
+            ),
             actions: [
               PopupMenuButton<_BoardMenuAction>(
                 onSelected: (action) async {
@@ -219,6 +227,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: _isMutating ? null : _addCardToFirstColumn,
+            tooltip: 'Add card to first column',
             child: _isMutating
                 ? const SizedBox(
                     width: 24,
