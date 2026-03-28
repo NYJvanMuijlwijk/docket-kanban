@@ -7,8 +7,6 @@ void main() {
     testWidgets('renders child immediately when reduce motion is on', (
       tester,
     ) async {
-      // MediaQuery.disableAnimationsOf returns true when
-      // disableAnimations is set.
       await tester.pumpWidget(
         const MediaQuery(
           data: MediaQueryData(disableAnimations: true),
@@ -26,15 +24,46 @@ void main() {
       // Should be visible immediately — no animation.
       expect(find.text('Hello'), findsOneWidget);
 
-      // Opacity wrapper should NOT be present (no controller allocated).
+      // No FadeTransition under AnimatedListItem when reduce-motion is active.
+      // (MaterialApp's route transitions also use FadeTransition, so scope.)
       expect(
-        find.byType(Opacity),
+        find.descendant(
+          of: find.byType(AnimatedListItem),
+          matching: find.byType(FadeTransition),
+        ),
         findsNothing,
-        reason: 'Reduce-motion skips animation entirely',
+        reason: 'Reduce-motion skips animation entirely — no controller',
       );
     });
 
-    testWidgets('starts invisible and fades in with animation', (
+    testWidgets('renders child immediately when skipAnimation is true', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: AnimatedListItem(
+              staggerIndex: 0,
+              skipAnimation: true,
+              child: Text('Skipped'),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Skipped'), findsOneWidget);
+
+      expect(
+        find.descendant(
+          of: find.byType(AnimatedListItem),
+          matching: find.byType(FadeTransition),
+        ),
+        findsNothing,
+        reason: 'skipAnimation bypasses controller allocation',
+      );
+    });
+
+    testWidgets('starts invisible and fades/slides in with animation', (
       tester,
     ) async {
       await tester.pumpWidget(
@@ -49,16 +78,34 @@ void main() {
         ),
       );
 
-      // Initial state: opacity 0.
-      final opacityBefore = tester.widget<Opacity>(find.byType(Opacity));
-      expect(opacityBefore.opacity, 0.0);
+      // Scope finders to AnimatedListItem subtree to avoid route transitions.
+      final itemFinder = find.byType(AnimatedListItem);
+
+      // Initial state: opacity 0, offset below final position.
+      final fadeBefore = tester.widget<FadeTransition>(
+        find.descendant(of: itemFinder, matching: find.byType(FadeTransition)),
+      );
+      expect(fadeBefore.opacity.value, 0.0);
+
+      final transformBefore = tester.widget<Transform>(
+        find.descendant(of: itemFinder, matching: find.byType(Transform)),
+      );
+      // Default slideOffset is 12.0 — starts below.
+      expect(transformBefore.transform.getTranslation().y, 12.0);
 
       // Advance past animation duration.
       await tester.pumpAndSettle();
 
-      // Final state: opacity 1.
-      final opacityAfter = tester.widget<Opacity>(find.byType(Opacity));
-      expect(opacityAfter.opacity, 1.0);
+      // Final state: fully visible at origin.
+      final fadeAfter = tester.widget<FadeTransition>(
+        find.descendant(of: itemFinder, matching: find.byType(FadeTransition)),
+      );
+      expect(fadeAfter.opacity.value, 1.0);
+
+      final transformAfter = tester.widget<Transform>(
+        find.descendant(of: itemFinder, matching: find.byType(Transform)),
+      );
+      expect(transformAfter.transform.getTranslation().y, 0.0);
     });
 
     testWidgets('stagger delays animation start by index', (tester) async {
@@ -94,26 +141,32 @@ void main() {
       await tester.pump(const Duration(milliseconds: 16));
       await tester.pump(const Duration(milliseconds: 16));
 
-      final firstOpacity = tester.widget<Opacity>(
-        find.ancestor(
-          of: find.text('First'),
-          matching: find.byType(Opacity),
+      final firstFade = tester.widget<FadeTransition>(
+        find.descendant(
+          of: find.ancestor(
+            of: find.text('First'),
+            matching: find.byType(AnimatedListItem),
+          ),
+          matching: find.byType(FadeTransition),
         ),
       );
       expect(
-        firstOpacity.opacity,
+        firstFade.opacity.value,
         greaterThan(0),
         reason: 'First item (index 0) should have started animating',
       );
 
-      final fourthOpacity = tester.widget<Opacity>(
-        find.ancestor(
-          of: find.text('Fourth'),
-          matching: find.byType(Opacity),
+      final fourthFade = tester.widget<FadeTransition>(
+        find.descendant(
+          of: find.ancestor(
+            of: find.text('Fourth'),
+            matching: find.byType(AnimatedListItem),
+          ),
+          matching: find.byType(FadeTransition),
         ),
       );
       expect(
-        fourthOpacity.opacity,
+        fourthFade.opacity.value,
         0.0,
         reason: 'Fourth item (index 3, 300ms delay) should not have started',
       );
@@ -140,8 +193,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 700));
       await tester.pumpAndSettle();
 
-      final opacity = tester.widget<Opacity>(find.byType(Opacity));
-      expect(opacity.opacity, 1.0);
+      final fade = tester.widget<FadeTransition>(
+        find.descendant(
+          of: find.byType(AnimatedListItem),
+          matching: find.byType(FadeTransition),
+        ),
+      );
+      expect(fade.opacity.value, 1.0);
     });
   });
 }

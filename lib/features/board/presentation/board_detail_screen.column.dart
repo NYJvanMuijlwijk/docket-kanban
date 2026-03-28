@@ -279,7 +279,7 @@ class _ColumnAddCardButton extends ConsumerWidget {
                     ),
                 'Failed to create card',
               );
-              await HapticFeedback.mediumImpact();
+              unawaited(HapticFeedback.mediumImpact());
             }
           },
           icon: const Icon(Icons.add, size: 18),

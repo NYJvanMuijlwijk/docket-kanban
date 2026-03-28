@@ -23,6 +23,14 @@ Future<void> guardMutation(
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(e.message)),
     );
+  // ArgumentError: repository "not found" cases (e.g., race between read
+  // and update). Show generic message — the ArgumentError detail is internal.
+  // ignore: avoid_catching_errors
+  } on ArgumentError {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(failureMessage)),
+    );
   } on Exception {
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
