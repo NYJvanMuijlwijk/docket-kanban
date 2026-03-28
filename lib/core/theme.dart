@@ -68,7 +68,7 @@ ThemeData buildDarkTheme() {
     ),
     cardTheme: const CardThemeData(
       elevation: 0,
-      margin: EdgeInsets.symmetric(vertical: 3),
+      margin: EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       color: _surfaceContainerHigh,
     ),
     filledButtonTheme: FilledButtonThemeData(

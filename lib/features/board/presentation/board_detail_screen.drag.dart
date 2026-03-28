@@ -183,10 +183,15 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
             ),
           ],
         ),
-        child: Material(
-          borderRadius: BorderRadius.circular(12),
-          color: colorScheme.surfaceContainerHigh,
-          child: child,
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            cardTheme: const CardThemeData(margin: EdgeInsets.zero),
+          ),
+          child: Material(
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.transparent,
+            child: child,
+          ),
         ),
       ),
     );
