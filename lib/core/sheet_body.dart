@@ -18,10 +18,12 @@ class SheetBody extends StatelessWidget {
     final viewInsets = MediaQuery.viewInsetsOf(context);
     final padding = MediaQuery.paddingOf(context);
     final bottomInset = math.max(viewInsets.bottom, padding.bottom);
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final horizontalPad = screenWidth < kCompactBreakpoint ? 16.0 : 24.0;
     return Padding(
       padding: EdgeInsets.only(
-        left: 24,
-        right: 24,
+        left: horizontalPad,
+        right: horizontalPad,
         top: 24,
         bottom: bottomInset + 24,
       ),
