@@ -343,5 +343,6 @@ void _executeDrop(WidgetRef ref, String targetColumnId) {
     );
   }
 
+  HapticFeedback.mediumImpact();
   ref.read(kanbanDragControllerProvider.notifier).endDrag();
 }
