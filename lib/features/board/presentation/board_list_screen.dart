@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:kanban_board/core/animated_list_item.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/responsive.dart';
 import 'package:kanban_board/core/shimmer.dart';
@@ -88,57 +89,60 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                 itemCount: boards.length,
                 itemBuilder: (context, index) {
                   final board = boards[index];
-                  return Dismissible(
-                    key: ValueKey(board.id),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 24),
-                      color: Theme.of(context).colorScheme.error,
-                      child: Icon(
-                        Icons.delete,
-                        color: Theme.of(context).colorScheme.onError,
-                      ),
-                    ),
-                    onDismissed: (_) async {
-                      try {
-                        await ref
-                            .read(boardListProvider.notifier)
-                            .deleteBoard(board.id);
-                      } on Object {
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Failed to delete board'),
-                          ),
-                        );
-                        ref.invalidate(boardListProvider);
-                      }
-                    },
-                    child: Column(
-                      children: [
-                        ListTile(
-                          title: Text(
-                            board.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyLarge
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: _RelativeTimestamp(
-                            dateTime: board.lastUsedAt,
-                          ),
-                          trailing: Icon(
-                            Icons.chevron_right,
-                            color:
-                                Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
-                          onTap: () => context.push('/board/${board.id}'),
+                  return AnimatedListItem(
+                    staggerIndex: index,
+                    child: Dismissible(
+                      key: ValueKey(board.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 24),
+                        color: Theme.of(context).colorScheme.error,
+                        child: Icon(
+                          Icons.delete,
+                          color: Theme.of(context).colorScheme.onError,
                         ),
-                        const Divider(height: 1, indent: 16, endIndent: 16),
-                      ],
+                      ),
+                      onDismissed: (_) async {
+                        try {
+                          await ref
+                              .read(boardListProvider.notifier)
+                              .deleteBoard(board.id);
+                        } on Object {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to delete board'),
+                            ),
+                          );
+                          ref.invalidate(boardListProvider);
+                        }
+                      },
+                      child: Column(
+                        children: [
+                          ListTile(
+                            title: Text(
+                              board.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                            subtitle: _RelativeTimestamp(
+                              dateTime: board.lastUsedAt,
+                            ),
+                            trailing: Icon(
+                              Icons.chevron_right,
+                              color:
+                                  Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                            onTap: () => context.push('/board/${board.id}'),
+                          ),
+                          const Divider(height: 1, indent: 16, endIndent: 16),
+                        ],
+                      ),
                     ),
                   );
                 },
