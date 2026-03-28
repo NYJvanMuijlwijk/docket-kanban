@@ -168,8 +168,11 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
           0.08,
         )!;
 
+        final reduceMotion = MediaQuery.disableAnimationsOf(context);
         return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+          duration: reduceMotion
+              ? Duration.zero
+              : const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
           width: columnWidth,
           constraints: BoxConstraints(minHeight: minHeight),
@@ -294,10 +297,11 @@ class _ColumnHeader extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
+    final displayName = truncateForDisplay(column.name);
     final message = cardCount > 0
-        ? "Delete '${column.name}' and its $cardCount "
+        ? "Delete '$displayName' and its $cardCount "
               '${cardCount == 1 ? 'card' : 'cards'}?'
-        : "Delete '${column.name}'?";
+        : "Delete '$displayName'?";
 
     final confirmed = await showDialog<bool>(
       context: context,

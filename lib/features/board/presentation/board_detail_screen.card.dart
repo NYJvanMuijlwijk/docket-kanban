@@ -81,7 +81,11 @@ class _KanbanCardTile extends ConsumerWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        title: Text(card.title),
+        title: Text(
+          card.title,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
         subtitle: card.description.isNotEmpty
             ? Text(
                 card.description,

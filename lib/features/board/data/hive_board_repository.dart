@@ -19,7 +19,6 @@ class HiveBoardRepository implements BoardRepository {
   static const boxName = 'boards';
   static const columnBoxName = 'columns';
   static const cardBoxName = 'cards';
-  static const maxColumnsPerBoard = 10;
   static const maxCardsPerColumn = 100;
 
   final Box<Map<dynamic, dynamic>> _boardBox;

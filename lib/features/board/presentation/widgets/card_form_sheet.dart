@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kanban_board/core/sheet_body.dart';
+import 'package:kanban_board/core/string_utils.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
 
 const _maxTitleLength = 100;
@@ -184,7 +185,7 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Card'),
-        content: Text("Delete '${widget.card.title}'?"),
+        content: Text("Delete '${truncateForDisplay(widget.card.title)}'?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -249,6 +250,8 @@ class _CardDetailView extends StatelessWidget {
               child: Text(
                 card.title,
                 style: theme.textTheme.titleLarge,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             IconButton(

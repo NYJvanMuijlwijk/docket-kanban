@@ -39,12 +39,14 @@ class _InsertionGap extends ConsumerWidget {
       // No-op — hover state managed by updateHover(), not by leave events.
       onLeave: (_) {},
       builder: (context, accepted, rejected) {
+        final reduceMotion = MediaQuery.disableAnimationsOf(context);
+        final duration = reduceMotion ? Duration.zero : _animDuration;
         return AnimatedContainer(
-          duration: _animDuration,
+          duration: duration,
           curve: Curves.easeInOut,
           height: isActive ? _gapHeight : 0,
           child: AnimatedOpacity(
-            duration: _animDuration,
+            duration: duration,
             curve: Curves.easeInOut,
             opacity: isActive ? 1.0 : 0.0,
             child: Center(
