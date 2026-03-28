@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,7 +155,7 @@ class _ReorderableColumnList extends ConsumerWidget {
       shrinkWrap: true,
       itemCount: columns.length,
       onReorder: (oldIndex, newIndex) async {
-        HapticFeedback.selectionClick();
+        unawaited(HapticFeedback.selectionClick());
         // Flutter's ReorderableListView provides pre-removal indices.
         // When moving downward, newIndex is one past the actual insertion
         // point because the removed item still occupies its original slot.

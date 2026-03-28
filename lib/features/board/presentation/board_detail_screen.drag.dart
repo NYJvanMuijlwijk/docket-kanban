@@ -100,7 +100,6 @@ class _DraggableCardSlot extends ConsumerStatefulWidget {
     required this.boardId,
     required this.autoScroll,
     required this.columnWidth,
-    super.key,
   });
 
   final KanbanCard card;
@@ -343,6 +342,6 @@ void _executeDrop(WidgetRef ref, String targetColumnId) {
     );
   }
 
-  HapticFeedback.mediumImpact();
+  unawaited(HapticFeedback.mediumImpact());
   ref.read(kanbanDragControllerProvider.notifier).endDrag();
 }

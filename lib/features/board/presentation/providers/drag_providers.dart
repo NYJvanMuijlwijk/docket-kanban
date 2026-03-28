@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show immutable;
 import 'package:flutter/services.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
@@ -72,7 +74,7 @@ class KanbanDragController extends _$KanbanDragController {
       originalIndex: originalIndex,
       hoverColumnId: sourceColumnId,
     );
-    HapticFeedback.lightImpact();
+    unawaited(HapticFeedback.lightImpact());
   }
 
   void updateHover({
@@ -106,7 +108,7 @@ class KanbanDragController extends _$KanbanDragController {
       hoverColumnId: columnId,
       hoverIndex: suppressedIndex,
     );
-    HapticFeedback.selectionClick();
+    unawaited(HapticFeedback.selectionClick());
   }
 
   void endDrag() {
