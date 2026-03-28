@@ -115,14 +115,14 @@ void main() {
       expect(find.text('DONE'), findsOneWidget);
     });
 
-    testWidgets('empty column shows "No cards yet" text', (tester) async {
+    testWidgets('empty column shows Add Card button', (tester) async {
       final repo = makeRepoWithBoard();
       await repo.createColumn(boardId: 'board-1', name: 'Empty Column');
 
       await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
-      expect(find.text('No cards yet'), findsOneWidget);
+      expect(find.text('Add Card'), findsOneWidget);
     });
   });
 

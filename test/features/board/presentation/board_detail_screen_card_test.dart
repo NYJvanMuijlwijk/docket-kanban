@@ -46,15 +46,14 @@ void main() {
     return (repo, column.id);
   }
 
-  testWidgets('shows "No cards yet" when column is empty',
-      (tester) async {
+  testWidgets('empty column shows Add Card button', (tester) async {
     final (repo, _) = await makeRepoWithColumn();
 
     await tester
         .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('No cards yet'), findsOneWidget);
+    expect(find.text('Add Card'), findsOneWidget);
   });
 
   testWidgets('add card button opens form, submit creates card',
@@ -198,9 +197,9 @@ void main() {
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
 
-    // Card should be gone
+    // Card should be gone, Add Card button still present.
     expect(find.text('Delete Me'), findsNothing);
-    expect(find.text('No cards yet'), findsOneWidget);
+    expect(find.text('Add Card'), findsOneWidget);
   });
 
   testWidgets('cancel delete dialog keeps card', (tester) async {

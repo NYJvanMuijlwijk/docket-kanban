@@ -77,6 +77,52 @@ void main() {
     );
   });
 
+  testWidgets('empty column state shows template button', (tester) async {
+    final now = DateTime.now();
+    final repo = FakeBoardRepository(initialBoards: [
+      Board(
+        id: 'test-id',
+        name: 'My Board',
+        createdAt: now,
+        updatedAt: now,
+        lastUsedAt: now,
+      ),
+    ]);
+
+    await tester.pumpWidget(_buildApp(boardId: 'test-id', repository: repo));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.widgetWithText(FilledButton, 'Start with defaults'),
+      findsOneWidget,
+    );
+    expect(find.text('Or add columns manually'), findsOneWidget);
+  });
+
+  testWidgets('tapping template button creates three columns', (tester) async {
+    final now = DateTime.now();
+    final repo = FakeBoardRepository(initialBoards: [
+      Board(
+        id: 'test-id',
+        name: 'My Board',
+        createdAt: now,
+        updatedAt: now,
+        lastUsedAt: now,
+      ),
+    ]);
+
+    await tester.pumpWidget(_buildApp(boardId: 'test-id', repository: repo));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Start with defaults'));
+    await tester.pumpAndSettle();
+
+    // Column headers render names uppercased.
+    expect(find.text('TODO'), findsOneWidget);
+    expect(find.text('IN PROGRESS'), findsOneWidget);
+    expect(find.text('DONE'), findsOneWidget);
+  });
+
   testWidgets('rename via popup menu updates board name', (tester) async {
     final now = DateTime.now();
     final repo = FakeBoardRepository(initialBoards: [
