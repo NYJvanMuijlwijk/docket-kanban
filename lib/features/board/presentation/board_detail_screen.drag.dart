@@ -21,13 +21,23 @@ class _InsertionGap extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isActive = ref.watch(
+    final (:isActive, :isDragging) = ref.watch(
       kanbanDragControllerProvider.select((state) {
-        return state.isDragging &&
-            state.hoverColumnId == columnId &&
-            state.hoverIndex == index;
+        return (
+          isActive: state.isDragging &&
+              state.hoverColumnId == columnId &&
+              state.hoverIndex == index,
+          isDragging: state.isDragging,
+        );
       }),
     );
+
+    // Animate open during hover changes, but collapse instantly on drop.
+    // When isDragging is false the drag just ended — the card's entrance
+    // animation should fill the space without fighting a closing gap.
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final duration =
+        reduceMotion || !isDragging ? Duration.zero : _animDuration;
 
     return DragTarget<KanbanCard>(
       onWillAcceptWithDetails: (details) {
@@ -40,8 +50,6 @@ class _InsertionGap extends ConsumerWidget {
       // No-op — hover state managed by updateHover(), not by leave events.
       onLeave: (_) {},
       builder: (context, accepted, rejected) {
-        final reduceMotion = MediaQuery.disableAnimationsOf(context);
-        final duration = reduceMotion ? Duration.zero : _animDuration;
         return AnimatedContainer(
           duration: duration,
           curve: Curves.easeInOut,
@@ -313,6 +321,12 @@ void _executeDrop(WidgetRef ref, String targetColumnId) {
   }
 
   if (dragState.sourceColumnId == targetColumnId) {
+    // Snapshot card positions BEFORE the reorder mutation fires,
+    // so ReorderAnimationScope can compute deltas after rebuild.
+    _reorderScopeKeys[targetColumnId]
+        ?.currentState
+        ?.snapshotPositions();
+
     // Same-column reorder: convert pre-removal to post-removal index.
     final originalIndex = dragState.originalIndex!;
     final postRemovalIndex = hoverIndex > originalIndex
