@@ -37,7 +37,15 @@ class StatusContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final resolvedColor = iconColor ?? theme.colorScheme.onSurfaceVariant;
+    // Default: warm tint (blend toward primary) for empty states.
+    // Error callers pass explicit iconColor, so this only affects
+    // the "no data yet" cases — adds subtle warmth to the gray.
+    final resolvedColor = iconColor ??
+        Color.lerp(
+          theme.colorScheme.onSurfaceVariant,
+          theme.colorScheme.primary,
+          0.25,
+        )!;
     final resolvedStyle = textStyle ?? theme.textTheme.bodyLarge;
 
     Widget content = Center(

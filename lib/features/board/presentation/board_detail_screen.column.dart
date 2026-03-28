@@ -69,9 +69,10 @@ class _BoardScrollViewState extends ConsumerState<_BoardScrollView>
               totalContentWidth <= constraints.maxWidth;
 
           final columns = [
-            for (final column in widget.columns)
+            for (var i = 0; i < widget.columns.length; i++)
               _KanbanColumnDropTarget(
-                column: column,
+                column: widget.columns[i],
+                columnIndex: i,
                 boardId: widget.boardId,
                 autoScroll: _autoScroll,
                 columnWidth: clampedWidth,
@@ -116,6 +117,7 @@ class _BoardScrollViewState extends ConsumerState<_BoardScrollView>
 class _KanbanColumnDropTarget extends ConsumerWidget {
   const _KanbanColumnDropTarget({
     required this.column,
+    required this.columnIndex,
     required this.boardId,
     required this.autoScroll,
     required this.columnWidth,
@@ -123,6 +125,7 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
   });
 
   final KanbanColumn column;
+  final int columnIndex;
   final String boardId;
   final AutoScrollHandler autoScroll;
   final double columnWidth;
@@ -161,10 +164,11 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
       // hit-test results between nested DragTargets.
       onLeave: (_) {},
       builder: (context, accepted, rejected) {
+        final accent = columnAccentColor(columnIndex);
         final baseColor = colorScheme.surfaceContainerLow;
         final highlightColor = Color.lerp(
           baseColor,
-          colorScheme.primary,
+          accent,
           0.14,
         )!;
 
@@ -189,12 +193,14 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
             children: [
               _ColumnHeader(
                 column: column,
+                columnIndex: columnIndex,
                 cardCount: cardCount,
                 boardId: boardId,
               ),
               Flexible(
                 child: _CardListView(
                   column: column,
+                  columnIndex: columnIndex,
                   boardId: boardId,
                   autoScroll: autoScroll,
                   columnWidth: columnWidth,
@@ -266,11 +272,13 @@ class _ColumnCardsSkeleton extends StatelessWidget {
 class _ColumnHeader extends ConsumerWidget {
   const _ColumnHeader({
     required this.column,
+    required this.columnIndex,
     required this.cardCount,
     required this.boardId,
   });
 
   final KanbanColumn column;
+  final int columnIndex;
   final int cardCount;
   final String boardId;
 
@@ -317,6 +325,7 @@ class _ColumnHeader extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
+    final accent = columnAccentColor(columnIndex);
 
     return Padding(
       padding: const EdgeInsets.only(
@@ -330,27 +339,41 @@ class _ColumnHeader extends ConsumerWidget {
           Expanded(
             child: Row(
               children: [
+                // Column accent dot — visual wayfinding cue.
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Flexible(
                   child: Text(
                     column.name.toUpperCase(),
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style:
+                        Theme.of(context).textTheme.titleMedium,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Card count badge — always visible for at-a-glance density.
+                // Card count badge — tinted with column accent.
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,
                     vertical: 1,
                   ),
                   decoration: BoxDecoration(
-                    color: colorScheme.outlineVariant,
+                    color: accent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     '$cardCount',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelSmall
+                        ?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
                           fontSize: 10,

@@ -96,6 +96,7 @@ class _DraggableCardSlot extends ConsumerStatefulWidget {
     required this.card,
     required this.index,
     required this.columnId,
+    required this.columnIndex,
     required this.boardId,
     required this.autoScroll,
     required this.columnWidth,
@@ -105,6 +106,7 @@ class _DraggableCardSlot extends ConsumerStatefulWidget {
   final KanbanCard card;
   final int index;
   final String columnId;
+  final int columnIndex;
   final String boardId;
   final AutoScrollHandler autoScroll;
   final double columnWidth;
@@ -153,6 +155,7 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
     final child = _KanbanCardTile(
       card: widget.card,
       columnId: widget.columnId,
+      columnIndex: widget.columnIndex,
     );
 
     // Ghost: the card left behind at the original position during drag.
