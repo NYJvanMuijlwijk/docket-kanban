@@ -113,9 +113,13 @@ class _ReorderAnimationItemState extends State<ReorderAnimationItem> {
   final GlobalKey _key = GlobalKey();
   AnimationController? _controller;
   late Animation<double> _translateY;
+  late Animation<double> _opacity;
   double _currentTranslateY = 0;
-
+  double _currentOpacity = 1;
   ReorderAnimationScopeState? _scope;
+
+  bool get _isAnimating =>
+      _currentTranslateY != 0 || _currentOpacity != 1;
 
   @override
   void didChangeDependencies() {
@@ -151,12 +155,13 @@ class _ReorderAnimationItemState extends State<ReorderAnimationItem> {
   ) {
     _controller?.dispose();
     _controller = AnimationController(vsync: vsync, duration: duration);
-    _translateY = Tween<double>(begin: deltaY, end: 0).animate(
-      CurvedAnimation(parent: _controller!, curve: curve),
-    );
-    _translateY.addListener(() {
+    final curved = CurvedAnimation(parent: _controller!, curve: curve);
+    _translateY = Tween<double>(begin: deltaY, end: 0).animate(curved);
+    _opacity = Tween<double>(begin: 0.6, end: 1).animate(curved);
+    _controller!.addListener(() {
       setState(() {
         _currentTranslateY = _translateY.value;
+        _currentOpacity = _opacity.value;
       });
     });
     unawaited(_controller!.forward());
@@ -164,8 +169,11 @@ class _ReorderAnimationItemState extends State<ReorderAnimationItem> {
 
   void _clear() {
     _controller?.stop();
-    if (_currentTranslateY != 0) {
-      setState(() => _currentTranslateY = 0);
+    if (_currentTranslateY != 0 || _currentOpacity != 1) {
+      setState(() {
+        _currentTranslateY = 0;
+        _currentOpacity = 1;
+      });
     }
   }
 
@@ -173,10 +181,13 @@ class _ReorderAnimationItemState extends State<ReorderAnimationItem> {
   Widget build(BuildContext context) {
     Widget child = KeyedSubtree(key: _key, child: widget.child);
 
-    if (_currentTranslateY != 0) {
-      child = Transform.translate(
-        offset: Offset(0, _currentTranslateY),
-        child: child,
+    if (_isAnimating) {
+      child = Opacity(
+        opacity: _currentOpacity,
+        child: Transform.translate(
+          offset: Offset(0, _currentTranslateY),
+          child: child,
+        ),
       );
     }
 
