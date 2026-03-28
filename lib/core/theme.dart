@@ -137,97 +137,122 @@ ThemeData buildLightTheme() {
 }
 
 // ── Typography ─────────────────────────────────────────────────────────
-// Bolder weight hierarchy: heavy headings (w700) contrast with regular
-// body text (w400). Tight letter-spacing on headings for a developer-tool
-// aesthetic.
+// Plus Jakarta Sans — geometric humanist with more character than Inter.
+// Major-third scale (~1.2x): 11 → 13 → 16 → 20 → 24.
+// Bold headings (w700) contrast with regular body (w400).
+// Tight negative letter-spacing on headings for developer-tool density.
+// Slightly elevated line-height on body for dark-mode readability.
+const _fontFamily = 'PlusJakartaSans';
+
 TextTheme _buildTextTheme(ColorScheme colorScheme) {
   return TextTheme(
-    // Display & Headlines — not heavily used but defined for completeness.
+    // Display — rare but defined for completeness.
     displayLarge: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w700,
       letterSpacing: -1,
       color: colorScheme.onSurface,
     ),
     displayMedium: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w700,
       letterSpacing: -0.5,
       color: colorScheme.onSurface,
     ),
     displaySmall: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w600,
       letterSpacing: -0.3,
       color: colorScheme.onSurface,
     ),
+    // Headlines — error screen, large empty states.
     headlineLarge: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w700,
+      fontSize: 28,
       letterSpacing: -0.5,
       color: colorScheme.onSurface,
     ),
     headlineMedium: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w600,
+      fontSize: 24,
       letterSpacing: -0.3,
       color: colorScheme.onSurface,
     ),
     headlineSmall: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w600,
+      fontSize: 20,
       letterSpacing: -0.2,
       color: colorScheme.onSurface,
     ),
-    // Titles — used for AppBar, sheet headers, column names.
+    // Titles — AppBar, sheet headers.
     titleLarge: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w700,
       fontSize: 20,
       letterSpacing: -0.3,
       color: colorScheme.onSurface,
     ),
+    // Column headers (uppercase, wide-tracked).
     titleMedium: TextStyle(
-      fontWeight: FontWeight.w600,
-      fontSize: 14,
-      letterSpacing: 0.4,
+      fontFamily: _fontFamily,
+      fontWeight: FontWeight.w700,
+      fontSize: 11,
+      letterSpacing: 1.2,
       color: colorScheme.onSurfaceVariant,
     ),
     titleSmall: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w600,
       fontSize: 13,
-      letterSpacing: 0.3,
+      letterSpacing: 0.1,
       color: colorScheme.onSurfaceVariant,
     ),
-    // Body — card content, descriptions.
+    // Body — card content, descriptions, general text.
     bodyLarge: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w400,
-      fontSize: 15,
+      fontSize: 16,
       height: 1.5,
       color: colorScheme.onSurface,
     ),
     bodyMedium: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w400,
       fontSize: 14,
-      height: 1.45,
+      height: 1.5,
       color: colorScheme.onSurface,
     ),
     bodySmall: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w400,
-      fontSize: 12,
-      height: 1.4,
+      fontSize: 13,
+      height: 1.45,
       color: colorScheme.onSurfaceVariant,
     ),
-    // Labels — buttons, chips, metadata.
+    // Labels — buttons, chips, badges, metadata.
     labelLarge: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w600,
       fontSize: 14,
-      letterSpacing: 0.3,
+      letterSpacing: 0.2,
       color: colorScheme.onSurface,
     ),
     labelMedium: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w500,
-      fontSize: 12,
-      letterSpacing: 0.4,
+      fontSize: 13,
+      letterSpacing: 0.3,
       color: colorScheme.onSurfaceVariant,
     ),
     labelSmall: TextStyle(
+      fontFamily: _fontFamily,
       fontWeight: FontWeight.w500,
       fontSize: 11,
-      letterSpacing: 0.5,
+      letterSpacing: 0.4,
+      fontFeatures: const [FontFeature.tabularFigures()],
       color: colorScheme.onSurfaceVariant,
     ),
   );
