@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kanban_board/core/animated_list_item.dart';
@@ -35,6 +36,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
           () => ref.read(boardListProvider.notifier).createBoard(name),
           'Failed to create board',
         );
+        HapticFeedback.mediumImpact();
       } finally {
         if (mounted) setState(() => _isMutating = false);
       }
@@ -104,6 +106,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                         ),
                       ),
                       onDismissed: (_) async {
+                        HapticFeedback.mediumImpact();
                         try {
                           await ref
                               .read(boardListProvider.notifier)
