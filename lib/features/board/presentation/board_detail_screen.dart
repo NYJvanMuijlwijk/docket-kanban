@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kanban_board/core/confirm_dialog.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/reorder_helpers.dart';
 import 'package:kanban_board/core/responsive.dart';

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:kanban_board/core/confirm_dialog.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/sheet_body.dart';
 import 'package:kanban_board/core/shimmer.dart';
@@ -124,31 +125,14 @@ class _ReorderableColumnList extends ConsumerWidget {
     KanbanColumn column,
   ) async {
     final cardCount = ref.read(cardListProvider(column.id)).value?.length ?? 0;
-    final displayName = truncateForDisplay(column.name);
-    final message = cardCount > 0
-        ? "Delete '$displayName' and its $cardCount "
-              '${cardCount == 1 ? 'card' : 'cards'}?'
-        : "Delete '$displayName'?";
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Column'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      title: 'Delete Column',
+      message: columnDeleteMessage(column.name, cardCount),
     );
 
-    if (confirmed == true && context.mounted) {
+    if (confirmed && context.mounted) {
       await guardMutation(
         context,
         () => ref
