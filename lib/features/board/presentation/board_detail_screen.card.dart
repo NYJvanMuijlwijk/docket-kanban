@@ -121,40 +121,44 @@ class _KanbanCardTile extends ConsumerWidget {
               break;
           }
         },
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            // Thin left accent bar — signals "draggable object", not container.
-            border: Border(
-              left: BorderSide(
-                color: colorScheme.primaryContainer,
-                width: 2,
-              ),
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  card.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+        child: SizedBox(
+          width: double.infinity,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              // Thin left accent bar — signals
+              // "draggable object", not container.
+              border: Border(
+                left: BorderSide(
+                  color: colorScheme.primaryContainer,
+                  width: 2,
                 ),
-                if (card.description.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    card.description,
+                    card.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: textTheme.bodySmall,
+                    style: textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
+                  if (card.description.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      card.description,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodySmall,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
