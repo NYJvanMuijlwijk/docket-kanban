@@ -84,24 +84,12 @@ class _KanbanCardTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Card(
-      color: Theme.of(context).colorScheme.surfaceContainerHigh,
-      child: ListTile(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        title: Text(
-          card.title,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: card.description.isNotEmpty
-            ? Text(
-                card.description,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              )
-            : null,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () async {
           final result = await CardDetailSheet.show(
             context,
@@ -133,6 +121,43 @@ class _KanbanCardTile extends ConsumerWidget {
               break;
           }
         },
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            // Thin left accent bar — signals "draggable object", not container.
+            border: Border(
+              left: BorderSide(
+                color: colorScheme.primaryContainer,
+                width: 2,
+              ),
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  card.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (card.description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    card.description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodySmall,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
