@@ -57,9 +57,11 @@ class _ShimmerScopeState extends State<ShimmerScope>
 
   @override
   Widget build(BuildContext context) {
-    return _ShimmerInherited(
-      notifier: _controller,
-      child: widget.child,
+    return RepaintBoundary(
+      child: _ShimmerInherited(
+        notifier: _controller,
+        child: widget.child,
+      ),
     );
   }
 }
@@ -109,43 +111,41 @@ class ShimmerBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = ShimmerScope.of(context);
 
-    return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: controller,
-        builder: (context, _) {
-          // Read theme inside the builder callback so colors update on
-          // theme changes. The builder's context inherits Theme from above.
-          final colorScheme = Theme.of(context).colorScheme;
-          final isDark = colorScheme.brightness == Brightness.dark;
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        // Read theme inside the builder callback so colors update on
+        // theme changes. The builder's context inherits Theme from above.
+        final colorScheme = Theme.of(context).colorScheme;
+        final isDark = colorScheme.brightness == Brightness.dark;
 
-          final baseColor = isDark
-              ? colorScheme.surfaceContainerHighest
-              : colorScheme.surfaceContainerLow;
-          final highlightColor =
-              isDark ? colorScheme.surfaceContainerHigh : colorScheme.surface;
+        final baseColor = isDark
+            ? colorScheme.surfaceContainerHighest
+            : colorScheme.surfaceContainerLow;
+        final highlightColor =
+            isDark ? colorScheme.surfaceContainerHigh : colorScheme.surface;
 
-          return ShaderMask(
-            blendMode: BlendMode.srcATop,
-            shaderCallback: (bounds) {
-              return LinearGradient(
-                colors: [baseColor, highlightColor, baseColor],
-                stops: const [0.0, 0.5, 1.0],
-                transform: _SlidingGradientTransform(controller.value),
-              ).createShader(bounds);
-            },
-            child: SizedBox(
-              width: width,
-              height: height,
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: baseColor,
-                  borderRadius: BorderRadius.circular(borderRadius),
-                ),
+        return ShaderMask(
+          blendMode: BlendMode.srcATop,
+          shaderCallback: (bounds) {
+            return LinearGradient(
+              colors: [baseColor, highlightColor, baseColor],
+              stops: const [0.0, 0.5, 1.0],
+              transform: _SlidingGradientTransform(controller.value),
+            ).createShader(bounds);
+          },
+          child: SizedBox(
+            width: width,
+            height: height,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: baseColor,
+                borderRadius: BorderRadius.circular(borderRadius),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

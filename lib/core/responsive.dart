@@ -1,25 +1,8 @@
 /// Shared responsive layout constants.
 library;
 
-// ── M3 window size class breakpoints ──────────────────────────────────
-
 /// Compact window width threshold (phones).
 const kCompactBreakpoint = 600.0;
-
-/// Medium window width threshold (tablets, small desktops).
-const kMediumBreakpoint = 840.0;
-
-/// Material 3 window size classes.
-enum WindowSizeClass { compact, medium, expanded }
-
-/// Returns the M3 window size class for a given viewport width.
-WindowSizeClass windowSizeClassOf(double width) {
-  if (width < kCompactBreakpoint) return WindowSizeClass.compact;
-  if (width < kMediumBreakpoint) return WindowSizeClass.medium;
-  return WindowSizeClass.expanded;
-}
-
-// ── Layout constants ──────────────────────────────────────────────────
 
 /// Max width for board list and error screen body content.
 const kContentMaxWidth = 800.0;
@@ -35,8 +18,6 @@ const kColumnMaxWidth = 400.0;
 
 /// Bottom sheet max width.
 const kSheetMaxWidth = 500.0;
-
-// ── Computed helpers ──────────────────────────────────────────────────
 
 /// Computes fluid column width for a given viewport and column count.
 ///
