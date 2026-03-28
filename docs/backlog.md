@@ -93,6 +93,10 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
   - [x] Error screen body constrained to 800px max width
   - [x] Bottom sheets centralized via `showAppBottomSheet` with 500px max width
   - [x] Skeleton loading states use same fluid sizing
+  - [x] M3 window size class breakpoints (compact/medium/expanded) in `responsive.dart`
+  - [x] Adaptive column min-width: 220px compact, 250px medium+
+  - [x] Viewport-relative auto-scroll edge zones (5% of axis, clamped 30–60px) + scaled max speed (50% longest axis, clamped 600–900 px/s)
+  - [x] Adaptive bottom sheet padding: 16px horizontal on compact, 24px on medium+
 - [x] Empty states (no boards, no columns, no cards)
   - [x] Shared `StatusContent` widget (`lib/core/status_content.dart`) — icon + message + optional action
   - [x] Board list: `dashboard_outlined` icon, "No boards yet"
