@@ -99,22 +99,25 @@ Feature-based structure. Each feature owns its data/domain/presentation layers.
 ## Design Context
 
 ### Users
-Solo developer using this as a personal task management tool. Also a portfolio piece showcasing Flutter expertise. The user is the only audience — no collaboration features yet.
+Solo developer using this as a personal task management tool. Also a portfolio piece showcasing Flutter expertise. Mobile is the primary platform; web exists for testing/demo only. The user is the only audience — no collaboration features yet.
 
 ### Brand Personality
-Minimal, focused, calm. A zen productivity tool that stays out of the way.
+Minimal, focused, calm. A zen productivity tool that stays out of the way. Developer-grade — precision without pretension.
 
 ### Aesthetic Direction
 - **References:** Linear (dark palette, developer-focused hierarchy), Vercel Dashboard (restrained color, monospace touches), Raycast and Warp (subtle opacity/translucency layers for depth)
 - **Anti-references:** Jira/Trello (cluttered enterprise chrome), Monday.com/Asana (too colorful, too playful, too much visual noise)
-- **Theme:** Dark-mode-first. Muted blueGrey seed. Depth via subtle opacity differences rather than borders or shadows. Content breathes with generous whitespace.
+- **Theme:** Dark-mode-first (`ThemeMode.dark` hardcoded). Warm amber accent (`#D4A054`) against near-black surfaces (`#0F1114`). 7-step surface ramp for depth hierarchy. Plus Jakarta Sans typography with major-third scale.
+- **Column accents:** 6-color muted pastel rotation (steel blue, sage green, warm clay, muted lavender, dusty rose, seafoam) — deterministic by column index.
 
 ### Design Principles
 1. **Content over chrome** — UI elements recede; cards and columns are the focus.
-2. **Depth through opacity** — Layer surfaces using subtle alpha differences, not drop shadows or heavy borders.
-3. **Restrained color** — One accent color used sparingly for actions/state. Everything else is neutral.
+2. **Depth through surface layering** — 7-step surface ramp creates hierarchy. Shadows reserved for drag elevation only.
+3. **Restrained color** — Warm amber accent used sparingly for actions/state. Column accents are muted pastels. Everything else is neutral.
 4. **Let it breathe** — Generous spacing and padding. Resist the urge to fill empty space.
-5. **Developer-grade polish** — Smooth animations, crisp typography, keyboard-friendly. Feels like a tool built by a developer for developers.
+5. **Developer-grade polish** — Smooth animations, crisp typography, haptic feedback. Feels like a tool built by a developer for developers.
+6. **Mobile-first** — Touch targets, long-press drag, responsive column sizing. Web is secondary.
+7. **Reduce-motion safe** — Every animation checks accessibility preference. No animation is mandatory for function.
 
 ### Accessibility
-Standard Material 3 defaults — M3 contrast ratios, touch targets, and semantic labels.
+Standard Material 3 contrast ratios and touch targets. All animations respect `MediaQuery.disableAnimationsOf`. Keyboard navigation and semantic labels have gaps identified in audit — to be addressed.
