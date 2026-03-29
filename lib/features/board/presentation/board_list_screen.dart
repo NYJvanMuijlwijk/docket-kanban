@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -29,9 +30,30 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
   /// This prevents the stagger animation from replaying on every rebuild
   /// (e.g., when a new board is added and the provider emits a new list).
   final Set<String> _seenBoardIds = {};
+
+  /// Single tick source for all `_RelativeTimestamp` widgets.
+  /// Incremented every 60 s so timestamps recompute in sync.
+  final _timestampTick = ValueNotifier<DateTime>(DateTime.now());
+  late final Timer _timestampTimer;
   bool _isMutating = false;
   bool _isSheetOpen = false;
   bool _initialLoadDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timestampTimer = Timer.periodic(
+      const Duration(seconds: 60),
+      (_) => _timestampTick.value = DateTime.now(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timestampTimer.cancel();
+    _timestampTick.dispose();
+    super.dispose();
+  }
 
   /// Undo-delete: snapshots the board, deletes optimistically, then
   /// shows a snackbar. Actual deletion happens when the snackbar closes
@@ -48,8 +70,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
     var cardSnapshot = const <KanbanCard>[];
     try {
       columnSnapshot = await repository.getColumns(board.id);
-      final cardFutures =
-          columnSnapshot.map((c) => repository.getCards(c.id));
+      final cardFutures = columnSnapshot.map((c) => repository.getCards(c.id));
       cardSnapshot = (await Future.wait(cardFutures)).expand((c) => c).toList();
     } on Object {
       // Can't snapshot — delete will proceed without undo support.
@@ -218,6 +239,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                             ),
                             subtitle: _RelativeTimestamp(
                               dateTime: board.lastUsedAt,
+                              timestampListenable: _timestampTick,
                             ),
                             trailing: Icon(
                               Icons.chevron_right,
@@ -226,8 +248,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                               ).colorScheme.onSurfaceVariant,
                             ),
                             onTap: () {
-                              ScaffoldMessenger.of(context)
-                                  .clearSnackBars();
+                              ScaffoldMessenger.of(context).clearSnackBars();
                               unawaited(
                                 context.push('/board/${board.id}'),
                               );
@@ -284,59 +305,44 @@ class _SkeletonListTile extends StatelessWidget {
   }
 }
 
-/// Self-contained timestamp that refreshes itself every 60 seconds.
-/// Each instance owns its own [Timer], scoping rebuilds to just the text.
-class _RelativeTimestamp extends StatefulWidget {
-  const _RelativeTimestamp({required this.dateTime});
+/// Timestamp that recomputes its label whenever [timestampListenable] fires.
+/// A single [ValueNotifier] drives all instances — no per-widget timer.
+class _RelativeTimestamp extends StatelessWidget {
+  const _RelativeTimestamp({
+    required this.dateTime,
+    required this.timestampListenable,
+  });
 
   final DateTime dateTime;
-
-  @override
-  State<_RelativeTimestamp> createState() => _RelativeTimestampState();
-}
-
-class _RelativeTimestampState extends State<_RelativeTimestamp> {
-  late final Timer _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(
-      const Duration(seconds: 60),
-      (_) => setState(() {}),
-    );
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
+  final ValueListenable<DateTime> timestampListenable;
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final diff = widget.dateTime.isAfter(now)
-        ? Duration.zero
-        : now.difference(widget.dateTime);
+    return ValueListenableBuilder(
+      valueListenable: timestampListenable,
+      builder: (context, now, child) {
+        final diff = dateTime.isAfter(now)
+            ? Duration.zero
+            : now.difference(dateTime);
 
-    final String label;
-    if (diff.inMinutes < 1) {
-      label = 'just now';
-    } else if (diff.inHours < 1) {
-      label = '${diff.inMinutes}m ago';
-    } else if (diff.inDays < 1) {
-      label = '${diff.inHours}h ago';
-    } else if (diff.inDays < 7) {
-      label = '${diff.inDays}d ago';
-    } else {
-      label =
-          '${widget.dateTime.month}/${widget.dateTime.day}/${widget.dateTime.year}';
-    }
+        final String label;
+        if (diff.inMinutes < 1) {
+          label = 'just now';
+        } else if (diff.inHours < 1) {
+          label = '${diff.inMinutes}m ago';
+        } else if (diff.inDays < 1) {
+          label = '${diff.inHours}h ago';
+        } else if (diff.inDays < 7) {
+          label = '${diff.inDays}d ago';
+        } else {
+          label = '${dateTime.month}/${dateTime.day}/${dateTime.year}';
+        }
 
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.bodySmall,
+        return Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall,
+        );
+      },
     );
   }
 }
