@@ -6,6 +6,11 @@ const maxColumnNameLength = 50;
 /// Maximum columns per board — enforced by the repository.
 const maxColumnsPerBoard = 10;
 
+/// A column within a board (e.g., "To Do", "In Progress", "Done").
+///
+/// Named `KanbanColumn` (not `Column`) to avoid conflicts with Flutter's
+/// layout `Column` widget. [order] is a fractional index string — columns
+/// within a board are sorted lexicographically ascending by this field.
 @immutable
 class KanbanColumn {
   const KanbanColumn({

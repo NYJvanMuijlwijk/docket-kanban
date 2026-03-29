@@ -1,5 +1,10 @@
 import 'package:flutter/foundation.dart';
 
+/// A kanban board — the top-level container for columns and cards.
+///
+/// [updatedAt] is stamped only on data mutations (rename). [lastUsedAt] is
+/// stamped on board exit (dispose + app lifecycle) and drives the board list
+/// sort order (most recently used first).
 @immutable
 class Board {
   const Board({

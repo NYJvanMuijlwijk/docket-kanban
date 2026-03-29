@@ -1,5 +1,12 @@
 import 'package:flutter/foundation.dart';
 
+/// A card within a kanban column.
+///
+/// Named `KanbanCard` (not `Card`) to avoid conflicts with Flutter's Material
+/// `Card` widget. [order] is a fractional index string — cards within a column
+/// are sorted lexicographically ascending by this field. Reordering generates
+/// a new key between two neighbors via `FractionalIndexer.generateKeyBetween`
+/// without touching any other card.
 @immutable
 class KanbanCard {
   const KanbanCard({
