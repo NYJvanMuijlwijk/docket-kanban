@@ -42,7 +42,7 @@ final class KanbanDragControllerProvider
 }
 
 String _$kanbanDragControllerHash() =>
-    r'4266ab98bd9c9d8ec3f91c36f757891f6963a55f';
+    r'c821da6fba5bfbd05365c6e327f985df91a56458';
 
 abstract class _$KanbanDragController extends $Notifier<KanbanDragState> {
   KanbanDragState build();

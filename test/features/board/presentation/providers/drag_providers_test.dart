@@ -59,6 +59,8 @@ void main() {
       readNotifier().startDrag(
         card: card,
         sourceColumnId: 'col-a',
+        sourceColumnIndex: 1,
+        draggedCardHeight: 72,
         originalIndex: 2,
       );
       final state = readState();
@@ -67,23 +69,31 @@ void main() {
       expect(state.sourceColumnId, 'col-a');
       expect(state.originalIndex, 2);
       expect(state.hoverColumnId, 'col-a');
+      expect(state.sourceColumnIndex, 1);
+      expect(state.draggedCardHeight, 72);
     });
 
     test('endDrag clears all state', () {
       readNotifier().startDrag(
         card: makeCard(),
         sourceColumnId: 'col-a',
+        sourceColumnIndex: 0,
+        draggedCardHeight: 52,
         originalIndex: 0,
       );
       readNotifier().endDrag();
       expect(readState().isDragging, isFalse);
       expect(readState().draggedCard, isNull);
+      expect(readState().draggedCardHeight, isNull);
+      expect(readState().sourceColumnIndex, isNull);
     });
 
     test('updateHover sets hoverColumnId and hoverIndex', () {
       readNotifier().startDrag(
         card: makeCard(),
         sourceColumnId: 'col-a',
+        sourceColumnIndex: 0,
+        draggedCardHeight: 52,
         originalIndex: 0,
       );
       readNotifier().updateHover(columnId: 'col-b', index: 3);
@@ -96,6 +106,8 @@ void main() {
         readNotifier().startDrag(
           card: makeCard(),
           sourceColumnId: 'col-a',
+          sourceColumnIndex: 0,
+          draggedCardHeight: 52,
           originalIndex: 2,
         );
         readNotifier().updateHover(columnId: 'col-a', index: 2);
@@ -106,6 +118,8 @@ void main() {
         readNotifier().startDrag(
           card: makeCard(),
           sourceColumnId: 'col-a',
+          sourceColumnIndex: 0,
+          draggedCardHeight: 52,
           originalIndex: 2,
         );
         readNotifier().updateHover(columnId: 'col-a', index: 3);
@@ -116,6 +130,8 @@ void main() {
         readNotifier().startDrag(
           card: makeCard(),
           sourceColumnId: 'col-a',
+          sourceColumnIndex: 0,
+          draggedCardHeight: 52,
           originalIndex: 2,
         );
         readNotifier().updateHover(columnId: 'col-a', index: 1);
@@ -126,6 +142,8 @@ void main() {
         readNotifier().startDrag(
           card: makeCard(),
           sourceColumnId: 'col-a',
+          sourceColumnIndex: 0,
+          draggedCardHeight: 52,
           originalIndex: 2,
         );
         readNotifier().updateHover(columnId: 'col-a', index: 4);
@@ -137,6 +155,8 @@ void main() {
       readNotifier().startDrag(
         card: makeCard(),
         sourceColumnId: 'col-a',
+        sourceColumnIndex: 0,
+        draggedCardHeight: 52,
         originalIndex: 2,
       );
       readNotifier().updateHover(columnId: 'col-b', index: 2);
@@ -147,6 +167,8 @@ void main() {
       readNotifier().startDrag(
         card: makeCard(),
         sourceColumnId: 'col-a',
+        sourceColumnIndex: 0,
+        draggedCardHeight: 52,
         originalIndex: 2,
       );
       readNotifier().updateHover(columnId: 'col-b', index: 3);
@@ -164,6 +186,8 @@ void main() {
       readNotifier().startDrag(
         card: makeCard(),
         sourceColumnId: 'col-a',
+        sourceColumnIndex: 0,
+        draggedCardHeight: 52,
         originalIndex: 0,
       );
 
@@ -185,6 +209,8 @@ void main() {
       readNotifier().startDrag(
         card: makeCard(),
         sourceColumnId: 'col-a',
+        sourceColumnIndex: 0,
+        draggedCardHeight: 52,
         originalIndex: 0,
       );
 
