@@ -109,6 +109,27 @@ void main() {
     expect(find.text('My New Board'), findsOneWidget);
   });
 
+  testWidgets('creating a board navigates to its detail screen',
+      (tester) async {
+    await tester.pumpWidget(_buildApp());
+    await tester.pumpAndSettle();
+
+    // Open bottom sheet, enter name, submit.
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'Fresh Board');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    // Should have navigated to the board detail screen.
+    expect(find.text('No columns yet'), findsOneWidget);
+    // AppBar should show the board name.
+    expect(find.text('Fresh Board'), findsOneWidget);
+  });
+
   testWidgets('create button is disabled when name is empty', (tester) async {
     await tester.pumpWidget(_buildApp());
     await tester.pumpAndSettle();

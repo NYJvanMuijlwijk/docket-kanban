@@ -9,19 +9,20 @@ import 'package:kanban_board/core/mutation_exception.dart';
 ///
 /// Checks `context.mounted` before showing the SnackBar
 /// since call sites resume after async gaps.
-Future<void> guardMutation(
+Future<T?> guardMutation<T>(
   BuildContext context,
-  Future<void> Function() action,
+  Future<T> Function() action,
 ) async {
   try {
-    await action();
+    return await action();
   } on MutationException catch (e) {
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     _showSnackBar(context, e.message);
   } on Exception {
-    if (!context.mounted) return;
+    if (!context.mounted) return null;
     _showSnackBar(context, 'Something went wrong');
   }
+  return null;
 }
 
 void _showSnackBar(BuildContext context, String message) {
