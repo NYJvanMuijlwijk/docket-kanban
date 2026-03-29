@@ -1,5 +1,45 @@
 part of 'board_detail_screen.dart';
 
+/// Shared animated ghost card used by both [_InsertionGap] and the
+/// original-position ghost in [_DraggableCardSlot]. Animates height
+/// between 0 and [height], clipping the child to prevent overflow.
+class _AnimatedGhostCard extends StatelessWidget {
+  const _AnimatedGhostCard({
+    required this.isActive,
+    required this.animate,
+    required this.height,
+    required this.child,
+  });
+
+  static const animDuration = Duration(milliseconds: 200);
+  static const fallbackHeight = 52.0;
+
+  /// Whether the ghost should be visible (target height = [height]).
+  final bool isActive;
+
+  /// Whether to animate the transition. False = instant (e.g., on drop).
+  final bool animate;
+
+  /// Measured card height. Falls back to [fallbackHeight] when null.
+  final double? height;
+
+  /// Ghost content — typically `Opacity(0.4, IgnorePointer(child: tile))`.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final targetHeight = isActive ? (height ?? fallbackHeight) : 0.0;
+    final duration = animate ? animDuration : Duration.zero;
+
+    return AnimatedContainer(
+      duration: duration,
+      curve: Curves.easeInOut,
+      height: targetHeight,
+      child: ClipRect(child: child),
+    );
+  }
+}
+
 /// Animated gap between cards. Opens to the dragged card's measured height
 /// and renders a ghost preview when the drag controller's hover index
 /// matches this slot's index.
@@ -16,9 +56,6 @@ class _InsertionGap extends ConsumerWidget {
 
   final String columnId;
   final int index;
-
-  static const _animDuration = Duration(milliseconds: 200);
-  static const _fallbackHeight = 52.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -37,16 +74,8 @@ class _InsertionGap extends ConsumerWidget {
       }),
     );
 
-    final targetHeight = dragData.isActive
-        ? (dragData.draggedCardHeight ?? _fallbackHeight)
-        : 0.0;
-
-    // Animate open during hover changes, but collapse instantly on drop.
-    // When isDragging is false the drag just ended — the card's entrance
-    // should fill the space without fighting a closing gap.
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final duration =
-        reduceMotion || !dragData.isDragging ? Duration.zero : _animDuration;
+    final animate = !reduceMotion && dragData.isDragging;
 
     return DragTarget<KanbanCard>(
       onWillAcceptWithDetails: (details) {
@@ -59,20 +88,18 @@ class _InsertionGap extends ConsumerWidget {
       // No-op — hover state managed by updateHover(), not by leave events.
       onLeave: (_) {},
       builder: (context, accepted, rejected) {
-        return AnimatedContainer(
-          duration: duration,
-          curve: Curves.easeInOut,
-          height: targetHeight,
+        return _AnimatedGhostCard(
+          isActive: dragData.isActive,
+          animate: animate,
+          height: dragData.draggedCardHeight,
           child: dragData.isActive && dragData.draggedCard != null
-              ? ClipRect(
-                  child: Opacity(
-                    opacity: 0.4,
-                    child: IgnorePointer(
-                      child: _KanbanCardTile(
-                        card: dragData.draggedCard!,
-                        columnId: columnId,
-                        columnIndex: dragData.sourceColumnIndex ?? 0,
-                      ),
+              ? Opacity(
+                  opacity: 0.4,
+                  child: IgnorePointer(
+                    child: _KanbanCardTile(
+                      card: dragData.draggedCard!,
+                      columnId: columnId,
+                      columnIndex: dragData.sourceColumnIndex ?? 0,
                     ),
                   ),
                 )
@@ -154,22 +181,28 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
     // Ghost: shown at original position only when adjacency-suppressed
     // (no-op) or before hovering a valid target. Disappears once the
     // pointer is over a valid non-no-op slot — the gap shows the ghost
-    // there instead.
+    // there instead. Height animates to avoid jarring layout shifts.
     final ghost = Consumer(
       builder: (context, ref, _) {
-        final showGhost = ref.watch(
+        final ghostData = ref.watch(
           kanbanDragControllerProvider.select((state) {
-            if (!state.isDragging) return true;
-            return state.hoverIndex == null;
+            return (
+              showGhost: !state.isDragging || state.hoverIndex == null,
+              isDragging: state.isDragging,
+              draggedCardHeight: state.draggedCardHeight,
+            );
           }),
         );
-        if (showGhost) {
-          return Opacity(
+        final reduceMotion = MediaQuery.disableAnimationsOf(context);
+        return _AnimatedGhostCard(
+          isActive: ghostData.showGhost,
+          animate: !reduceMotion && ghostData.isDragging,
+          height: ghostData.draggedCardHeight,
+          child: Opacity(
             opacity: 0.4,
             child: IgnorePointer(child: child),
-          );
-        }
-        return const SizedBox.shrink();
+          ),
+        );
       },
     );
 
