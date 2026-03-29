@@ -315,6 +315,7 @@ class _AdaptiveDraggableState<T extends Object>
 
     final draggable = isTouch
         ? LongPressDraggable<T>(
+            delay: const Duration(milliseconds: 200),
             data: widget.data,
             feedback: widget.feedback,
             childWhenDragging: widget.childWhenDragging,
