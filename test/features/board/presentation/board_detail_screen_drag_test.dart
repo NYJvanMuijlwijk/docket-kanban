@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -62,6 +63,44 @@ void main() {
         findsOneWidget,
       );
     });
+
+    testWidgets(
+      'mouse hover switches card to Draggable before first click',
+      (tester) async {
+        final repo = makeRepoWithBoard();
+        final column =
+            await repo.createColumn(boardId: 'board-1', name: 'Todo');
+        await repo.createCard(columnId: column.id, title: 'Task A');
+
+        await tester.pumpWidget(
+          _buildApp(boardId: 'board-1', repository: repo),
+        );
+        await tester.pumpAndSettle();
+
+        // Before hover: LongPressDraggable (touch default).
+        expect(
+          find.byType(LongPressDraggable<KanbanCard>),
+          findsOneWidget,
+        );
+        expect(find.byType(Draggable<KanbanCard>), findsNothing);
+
+        // Simulate a mouse hover over the card — no click.
+        final gesture = await tester.createGesture(
+          kind: PointerDeviceKind.mouse,
+        );
+        await gesture.addPointer(location: Offset.zero);
+        addTearDown(gesture.removePointer);
+        await gesture.moveTo(tester.getCenter(find.text('Task A')));
+        await tester.pumpAndSettle();
+
+        // After hover: switches to Draggable (mouse path).
+        expect(find.byType(Draggable<KanbanCard>), findsOneWidget);
+        expect(
+          find.byType(LongPressDraggable<KanbanCard>),
+          findsNothing,
+        );
+      },
+    );
 
     testWidgets('each card slot has a DragTarget<KanbanCard>', (tester) async {
       final repo = makeRepoWithBoard();

@@ -336,15 +336,24 @@ class _AdaptiveDraggableState<T extends Object>
             child: widget.child,
           );
 
-    return Listener(
-      onPointerDown: (event) {
+    return MouseRegion(
+      onEnter: (event) {
         if (_lastPointerKind != event.kind) {
           setState(() {
             _lastPointerKind = event.kind;
           });
         }
       },
-      child: draggable,
+      child: Listener(
+        onPointerDown: (event) {
+          if (_lastPointerKind != event.kind) {
+            setState(() {
+              _lastPointerKind = event.kind;
+            });
+          }
+        },
+        child: draggable,
+      ),
     );
   }
 }
