@@ -142,11 +142,14 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
     if (name != null && mounted) {
       setState(() => _isMutating = true);
       try {
-        await guardMutation(
+        final board = await guardMutation(
           context,
           () => ref.read(boardListProvider.notifier).createBoard(name),
         );
         unawaited(HapticFeedback.mediumImpact());
+        if (board != null && mounted) {
+          unawaited(context.push('/board/${board.id}'));
+        }
       } finally {
         if (mounted) setState(() => _isMutating = false);
       }

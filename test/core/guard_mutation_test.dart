@@ -127,6 +127,74 @@ void main() {
     expect(find.text('unexpected'), findsNothing);
   });
 
+  testWidgets('returns action result on success', (tester) async {
+    late BuildContext savedContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              savedContext = context;
+              return const SizedBox();
+            },
+          ),
+        ),
+      ),
+    );
+
+    final result = await guardMutation(savedContext, () async => 42);
+
+    expect(result, 42);
+  });
+
+  testWidgets('returns null on MutationException', (tester) async {
+    late BuildContext savedContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              savedContext = context;
+              return const SizedBox();
+            },
+          ),
+        ),
+      ),
+    );
+
+    final result = await guardMutation<int>(
+      savedContext,
+      () async => throw const ValidationException('limit reached'),
+    );
+    await tester.pump();
+
+    expect(result, isNull);
+  });
+
+  testWidgets('returns null on unknown Exception', (tester) async {
+    late BuildContext savedContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              savedContext = context;
+              return const SizedBox();
+            },
+          ),
+        ),
+      ),
+    );
+
+    final result = await guardMutation<String>(
+      savedContext,
+      () async => throw Exception('unexpected'),
+    );
+    await tester.pump();
+
+    expect(result, isNull);
+  });
+
   testWidgets('no crash when context is unmounted', (tester) async {
     late BuildContext savedContext;
     await tester.pumpWidget(
