@@ -322,16 +322,11 @@ class _RelativeTimestamp extends StatelessWidget {
   final ValueListenable<DateTime> timestampListenable;
 
   String _localeStringFor(Locale locale) {
-    final full = '${locale.languageCode}_${locale.countryCode}';
-
-    // Check if intl actually has this combo
-    if (DateFormat.localeExists(full)) return full;
-
-    // For "English in country X", use that country's native locale for dates
-    // since the user presumably wants local date formatting
-    if (locale.countryCode != null &&
-        DateFormat.localeExists(locale.countryCode!.toLowerCase())) {
-      return locale.countryCode!.toLowerCase();
+    final countryCode = locale.countryCode;
+    if (countryCode != null) {
+      final full = '${locale.languageCode}_$countryCode';
+      // Check if intl actually has this combo
+      if (DateFormat.localeExists(full)) return full;
     }
 
     return locale.languageCode;
