@@ -32,6 +32,7 @@ class ColumnManagementSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final columnsAsync = ref.watch(columnListProvider(boardId));
     final screenHeight = MediaQuery.sizeOf(context).height;
+    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
 
     return SheetBody(
       children: [
@@ -65,7 +66,7 @@ class ColumnManagementSheet extends ConsumerWidget {
             }
             return ConstrainedBox(
               constraints: BoxConstraints(
-                maxHeight: screenHeight * 0.5,
+                maxHeight: (screenHeight - keyboardHeight) * 0.5,
               ),
               child: _ReorderableColumnList(
                 columns: columns,

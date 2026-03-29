@@ -335,6 +335,44 @@ void main() {
     });
   });
 
+  group('layout', () {
+    testWidgets('does not overflow with max columns and keyboard open',
+        (tester) async {
+      // Use a realistic mobile screen size where keyboard overflow is
+      // most likely to occur.
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+
+      final repo = makeRepo();
+      await seedColumns(repo, count: 10);
+
+      await tester.pumpWidget(
+        _buildApp(boardId: 'board-1', repository: repo),
+      );
+      await tester.pumpAndSettle();
+
+      await _openManageColumnsSheet(tester);
+
+      // Simulate an on-screen keyboard by setting viewInsets.bottom.
+      // A typical mobile keyboard is ~300px at 1x device pixel ratio.
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+
+      // Rebuild with the new insets — should not overflow.
+      await tester.pumpAndSettle();
+
+      // If the Column inside SheetBody overflows, Flutter will report a
+      // RenderFlex overflow error, failing the test automatically.
+      // Verify the sheet content is still visible.
+      expect(find.text('Manage Columns'), findsOneWidget);
+
+      // Reset view properties for subsequent tests.
+      tester.view
+        ..resetViewInsets()
+        ..resetPhysicalSize()
+        ..resetDevicePixelRatio();
+    });
+  });
+
   group('loading and error states', () {
     // Column errors show in both the board detail body AND the sheet.
     // Scope finders to the BottomSheet to avoid ambiguous matches.
