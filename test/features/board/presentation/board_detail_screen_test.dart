@@ -96,7 +96,7 @@ void main() {
       find.widgetWithText(FilledButton, 'Start with defaults'),
       findsOneWidget,
     );
-    expect(find.text('Or add columns manually'), findsOneWidget);
+    expect(find.text('Add columns manually'), findsOneWidget);
   });
 
   testWidgets('tapping template button creates three columns', (tester) async {

@@ -235,7 +235,7 @@ class _ColumnEmptyContent extends StatelessWidget {
               icon: Icons.error_outline,
               iconSize: 36,
               iconColor: Theme.of(context).colorScheme.error,
-              message: 'Failed to load',
+              message: "Couldn't load cards",
               textStyle: Theme.of(context).textTheme.bodyMedium,
               action: TextButton(
                 onPressed: onRetry,
@@ -262,7 +262,7 @@ class _ColumnAddCardButton extends ConsumerWidget {
     if (cardsAsync is AsyncError) return const SizedBox.shrink();
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: SizedBox(
         width: double.infinity,
         child: TextButton.icon(
@@ -283,7 +283,7 @@ class _ColumnAddCardButton extends ConsumerWidget {
             }
           },
           icon: const Icon(Icons.add, size: 18),
-          label: const Text('Add Card'),
+          label: const Text('Add card'),
         ),
       ),
     );
@@ -362,15 +362,14 @@ class _ColumnHeader extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colorScheme = Theme.of(context).colorScheme;
     final accent = columnAccentColor(columnIndex);
 
     return Padding(
       padding: const EdgeInsets.only(
         left: 16,
         right: 4,
-        top: 10,
-        bottom: 6,
+        top: 12,
+        bottom: 8,
       ),
       child: Row(
         children: [
@@ -400,7 +399,7 @@ class _ColumnHeader extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,
-                    vertical: 1,
+                    vertical: 2,
                   ),
                   decoration: BoxDecoration(
                     color: accent.withValues(alpha: 0.15),
@@ -412,9 +411,8 @@ class _ColumnHeader extends ConsumerWidget {
                         .textTheme
                         .labelSmall
                         ?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
+                          color: accent.withValues(alpha: 0.7),
                           fontWeight: FontWeight.w600,
-                          fontSize: 10,
                         ),
                   ),
                 ),

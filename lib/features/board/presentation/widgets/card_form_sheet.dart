@@ -149,8 +149,9 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.card.title);
-    _descriptionController =
-        TextEditingController(text: widget.card.description);
+    _descriptionController = TextEditingController(
+      text: widget.card.description,
+    );
     _titleController.addListener(_onChanged);
   }
 
@@ -267,6 +268,9 @@ class _CardDetailView extends StatelessWidget {
               onPressed: onDelete,
               icon: const Icon(Icons.delete),
               tooltip: 'Delete',
+              style: IconButton.styleFrom(
+                foregroundColor: theme.colorScheme.error,
+              ),
             ),
           ],
         ),
