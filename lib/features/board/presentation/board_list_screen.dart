@@ -176,99 +176,112 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
       ),
       body: SafeArea(
         child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: kContentMaxWidth),
-            child: boardsAsync.when(
-              loading: () => const _BoardListSkeleton(),
-              error: (_, _) => StatusContent(
-                icon: Icons.error_outline,
-                iconColor: Theme.of(context).colorScheme.error,
-                message: "Couldn't load your boards",
-                action: TextButton(
-                  onPressed: () => ref.invalidate(boardListProvider),
-                  child: const Text('Tap to retry'),
+          child: ClipRect(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: kContentMaxWidth),
+              child: boardsAsync.when(
+                loading: () => const _BoardListSkeleton(),
+                error: (_, _) => StatusContent(
+                  icon: Icons.error_outline,
+                  iconColor: Theme.of(context).colorScheme.error,
+                  message: "Couldn't load your boards",
+                  action: TextButton(
+                    onPressed: () => ref.invalidate(boardListProvider),
+                    child: const Text('Tap to retry'),
+                  ),
                 ),
-              ),
-              data: (boards) {
-                if (boards.isEmpty) {
-                  return StatusContent(
-                    icon: Icons.dashboard_outlined,
-                    message: 'No boards yet',
-                    action: FilledButton.icon(
-                      onPressed: _isMutating ? null : _createBoard,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Create board'),
-                    ),
-                  );
-                }
-                final isInitialLoad = !_initialLoadDone;
-                if (!_initialLoadDone) _initialLoadDone = true;
-                return ListView.builder(
-                  itemCount: boards.length,
-                  itemBuilder: (context, index) {
-                    final board = boards[index];
-                    final alreadySeen = !_seenBoardIds.add(board.id);
-                    // Initial load: stagger all items. After that: only
-                    // animate items we haven't rendered before.
-                    final shouldAnimate = isInitialLoad || !alreadySeen;
-                    return AnimatedListItem(
-                      key: ValueKey('anim_${board.id}'),
-                      staggerIndex: isInitialLoad ? index : 0,
-                      skipAnimation: !shouldAnimate,
-                      // New boards insert at top — slide down from above.
-                      slideOffset: isInitialLoad ? 12.0 : -12.0,
-                      child: Dismissible(
-                        key: ValueKey(board.id),
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 24),
-                          color: Theme.of(context).colorScheme.errorContainer,
-                          child: Icon(
-                            Icons.delete_outline,
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                        confirmDismiss: (_) => _confirmDeleteBoard(board),
-                        child: Column(
-                          children: [
-                            ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 4,
-                              ),
-                              title: Text(
-                                board.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(fontWeight: FontWeight.w600),
-                              ),
-                              subtitle: _RelativeTimestamp(
-                                dateTime: board.lastUsedAt,
-                                timestampListenable: _timestampTick,
-                              ),
-                              trailing: Icon(
-                                Icons.chevron_right,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                              onTap: () {
-                                ScaffoldMessenger.of(context).clearSnackBars();
-                                unawaited(
-                                  context.push('/board/${board.id}'),
-                                );
-                              },
-                            ),
-                            const Divider(height: 1, indent: 16, endIndent: 16),
-                          ],
-                        ),
+                data: (boards) {
+                  if (boards.isEmpty) {
+                    return StatusContent(
+                      icon: Icons.dashboard_outlined,
+                      message: 'No boards yet',
+                      action: FilledButton.icon(
+                        onPressed: _isMutating ? null : _createBoard,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Create board'),
                       ),
                     );
-                  },
-                );
-              },
+                  }
+                  final isInitialLoad = !_initialLoadDone;
+                  if (!_initialLoadDone) _initialLoadDone = true;
+                  return ListView.builder(
+                    itemCount: boards.length,
+                    itemBuilder: (context, index) {
+                      final board = boards[index];
+                      final alreadySeen = !_seenBoardIds.add(board.id);
+                      // Initial load: stagger all items. After that: only
+                      // animate items we haven't rendered before.
+                      final shouldAnimate = isInitialLoad || !alreadySeen;
+                      return AnimatedListItem(
+                        key: ValueKey('anim_${board.id}'),
+                        staggerIndex: isInitialLoad ? index : 0,
+                        skipAnimation: !shouldAnimate,
+                        // New boards insert at top — slide down from above.
+                        slideOffset: isInitialLoad ? 12.0 : -12.0,
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.grab,
+                          child: Dismissible(
+                            key: ValueKey(board.id),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 24),
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .errorContainer,
+                              child: Icon(
+                                Icons.delete_outline,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                            confirmDismiss: (_) => _confirmDeleteBoard(board),
+                            child: Column(
+                              children: [
+                                ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  ),
+                                  title: Text(
+                                    board.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                  ),
+                                  subtitle: _RelativeTimestamp(
+                                    dateTime: board.lastUsedAt,
+                                    timestampListenable: _timestampTick,
+                                  ),
+                                  trailing: Icon(
+                                    Icons.chevron_right,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
+                                  onTap: () {
+                                    ScaffoldMessenger.of(
+                                      context,
+                                    ).clearSnackBars();
+                                    unawaited(
+                                      context.push('/board/${board.id}'),
+                                    );
+                                  },
+                                ),
+                                const Divider(
+                                  height: 1,
+                                  indent: 16,
+                                  endIndent: 16,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ),
         ),

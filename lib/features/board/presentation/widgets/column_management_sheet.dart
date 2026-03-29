@@ -64,13 +64,15 @@ class ColumnManagementSheet extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 24),
               );
             }
-            return ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: (screenHeight - keyboardHeight) * 0.5,
-              ),
-              child: _ReorderableColumnList(
-                columns: columns,
-                boardId: boardId,
+            return ClipRect(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: (screenHeight - keyboardHeight) * 0.5,
+                ),
+                child: _ReorderableColumnList(
+                  columns: columns,
+                  boardId: boardId,
+                ),
               ),
             );
           },
@@ -78,8 +80,7 @@ class ColumnManagementSheet extends ConsumerWidget {
         const Divider(),
         _AddColumnField(
           boardId: boardId,
-          atLimit:
-              (columnsAsync.value?.length ?? 0) >= maxColumnsPerBoard,
+          atLimit: (columnsAsync.value?.length ?? 0) >= maxColumnsPerBoard,
         ),
       ],
     );
@@ -154,6 +155,7 @@ class _ReorderableColumnList extends ConsumerWidget {
     return ReorderableListView.builder(
       shrinkWrap: true,
       itemCount: columns.length,
+      buildDefaultDragHandles: false,
       onReorder: (oldIndex, newIndex) async {
         unawaited(HapticFeedback.selectionClick());
         // Flutter's ReorderableListView provides pre-removal indices.
@@ -291,52 +293,56 @@ class _ColumnRowState extends State<_ColumnRow> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Dismissible(
-      key: ValueKey(widget.column.id),
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (_) => widget.onConfirmDismiss(),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 16),
-        color: colorScheme.errorContainer,
-        child: Icon(Icons.delete_outline, color: colorScheme.error),
-      ),
-      child: ListTile(
-        leading: Tooltip(
-          message: 'Reorder column',
-          child: ReorderableDragStartListener(
-            index: widget.index,
-            child: const Icon(Icons.drag_handle),
-          ),
+    return MouseRegion(
+      cursor: _isEditing ? SystemMouseCursors.text : SystemMouseCursors.grab,
+      child: Dismissible(
+        key: ValueKey(widget.column.id),
+        direction:
+            _isEditing ? DismissDirection.none : DismissDirection.endToStart,
+        confirmDismiss: (_) => widget.onConfirmDismiss(),
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 16),
+          color: colorScheme.errorContainer,
+          child: Icon(Icons.delete_outline, color: colorScheme.error),
         ),
-        title: _isEditing
-            ? KeyboardListener(
-                focusNode: _keyboardFocusNode,
-                onKeyEvent: (event) {
-                  if (event is KeyDownEvent &&
-                      event.logicalKey == LogicalKeyboardKey.escape) {
-                    _controller.text = widget.column.name;
-                    setState(() => _isEditing = false);
-                    _focusNode.unfocus();
-                  }
-                },
-                child: TextField(
-                  controller: _controller,
-                  focusNode: _focusNode,
-                  maxLength: maxColumnNameLength,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    border: OutlineInputBorder(),
-                    counterText: '',
+        child: ListTile(
+          leading: Tooltip(
+            message: 'Reorder column',
+            child: ReorderableDragStartListener(
+              index: widget.index,
+              child: const Icon(Icons.drag_handle),
+            ),
+          ),
+          title: _isEditing
+              ? KeyboardListener(
+                  focusNode: _keyboardFocusNode,
+                  onKeyEvent: (event) {
+                    if (event is KeyDownEvent &&
+                        event.logicalKey == LogicalKeyboardKey.escape) {
+                      _controller.text = widget.column.name;
+                      setState(() => _isEditing = false);
+                      _focusNode.unfocus();
+                    }
+                  },
+                  child: TextField(
+                    controller: _controller,
+                    focusNode: _focusNode,
+                    maxLength: maxColumnNameLength,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                      counterText: '',
+                    ),
+                    onSubmitted: (_) => _submitOrCancel(),
                   ),
-                  onSubmitted: (_) => _submitOrCancel(),
+                )
+              : GestureDetector(
+                  onTap: _enterEditMode,
+                  child: Text(widget.column.name),
                 ),
-              )
-            : GestureDetector(
-                onTap: _enterEditMode,
-                child: Text(widget.column.name),
-              ),
+        ),
       ),
     );
   }
