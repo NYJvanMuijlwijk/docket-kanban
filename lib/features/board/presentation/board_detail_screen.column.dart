@@ -158,11 +158,13 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
         return true;
       },
       onAcceptWithDetails: (_) => _executeDrop(ref, column.id),
-      // No-op: hover is only overwritten by updateHover() or reset by
-      // endDrag(). Clearing here caused oscillation — the column onLeave
-      // fires spuriously during gap animations as layout shifts change
-      // hit-test results between nested DragTargets.
-      onLeave: (_) {},
+      // Reset hover to original position when the pointer leaves
+      // the column entirely (non-droppable area). The dedup guard
+      // in updateHover() prevents oscillation from gap-animation
+      // layout shifts — onLeave is safe here now.
+      onLeave: (_) => ref
+          .read(kanbanDragControllerProvider.notifier)
+          .resetHover(),
       builder: (context, accepted, rejected) {
         final accent = columnAccentColor(columnIndex);
         final baseColor = colorScheme.surfaceContainerLow;

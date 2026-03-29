@@ -133,6 +133,26 @@ class KanbanDragController extends _$KanbanDragController {
     unawaited(HapticFeedback.selectionClick());
   }
 
+  /// Resets hover to the source column with a null index (adjacency-
+  /// suppressed "home" position). The ghost card reappears at the
+  /// card's original slot. Called when the pointer leaves all valid
+  /// drop targets during an active drag.
+  void resetHover() {
+    if (!state.isDragging) return;
+    if (state.hoverColumnId == state.sourceColumnId &&
+        state.hoverIndex == null) {
+      return;
+    }
+    state = KanbanDragState(
+      draggedCard: state.draggedCard,
+      sourceColumnId: state.sourceColumnId,
+      sourceColumnIndex: state.sourceColumnIndex,
+      draggedCardHeight: state.draggedCardHeight,
+      originalIndex: state.originalIndex,
+      hoverColumnId: state.sourceColumnId,
+    );
+  }
+
   void endDrag() {
     state = KanbanDragState.empty;
   }

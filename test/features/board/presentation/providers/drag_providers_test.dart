@@ -235,6 +235,52 @@ void main() {
       expect(readState().hoverColumnId, isNull);
     });
 
+    group('resetHover', () {
+      test('returns hover to source column with null index', () {
+        readNotifier().startDrag(
+          card: makeCard(),
+          sourceColumnId: 'col-a',
+          sourceColumnIndex: 0,
+          draggedCardHeight: 52,
+          originalIndex: 1,
+        );
+        // Simulate hovering a different column.
+        readNotifier().updateHover(columnId: 'col-b', index: 2);
+        expect(readState().hoverColumnId, 'col-b');
+        expect(readState().hoverIndex, 2);
+
+        // Reset — ghost should return to original position.
+        readNotifier().resetHover();
+        expect(readState().hoverColumnId, 'col-a');
+        expect(readState().hoverIndex, isNull);
+        expect(readState().isDragging, isTrue,
+            reason: 'drag must still be active after resetHover');
+      });
+
+      test('no-op when not dragging', () {
+        readNotifier().resetHover();
+        expect(readState(), KanbanDragState.empty);
+      });
+
+      test('no-op when already at source with null index', () {
+        readNotifier().startDrag(
+          card: makeCard(),
+          sourceColumnId: 'col-a',
+          sourceColumnIndex: 0,
+          draggedCardHeight: 52,
+          originalIndex: 0,
+        );
+        final stateAfterStart = readState();
+        readNotifier().resetHover();
+        expect(
+          identical(readState(), stateAfterStart),
+          isTrue,
+          reason: 'resetHover at home position must not create a new '
+              'state object',
+        );
+      });
+    });
+
   });
 
   group('KanbanDragState.isAdjacencySuppressed', () {
