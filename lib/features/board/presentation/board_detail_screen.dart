@@ -53,6 +53,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
   /// Cached at initState so _stampLastUsed can run in dispose
   /// without touching ref (which is invalid after deactivation).
   late final BoardRepository _repository;
+  ScaffoldMessengerState? _scaffoldMessenger;
   bool _hasStamped = false;
   bool _isMutating = false;
   bool _isSheetOpen = false;
@@ -67,6 +68,12 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
+  }
+
+  @override
   void didUpdateWidget(BoardDetailScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.boardId != widget.boardId) {
@@ -77,6 +84,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
 
   @override
   void dispose() {
+    _scaffoldMessenger?.clearSnackBars();
     _stampLastUsed();
     _lifecycleListener.dispose();
     super.dispose();
@@ -181,10 +189,10 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
         body: StatusContent(
           icon: Icons.error_outline,
           iconColor: Theme.of(context).colorScheme.error,
-          message: 'Something went wrong',
+          message: "Couldn't load this board",
           action: TextButton(
             onPressed: () => ref.invalidate(boardProvider(widget.boardId)),
-            child: const Text('Retry'),
+            child: const Text('Tap to retry'),
           ),
         ),
       ),
@@ -247,11 +255,11 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
             error: (_, _) => StatusContent(
               icon: Icons.error_outline,
               iconColor: Theme.of(context).colorScheme.error,
-              message: 'Something went wrong',
+              message: "Couldn't load columns",
               action: TextButton(
                 onPressed: () =>
                     ref.invalidate(columnListProvider(widget.boardId)),
-                child: const Text('Retry'),
+                child: const Text('Tap to retry'),
               ),
             ),
             data: (columns) {

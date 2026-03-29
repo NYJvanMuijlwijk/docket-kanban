@@ -45,11 +45,11 @@ class ColumnManagementSheet extends ConsumerWidget {
             icon: Icons.error_outline,
             iconSize: 36,
             iconColor: Theme.of(context).colorScheme.error,
-            message: 'Something went wrong',
+            message: "Couldn't load columns",
             textStyle: Theme.of(context).textTheme.bodyMedium,
             action: TextButton(
               onPressed: () => ref.invalidate(columnListProvider(boardId)),
-              child: const Text('Retry'),
+              child: const Text('Tap to retry'),
             ),
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),

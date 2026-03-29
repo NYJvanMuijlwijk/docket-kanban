@@ -295,7 +295,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.error_outline), findsOneWidget);
-      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Tap to retry'), findsOneWidget);
       // Raw error text should not appear.
       expect(find.textContaining('Error:'), findsNothing);
     });
@@ -322,7 +322,7 @@ void main() {
       // Board loads fine, but columns error.
       expect(find.text('Test Board'), findsOneWidget);
       expect(find.byIcon(Icons.error_outline), findsOneWidget);
-      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Tap to retry'), findsOneWidget);
     });
 
     testWidgets('retry on board error does not crash', (tester) async {
@@ -334,7 +334,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Retry'));
+      await tester.tap(find.text('Tap to retry'));
       await tester.pumpAndSettle();
     });
   });

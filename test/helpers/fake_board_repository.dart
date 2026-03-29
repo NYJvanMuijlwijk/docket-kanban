@@ -79,6 +79,12 @@ class FakeBoardRepository implements BoardRepository {
   }
 
   @override
+  Future<void> putBoard(Board board) async {
+    _boards[board.id] = board;
+    _emitBoards();
+  }
+
+  @override
   Future<void> deleteBoard(String id) async {
     if (!_boards.containsKey(id)) {
       throw ArgumentError('Board not found: $id');
@@ -171,6 +177,12 @@ class FakeBoardRepository implements BoardRepository {
   }
 
   @override
+  Future<void> putColumn(KanbanColumn column) async {
+    _columns[column.id] = column;
+    _emitColumns();
+  }
+
+  @override
   Future<void> deleteColumn(String id) async {
     if (!_columns.containsKey(id)) {
       throw ArgumentError('Column not found: $id');
@@ -249,6 +261,12 @@ class FakeBoardRepository implements BoardRepository {
     if (!_cards.containsKey(card.id)) {
       throw ArgumentError('Card not found: ${card.id}');
     }
+    _cards[card.id] = card;
+    _emitCards();
+  }
+
+  @override
+  Future<void> putCard(KanbanCard card) async {
     _cards[card.id] = card;
     _emitCards();
   }

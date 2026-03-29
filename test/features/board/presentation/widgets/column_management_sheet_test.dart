@@ -356,7 +356,7 @@ void main() {
       final sheetFinder = find.byType(BottomSheet);
       final retryInSheet = find.descendant(
         of: sheetFinder,
-        matching: find.text('Retry'),
+        matching: find.text('Tap to retry'),
       );
       expect(retryInSheet, findsOneWidget);
 
@@ -390,7 +390,7 @@ void main() {
 
       final retryInSheet = find.descendant(
         of: find.byType(BottomSheet),
-        matching: find.text('Retry'),
+        matching: find.text('Tap to retry'),
       );
       await tester.tap(retryInSheet);
       await tester.pumpAndSettle();

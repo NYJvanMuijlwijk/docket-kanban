@@ -12,6 +12,8 @@ abstract class BoardRepository {
   Future<Board> createBoard(String name);
   Future<void> updateBoard(Board board);
   Future<void> deleteBoard(String id);
+  /// Upsert a board — used by undo-delete to re-insert a snapshot.
+  Future<void> putBoard(Board board);
   Stream<List<Board>> watchBoards();
   Stream<Board?> watchBoard(String id);
 
@@ -24,6 +26,8 @@ abstract class BoardRepository {
   });
   Future<void> updateColumn(KanbanColumn column);
   Future<void> deleteColumn(String id);
+  /// Upsert a column — used by undo-delete to re-insert a snapshot.
+  Future<void> putColumn(KanbanColumn column);
   Stream<List<KanbanColumn>> watchColumns(String boardId);
 
   // Cards
@@ -36,6 +40,8 @@ abstract class BoardRepository {
   });
   Future<void> updateCard(KanbanCard card);
   Future<void> deleteCard(String id);
+  /// Upsert a card — used by undo-delete to re-insert a snapshot.
+  Future<void> putCard(KanbanCard card);
   Stream<List<KanbanCard>> watchCards(String columnId);
 
   void dispose();
