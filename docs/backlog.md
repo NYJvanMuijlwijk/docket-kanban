@@ -86,7 +86,7 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
 - [x] Drop onto empty columns works via column-level `DragTarget` fallback
 
 ### Slice 5: Polish — PRIORITY: later
-- [ ] Material 3 theme: dark-mode-first, zen/minimal palette
+- [x] Material 3 theme: dark-mode-first, zen/minimal palette
 - [x] Responsive layout (mobile vs. desktop/tablet breakpoints)
   - [x] Fluid column sizing: `clamp(available / count, 250, 400)` with centering
   - [x] Board list body constrained to 800px max width
