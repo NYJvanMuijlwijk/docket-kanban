@@ -58,30 +58,9 @@ class _CardListViewState extends ConsumerState<_CardListView> {
       ),
       data: (cards) {
         if (cards.isEmpty) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Visual affordance: muted hint so empty columns
-              // don't look broken or accidentally blank.
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 20,
-                ),
-                child: Text(
-                  'No cards yet',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                  ),
-                ),
-              ),
-              _InsertionGap(
-                columnId: widget.column.id,
-                index: 0,
-              ),
-            ],
+          return _InsertionGap(
+            columnId: widget.column.id,
+            index: 0,
           );
         }
 

@@ -107,7 +107,7 @@ void main() {
     expect(find.text('Create a column first'), findsOneWidget);
   });
 
-  testWidgets('board menu shows Manage Columns option', (tester) async {
+  testWidgets('app bar shows Manage Columns icon button', (tester) async {
     final repo = makeRepo();
     await repo.createColumn(boardId: 'board-1', name: 'Todo');
 
@@ -115,18 +115,14 @@ void main() {
         .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
     await tester.pumpAndSettle();
 
-    // Open board popup menu (in the AppBar)
-    await tester.tap(
+    // Manage Columns is now a direct IconButton in the AppBar.
+    expect(
       find.descendant(
         of: find.byType(AppBar),
-        matching: find.byWidgetPredicate((w) => w is PopupMenuButton),
+        matching: find.byTooltip('Manage columns'),
       ),
+      findsOneWidget,
     );
-    await tester.pumpAndSettle();
-
-    // Both menu items should be visible
-    expect(find.text('Rename'), findsOneWidget);
-    expect(find.text('Manage Columns'), findsOneWidget);
   });
 
   testWidgets('multiple columns render in horizontal list',

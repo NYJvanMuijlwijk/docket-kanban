@@ -34,7 +34,7 @@ part 'board_detail_screen.drag.dart';
 const _kColumnMarginH = 6.0;
 const _kColumnMarginV = 12.0;
 
-enum _BoardMenuAction { rename, manageColumns }
+enum _BoardMenuAction { rename }
 
 enum _ColumnMenuAction { rename, delete }
 
@@ -213,27 +213,25 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
               overflow: TextOverflow.ellipsis,
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.view_column_outlined),
+                tooltip: 'Manage columns',
+                onPressed: () => ColumnManagementSheet.show(
+                  context,
+                  boardId: widget.boardId,
+                ),
+              ),
               PopupMenuButton<_BoardMenuAction>(
                 onSelected: (action) async {
                   switch (action) {
                     case _BoardMenuAction.rename:
                       await _renameBoard(board.name);
-                    case _BoardMenuAction.manageColumns:
-                      if (!mounted) return;
-                      await ColumnManagementSheet.show(
-                        context,
-                        boardId: widget.boardId,
-                      );
                   }
                 },
                 itemBuilder: (_) => const [
                   PopupMenuItem(
                     value: _BoardMenuAction.rename,
                     child: Text('Rename'),
-                  ),
-                  PopupMenuItem(
-                    value: _BoardMenuAction.manageColumns,
-                    child: Text('Manage Columns'),
                   ),
                 ],
               ),
@@ -329,8 +327,8 @@ class _EmptyBoardContentState extends ConsumerState<_EmptyBoardContent> {
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.auto_awesome_outlined),
-              label: const Text('Start with defaults'),
+                  : const Icon(Icons.dashboard_customize_outlined),
+              label: const Text('Create Todo / In Progress / Done'),
             ),
           ),
           const SizedBox(height: 8),
