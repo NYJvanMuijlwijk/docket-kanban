@@ -112,9 +112,11 @@ class _BoardScrollViewState extends ConsumerState<_BoardScrollView>
   }
 }
 
-/// [DragTarget] wrapping an entire column. Accepts cross-column drops on the
-/// column body (below cards or on an empty column) — appends to end.
-class _KanbanColumnDropTarget extends ConsumerWidget {
+/// [DragTarget] wrapping an entire column. Accepts drops on the column body
+/// (header, empty space below cards, or an empty column). Uses the card
+/// list's vertical position to decide index 0 (above cards) vs cardCount
+/// (below cards).
+class _KanbanColumnDropTarget extends ConsumerStatefulWidget {
   const _KanbanColumnDropTarget({
     required this.column,
     required this.columnIndex,
@@ -132,16 +134,36 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
   final double minHeight;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_KanbanColumnDropTarget> createState() =>
+      _KanbanColumnDropTargetState();
+}
+
+class _KanbanColumnDropTargetState
+    extends ConsumerState<_KanbanColumnDropTarget> {
+  final GlobalKey _cardListKey = GlobalKey();
+
+  /// Returns the insert index based on the pointer's vertical position
+  /// relative to the card list. Above the card list → 0, at or below → end.
+  int _insertIndexFromPointer(Offset globalOffset, int cardCount) {
+    final cardListBox =
+        _cardListKey.currentContext?.findRenderObject() as RenderBox?;
+    if (cardListBox == null || !cardListBox.attached) return cardCount;
+    final listTopInGlobal = cardListBox.localToGlobal(Offset.zero).dy;
+    return globalOffset.dy < listTopInGlobal ? 0 : cardCount;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final cardCount = ref.watch(
-      cardListProvider(column.id)
+      cardListProvider(widget.column.id)
           .select((async) => async.value?.length ?? 0),
     );
 
     final isHoverTarget = ref.watch(
       kanbanDragControllerProvider.select((state) {
-        return state.isDragging && state.hoverColumnId == column.id;
+        return state.isDragging &&
+            state.hoverColumnId == widget.column.id;
       }),
     );
 
@@ -149,32 +171,23 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
       onWillAcceptWithDetails: (details) {
         // Column body is the outermost DragTarget — Flutter's depth-first
         // hit-test means this only fires when the pointer is NOT over any
-        // card or gap DragTarget (i.e., empty space below cards or an
-        // empty column). Oscillation from gap-animation layout shifts is
-        // prevented by the no-op guard in updateHover().
-        final drag =
-            ref.read(kanbanDragControllerProvider.notifier);
-        final sourceId =
-            ref.read(kanbanDragControllerProvider).sourceColumnId;
-        if (column.id == sourceId) {
-          // Source column empty space: return ghost to original position
-          // rather than appending to end.
-          drag.resetHover();
-        } else {
-          drag.updateHover(columnId: column.id, index: cardCount);
-        }
+        // card or gap DragTarget (i.e., header area, empty space below
+        // cards, or an empty column). Adjacency suppression in
+        // updateHover() handles same-column no-ops.
+        final index =
+            _insertIndexFromPointer(details.offset, cardCount);
+        ref
+            .read(kanbanDragControllerProvider.notifier)
+            .updateHover(columnId: widget.column.id, index: index);
         return true;
       },
-      onAcceptWithDetails: (_) => _executeDrop(ref, column.id),
-      // Reset hover to original position when the pointer leaves
-      // the column entirely (non-droppable area). The dedup guard
-      // in updateHover() prevents oscillation from gap-animation
-      // layout shifts — onLeave is safe here now.
+      onAcceptWithDetails: (_) => _executeDrop(ref, widget.column.id),
+      // Reset hover when the pointer leaves the column entirely.
       onLeave: (_) => ref
           .read(kanbanDragControllerProvider.notifier)
           .resetHover(),
       builder: (context, accepted, rejected) {
-        final accent = columnAccentColor(columnIndex);
+        final accent = columnAccentColor(widget.columnIndex);
         final baseColor = colorScheme.surfaceContainerLow;
         final highlightColor = Color.lerp(
           baseColor,
@@ -188,8 +201,8 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
               ? Duration.zero
               : const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
-          width: columnWidth,
-          constraints: BoxConstraints(minHeight: minHeight),
+          width: widget.columnWidth,
+          constraints: BoxConstraints(minHeight: widget.minHeight),
           margin: const EdgeInsets.symmetric(
             horizontal: _kColumnMarginH,
             vertical: _kColumnMarginV,
@@ -202,21 +215,22 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               _ColumnHeader(
-                column: column,
-                columnIndex: columnIndex,
+                column: widget.column,
+                columnIndex: widget.columnIndex,
                 cardCount: cardCount,
-                boardId: boardId,
+                boardId: widget.boardId,
               ),
               Flexible(
                 child: _CardListView(
-                  column: column,
-                  columnIndex: columnIndex,
-                  boardId: boardId,
-                  autoScroll: autoScroll,
-                  columnWidth: columnWidth,
+                  key: _cardListKey,
+                  column: widget.column,
+                  columnIndex: widget.columnIndex,
+                  boardId: widget.boardId,
+                  autoScroll: widget.autoScroll,
+                  columnWidth: widget.columnWidth,
                 ),
               ),
-              _ColumnAddCardButton(columnId: column.id),
+              _ColumnAddCardButton(columnId: widget.column.id),
             ],
           ),
         );
