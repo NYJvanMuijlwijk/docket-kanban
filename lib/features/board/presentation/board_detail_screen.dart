@@ -194,16 +194,21 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
   Widget build(BuildContext context) {
     final boardAsync = ref.watch(boardProvider(widget.boardId));
     return boardAsync.when(
-      loading: () => const _BoardLoadingSkeleton(),
+      loading: () => ColoredBox(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: const SafeArea(child: _BoardLoadingSkeleton()),
+      ),
       error: (_, _) => Scaffold(
         appBar: AppBar(),
-        body: StatusContent(
-          icon: Icons.error_outline,
-          iconColor: Theme.of(context).colorScheme.error,
-          message: "Couldn't load this board",
-          action: TextButton(
-            onPressed: () => ref.invalidate(boardProvider(widget.boardId)),
-            child: const Text('Tap to retry'),
+        body: SafeArea(
+          child: StatusContent(
+            icon: Icons.error_outline,
+            iconColor: Theme.of(context).colorScheme.error,
+            message: "Couldn't load this board",
+            action: TextButton(
+              onPressed: () => ref.invalidate(boardProvider(widget.boardId)),
+              child: const Text('Tap to retry'),
+            ),
           ),
         ),
       ),
@@ -215,7 +220,9 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
           );
         }
 
-        final columnsAsync = ref.watch(columnListProvider(widget.boardId));
+        final columnsAsync = ref.watch(
+          columnListProvider(widget.boardId),
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -259,27 +266,29 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
                   )
                 : const Icon(Icons.note_add),
           ),
-          body: columnsAsync.when(
-            loading: () => const _ColumnListSkeleton(),
-            error: (_, _) => StatusContent(
-              icon: Icons.error_outline,
-              iconColor: Theme.of(context).colorScheme.error,
-              message: "Couldn't load columns",
-              action: TextButton(
-                onPressed: () =>
-                    ref.invalidate(columnListProvider(widget.boardId)),
-                child: const Text('Tap to retry'),
+          body: SafeArea(
+            child: columnsAsync.when(
+              loading: () => const _ColumnListSkeleton(),
+              error: (_, _) => StatusContent(
+                icon: Icons.error_outline,
+                iconColor: Theme.of(context).colorScheme.error,
+                message: "Couldn't load columns",
+                action: TextButton(
+                  onPressed: () =>
+                      ref.invalidate(columnListProvider(widget.boardId)),
+                  child: const Text('Tap to retry'),
+                ),
               ),
+              data: (columns) {
+                if (columns.isEmpty) {
+                  return _EmptyBoardContent(boardId: widget.boardId);
+                }
+                return _BoardScrollView(
+                  boardId: widget.boardId,
+                  columns: columns,
+                );
+              },
             ),
-            data: (columns) {
-              if (columns.isEmpty) {
-                return _EmptyBoardContent(boardId: widget.boardId);
-              }
-              return _BoardScrollView(
-                boardId: widget.boardId,
-                columns: columns,
-              );
-            },
           ),
         );
       },
@@ -295,8 +304,7 @@ class _EmptyBoardContent extends ConsumerStatefulWidget {
   final String boardId;
 
   @override
-  ConsumerState<_EmptyBoardContent> createState() =>
-      _EmptyBoardContentState();
+  ConsumerState<_EmptyBoardContent> createState() => _EmptyBoardContentState();
 }
 
 class _EmptyBoardContentState extends ConsumerState<_EmptyBoardContent> {

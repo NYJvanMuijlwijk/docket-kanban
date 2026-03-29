@@ -20,7 +20,7 @@ class SheetBody extends StatelessWidget {
     final bottomInset = math.max(viewInsets.bottom, padding.bottom);
     final screenWidth = MediaQuery.sizeOf(context).width;
     final horizontalPad = screenWidth < kCompactBreakpoint ? 16.0 : 24.0;
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: horizontalPad,
         right: horizontalPad,
