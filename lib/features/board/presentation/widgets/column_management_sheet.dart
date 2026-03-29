@@ -140,7 +140,6 @@ class _ReorderableColumnList extends ConsumerWidget {
         () => ref
             .read(columnListProvider(boardId).notifier)
             .deleteColumn(column.id),
-        'Failed to delete column',
       );
     }
     // Always return false — let the Riverpod stream rebuild remove the
@@ -166,7 +165,6 @@ class _ReorderableColumnList extends ConsumerWidget {
           () => ref
               .read(columnListProvider(boardId).notifier)
               .reorderColumn(oldIndex, adjustedNew),
-          'Failed to reorder column',
         );
       },
       proxyDecorator: (child, index, animation) {
@@ -199,7 +197,6 @@ class _ReorderableColumnList extends ConsumerWidget {
               () => ref
                   .read(columnListProvider(boardId).notifier)
                   .renameColumn(column.id, newName),
-              'Failed to rename column',
             );
           },
           onConfirmDismiss: () => _confirmDelete(context, ref, column),
@@ -390,7 +387,6 @@ class _AddColumnFieldState extends ConsumerState<_AddColumnField> {
       () => ref
           .read(columnListProvider(widget.boardId).notifier)
           .createColumn(name),
-      'Failed to create column',
     );
     // guardMutation swallows errors — always clear the field.
     // Worst case on limit error: user re-types (snackbar is visible).

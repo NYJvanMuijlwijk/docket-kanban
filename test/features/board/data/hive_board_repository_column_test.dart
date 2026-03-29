@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:kanban_board/core/mutation_exception.dart';
 import 'package:kanban_board/features/board/data/hive_board_repository.dart';
 
 void main() {
@@ -40,13 +41,13 @@ void main() {
   });
 
   group('createColumn', () {
-    test('throws ArgumentError for non-existent boardId', () async {
+    test('throws StaleDataException for non-existent boardId', () async {
       expect(
         () => repository.createColumn(
           boardId: 'non-existent',
           name: 'Orphan',
         ),
-        throwsA(isA<ArgumentError>()),
+        throwsA(isA<StaleDataException>()),
       );
     });
 
@@ -96,7 +97,7 @@ void main() {
       expect(columns.first.name, 'Todo');
     });
 
-    test('throws StateError when board has 10 columns', () async {
+    test('throws ValidationException when board has 10 columns', () async {
       final board = await repository.createBoard('Test');
       for (var i = 0; i < 10; i++) {
         await repository.createColumn(
@@ -110,7 +111,7 @@ void main() {
           boardId: board.id,
           name: 'Too Many',
         ),
-        throwsA(isA<StateError>()),
+        throwsA(isA<ValidationException>()),
       );
     });
   });
@@ -165,7 +166,7 @@ void main() {
 
       expect(
         () => repository.updateColumn(ghost),
-        throwsA(isA<ArgumentError>()),
+        throwsA(isA<StaleDataException>()),
       );
     });
   });
@@ -207,7 +208,7 @@ void main() {
     test('throws for non-existent column ID', () async {
       expect(
         () => repository.deleteColumn('non-existent'),
-        throwsA(isA<ArgumentError>()),
+        throwsA(isA<StaleDataException>()),
       );
     });
   });

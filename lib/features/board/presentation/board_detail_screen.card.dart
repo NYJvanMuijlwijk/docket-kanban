@@ -145,7 +145,6 @@ class _KanbanCardTile extends ConsumerWidget {
                       title: result.title,
                       description: result.description,
                     ),
-                'Failed to update card',
               );
             case CardDeleted():
               // Capture repository while ref is still valid — the card
@@ -162,7 +161,7 @@ class _KanbanCardTile extends ConsumerWidget {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Could not delete card — please try again'),
+                    content: Text("Couldn't remove card — try again"),
                   ),
                 );
                 return;
@@ -186,7 +185,9 @@ class _KanbanCardTile extends ConsumerWidget {
                         if (!context.mounted) return;
                         messenger.showSnackBar(
                           const SnackBar(
-                            content: Text('Could not undo — card may be lost'),
+                            content: Text(
+                              'Undo failed — card data may be lost',
+                            ),
                           ),
                         );
                       }

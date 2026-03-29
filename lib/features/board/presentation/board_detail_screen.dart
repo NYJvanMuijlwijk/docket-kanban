@@ -141,7 +141,6 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
         () => ref
             .read(boardListProvider.notifier)
             .renameBoard(widget.boardId, newName),
-        'Failed to rename board',
       );
     }
   }
@@ -170,7 +169,6 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
                 title: result.title,
                 description: result.description,
               ),
-          'Failed to create card',
         );
         unawaited(HapticFeedback.mediumImpact());
       } finally {
@@ -299,7 +297,6 @@ class _EmptyBoardContentState extends ConsumerState<_EmptyBoardContent> {
         () => ref
             .read(columnListProvider(widget.boardId).notifier)
             .createTemplateColumns(),
-        'Failed to create columns',
       );
     } finally {
       if (mounted) setState(() => _isMutating = false);

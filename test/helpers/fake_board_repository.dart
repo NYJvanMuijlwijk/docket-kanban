@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:fractional_indexing/fractional_indexing.dart';
+import 'package:kanban_board/core/mutation_exception.dart';
 import 'package:kanban_board/core/seed_transformer.dart';
 import 'package:kanban_board/features/board/domain/board.dart';
 import 'package:kanban_board/features/board/domain/board_repository.dart';
@@ -72,7 +73,7 @@ class FakeBoardRepository implements BoardRepository {
   @override
   Future<void> updateBoard(Board board) async {
     if (!_boards.containsKey(board.id)) {
-      throw ArgumentError('Board not found: ${board.id}');
+      throw const StaleDataException('Board was already deleted');
     }
     _boards[board.id] = board;
     _emitBoards();
@@ -87,7 +88,7 @@ class FakeBoardRepository implements BoardRepository {
   @override
   Future<void> deleteBoard(String id) async {
     if (!_boards.containsKey(id)) {
-      throw ArgumentError('Board not found: $id');
+      throw const StaleDataException('Board was already deleted');
     }
     // Cascade: delete columns and their cards.
     final columnIds = _columns.values
@@ -141,11 +142,11 @@ class FakeBoardRepository implements BoardRepository {
     required String name,
   }) async {
     if (!_boards.containsKey(boardId)) {
-      throw ArgumentError('Board not found: $boardId');
+      throw const StaleDataException('Board was already deleted');
     }
     final existing = _sortedColumns(boardId);
     if (existing.length >= 10) {
-      throw StateError('Board already has 10 columns');
+      throw const ValidationException('Board already has 10 columns');
     }
 
     final lastOrder =
@@ -170,7 +171,7 @@ class FakeBoardRepository implements BoardRepository {
   @override
   Future<void> updateColumn(KanbanColumn column) async {
     if (!_columns.containsKey(column.id)) {
-      throw ArgumentError('Column not found: ${column.id}');
+      throw const StaleDataException('Column was already deleted');
     }
     _columns[column.id] = column;
     _emitColumns();
@@ -185,7 +186,7 @@ class FakeBoardRepository implements BoardRepository {
   @override
   Future<void> deleteColumn(String id) async {
     if (!_columns.containsKey(id)) {
-      throw ArgumentError('Column not found: $id');
+      throw const StaleDataException('Column was already deleted');
     }
     _cards.removeWhere((_, card) => card.columnId == id);
     _columns.remove(id);
@@ -229,11 +230,11 @@ class FakeBoardRepository implements BoardRepository {
     String description = '',
   }) async {
     if (!_columns.containsKey(columnId)) {
-      throw ArgumentError('Column not found: $columnId');
+      throw const StaleDataException('Column was already deleted');
     }
     final existing = _sortedCards(columnId);
     if (existing.length >= 100) {
-      throw StateError('Column already has 100 cards');
+      throw const ValidationException('Column already has 100 cards');
     }
 
     final lastOrder =
@@ -259,7 +260,7 @@ class FakeBoardRepository implements BoardRepository {
   @override
   Future<void> updateCard(KanbanCard card) async {
     if (!_cards.containsKey(card.id)) {
-      throw ArgumentError('Card not found: ${card.id}');
+      throw const StaleDataException('Card was already deleted');
     }
     _cards[card.id] = card;
     _emitCards();
@@ -274,7 +275,7 @@ class FakeBoardRepository implements BoardRepository {
   @override
   Future<void> deleteCard(String id) async {
     if (!_cards.containsKey(id)) {
-      throw ArgumentError('Card not found: $id');
+      throw const StaleDataException('Card was already deleted');
     }
     _cards.remove(id);
     _emitCards();
