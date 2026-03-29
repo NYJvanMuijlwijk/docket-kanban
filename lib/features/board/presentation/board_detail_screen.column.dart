@@ -394,26 +394,33 @@ class _ColumnHeader extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 // Card count badge — tinted with column accent.
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    '$cardCount',
-                    style: Theme.of(context)
-                        .textTheme
-                        .labelSmall
-                        ?.copyWith(
-                          color: accent.withValues(alpha: 0.7),
-                          fontWeight: FontWeight.w600,
-                        ),
+                // ConstrainedBox caps width so triple-digit counts
+                // (max 100) don't push the column name off screen
+                // at narrow viewport widths.
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 40),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      '$cardCount',
+                      overflow: TextOverflow.clip,
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelSmall
+                          ?.copyWith(
+                            color: accent.withValues(alpha: 0.7),
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
                   ),
                 ),
               ],

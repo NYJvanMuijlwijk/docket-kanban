@@ -3,8 +3,7 @@ part of 'board_detail_screen.dart';
 /// File-private registry of per-column [ReorderAnimationScope] keys.
 /// Populated by [_CardListViewState] on mount, cleared on dispose.
 /// Used by [_executeDrop] to snapshot positions before same-column reorder.
-final _reorderScopeKeys =
-    <String, GlobalKey<ReorderAnimationScopeState>>{};
+final _reorderScopeKeys = <String, GlobalKey<ReorderAnimationScopeState>>{};
 
 /// Per-column card list. Watches only [cardListProvider] for its own column
 /// (fixes Slice 4c — previously all columns re-watched together).
@@ -44,11 +43,9 @@ class _CardListViewState extends ConsumerState<_CardListView> {
 
   @override
   Widget build(BuildContext context) {
-    final cardsAsync =
-        ref.watch(cardListProvider(widget.column.id));
+    final cardsAsync = ref.watch(cardListProvider(widget.column.id));
 
-    void onRetry() =>
-        ref.invalidate(cardListProvider(widget.column.id));
+    void onRetry() => ref.invalidate(cardListProvider(widget.column.id));
 
     return cardsAsync.when(
       loading: () => _ColumnEmptyContent(
@@ -61,9 +58,30 @@ class _CardListViewState extends ConsumerState<_CardListView> {
       ),
       data: (cards) {
         if (cards.isEmpty) {
-          return _InsertionGap(
-            columnId: widget.column.id,
-            index: 0,
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Visual affordance: muted hint so empty columns
+              // don't look broken or accidentally blank.
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 20,
+                ),
+                child: Text(
+                  'No cards yet',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+              _InsertionGap(
+                columnId: widget.column.id,
+                index: 0,
+              ),
+            ],
           );
         }
 
@@ -151,12 +169,51 @@ class _KanbanCardTile extends ConsumerWidget {
                 'Failed to update card',
               );
             case CardDeleted():
-              await guardMutation(
-                context,
-                () => ref
+              // Capture repository while ref is still valid — the card
+              // tile will unmount after deletion, making ref unusable
+              // inside the snackbar callback.
+              final repository = ref.read(boardRepositoryProvider);
+
+              // Undo-delete: delete optimistically, show undo snackbar.
+              try {
+                await ref
                     .read(cardListProvider(columnId).notifier)
-                    .deleteCard(card.id),
-                'Failed to delete card',
+                    .deleteCard(card.id);
+              } on Object {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Could not delete card — please try again'),
+                  ),
+                );
+                return;
+              }
+              if (!context.mounted) return;
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.clearSnackBars();
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    "'${truncateForDisplay(card.title)}' deleted",
+                  ),
+                  action: SnackBarAction(
+                    label: 'Undo',
+                    textColor: Theme.of(context).colorScheme.primary,
+                    onPressed: () async {
+                      // Re-insert the snapshot — putCard is an upsert.
+                      try {
+                        await repository.putCard(card);
+                      } on Object {
+                        if (!context.mounted) return;
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text('Could not undo — card may be lost'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
               );
             case null:
               break;
@@ -166,8 +223,6 @@ class _KanbanCardTile extends ConsumerWidget {
           width: double.infinity,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              // Left accent bar — column-colored for visual
-              // association, especially during drag-and-drop.
               border: Border(
                 left: BorderSide(
                   color: columnAccentColor(columnIndex),
@@ -177,7 +232,10 @@ class _KanbanCardTile extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

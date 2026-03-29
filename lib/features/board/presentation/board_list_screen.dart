@@ -9,6 +9,10 @@ import 'package:kanban_board/core/guard_mutation.dart';
 import 'package:kanban_board/core/responsive.dart';
 import 'package:kanban_board/core/shimmer.dart';
 import 'package:kanban_board/core/status_content.dart';
+import 'package:kanban_board/core/string_utils.dart';
+import 'package:kanban_board/features/board/domain/board.dart';
+import 'package:kanban_board/features/board/domain/kanban_card.dart';
+import 'package:kanban_board/features/board/domain/kanban_column.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
 import 'package:kanban_board/features/board/presentation/widgets/board_form_sheet.dart';
 
@@ -28,6 +32,83 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
   bool _isMutating = false;
   bool _isSheetOpen = false;
   bool _initialLoadDone = false;
+
+  /// Undo-delete: snapshots the board, deletes optimistically, then
+  /// shows a snackbar. Actual deletion happens when the snackbar closes
+  /// without undo. If undo is tapped, the board is re-inserted via put().
+  Future<bool> _confirmDeleteBoard(Board board) async {
+    unawaited(HapticFeedback.mediumImpact());
+
+    // Capture repository while ref is still valid — if the user
+    // navigates away before tapping Undo, ref would be dead.
+    final repository = ref.read(boardRepositoryProvider);
+
+    // Snapshot columns + cards before cascade-delete wipes them.
+    var columnSnapshot = const <KanbanColumn>[];
+    var cardSnapshot = const <KanbanCard>[];
+    try {
+      columnSnapshot = await repository.getColumns(board.id);
+      final cardFutures =
+          columnSnapshot.map((c) => repository.getCards(c.id));
+      cardSnapshot = (await Future.wait(cardFutures)).expand((c) => c).toList();
+    } on Object {
+      // Can't snapshot — delete will proceed without undo support.
+    }
+
+    // Clear from seen cache so the undo re-insert animates in.
+    _seenBoardIds.remove(board.id);
+
+    // Delete immediately for responsive feel.
+    try {
+      await ref.read(boardListProvider.notifier).deleteBoard(board.id);
+    } on Object {
+      if (!mounted) return false;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not delete board — please try again'),
+        ),
+      );
+      return false;
+    }
+
+    if (!mounted) return false;
+
+    // Show undo snackbar. If dismissed without undo, deletion stands.
+    final messenger = ScaffoldMessenger.of(context)..clearSnackBars();
+    final controller = messenger.showSnackBar(
+      SnackBar(
+        content: Text("'${truncateForDisplay(board.name)}' deleted"),
+        action: SnackBarAction(
+          label: 'Undo',
+          textColor: Theme.of(context).colorScheme.primary,
+          onPressed: () async {
+            // Re-insert board, columns, and cards from snapshot.
+            try {
+              await repository.putBoard(board);
+              for (final column in columnSnapshot) {
+                await repository.putColumn(column);
+              }
+              for (final card in cardSnapshot) {
+                await repository.putCard(card);
+              }
+            } on Object {
+              if (!mounted) return;
+              messenger.showSnackBar(
+                const SnackBar(
+                  content: Text('Could not undo — board may be lost'),
+                ),
+              );
+            }
+          },
+        ),
+      ),
+    );
+    // Await snackbar close reason — no further action needed.
+    await controller.closed;
+
+    // Dismissible already removed from tree by returning true.
+    return false;
+  }
 
   Future<void> _createBoard() async {
     if (_isSheetOpen) return;
@@ -75,10 +156,10 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
             error: (_, _) => StatusContent(
               icon: Icons.error_outline,
               iconColor: Theme.of(context).colorScheme.error,
-              message: 'Something went wrong',
+              message: "Couldn't load your boards",
               action: TextButton(
                 onPressed: () => ref.invalidate(boardListProvider),
-                child: const Text('Retry'),
+                child: const Text('Tap to retry'),
               ),
             ),
             data: (boards) {
@@ -121,22 +202,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                           color: Theme.of(context).colorScheme.error,
                         ),
                       ),
-                      onDismissed: (_) async {
-                        unawaited(HapticFeedback.mediumImpact());
-                        try {
-                          await ref
-                              .read(boardListProvider.notifier)
-                              .deleteBoard(board.id);
-                        } on Object {
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to delete board'),
-                            ),
-                          );
-                          ref.invalidate(boardListProvider);
-                        }
-                      },
+                      confirmDismiss: (_) => _confirmDeleteBoard(board),
                       child: Column(
                         children: [
                           ListTile(
@@ -160,7 +226,13 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                                 context,
                               ).colorScheme.onSurfaceVariant,
                             ),
-                            onTap: () => context.push('/board/${board.id}'),
+                            onTap: () {
+                              ScaffoldMessenger.of(context)
+                                  .clearSnackBars();
+                              unawaited(
+                                context.push('/board/${board.id}'),
+                              );
+                            },
                           ),
                           const Divider(height: 1, indent: 16, endIndent: 16),
                         ],

@@ -67,6 +67,11 @@ class HiveBoardRepository implements BoardRepository {
   }
 
   @override
+  Future<void> putBoard(Board board) async {
+    await _boardBox.put(board.id, board.toJson());
+  }
+
+  @override
   Future<void> deleteBoard(String id) async {
     if (!_boardBox.containsKey(id)) {
       throw ArgumentError('Board not found: $id');
@@ -152,6 +157,11 @@ class HiveBoardRepository implements BoardRepository {
   }
 
   @override
+  Future<void> putColumn(KanbanColumn column) async {
+    await _columnBox.put(column.id, column.toJson());
+  }
+
+  @override
   Future<void> deleteColumn(String id) async {
     if (!_columnBox.containsKey(id)) {
       throw ArgumentError('Column not found: $id');
@@ -224,6 +234,11 @@ class HiveBoardRepository implements BoardRepository {
     if (!_cardBox.containsKey(card.id)) {
       throw ArgumentError('Card not found: ${card.id}');
     }
+    await _cardBox.put(card.id, card.toJson());
+  }
+
+  @override
+  Future<void> putCard(KanbanCard card) async {
     await _cardBox.put(card.id, card.toJson());
   }
 

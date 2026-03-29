@@ -314,7 +314,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.error_outline), findsOneWidget);
-      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Tap to retry'), findsOneWidget);
       // Should not show raw error text.
       expect(find.text('Error: Exception: Connection failed'), findsNothing);
     });
@@ -325,9 +325,9 @@ void main() {
       await tester.pumpWidget(_buildApp(repository: repo));
       await tester.pumpAndSettle();
 
-      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Tap to retry'), findsOneWidget);
       // Tapping retry should not crash (it calls ref.invalidate).
-      await tester.tap(find.text('Retry'));
+      await tester.tap(find.text('Tap to retry'));
       await tester.pumpAndSettle();
     });
   });
