@@ -115,7 +115,7 @@ Personal kanban board built with Flutter. Portfolio piece demonstrating clean ar
   - [x] Add try-catch + SnackBar to rename flows (board, column, card) — currently unhandled `ArgumentError` on entity-not-found. Follow existing delete pattern in `board_list_screen.dart`.
 - [x] GoRouter `errorBuilder`: general error/404 screen with "Go Home" navigation
 - [x] Column management: board menu → "Manage Columns" bottom sheet (reorder, inline rename, swipe-delete, inline create). FAB repurposed to create card in first column.
-- [ ] App icon + splash screen
+- [x] App icon + splash screen
 
 **Acceptance:** Portfolio-ready on web (desktop + mobile viewport) and Android. Dark mode default. Edge cases handled (including unknown routes → error screen). Clean, minimal aesthetic.
 
