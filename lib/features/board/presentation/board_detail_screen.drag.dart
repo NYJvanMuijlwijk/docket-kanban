@@ -1,6 +1,7 @@
 part of 'board_detail_screen.dart';
 
-/// Animated gap between cards. Opens when the drag controller's hover index
+/// Animated gap between cards. Opens to the dragged card's measured height
+/// and renders a ghost preview when the drag controller's hover index
 /// matches this slot's index.
 ///
 /// Also acts as a [DragTarget] so the gap "catches" the pointer as it
@@ -16,28 +17,36 @@ class _InsertionGap extends ConsumerWidget {
   final String columnId;
   final int index;
 
-  static const _gapHeight = 52.0;
   static const _animDuration = Duration(milliseconds: 200);
+  static const _fallbackHeight = 52.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final (:isActive, :isDragging) = ref.watch(
+    final dragData = ref.watch(
       kanbanDragControllerProvider.select((state) {
+        final isActive = state.isDragging &&
+            state.hoverColumnId == columnId &&
+            state.hoverIndex == index;
         return (
-          isActive: state.isDragging &&
-              state.hoverColumnId == columnId &&
-              state.hoverIndex == index,
+          isActive: isActive,
           isDragging: state.isDragging,
+          draggedCard: isActive ? state.draggedCard : null,
+          draggedCardHeight: isActive ? state.draggedCardHeight : null,
+          sourceColumnIndex: isActive ? state.sourceColumnIndex : null,
         );
       }),
     );
 
+    final targetHeight = dragData.isActive
+        ? (dragData.draggedCardHeight ?? _fallbackHeight)
+        : 0.0;
+
     // Animate open during hover changes, but collapse instantly on drop.
     // When isDragging is false the drag just ended — the card's entrance
-    // animation should fill the space without fighting a closing gap.
+    // should fill the space without fighting a closing gap.
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final duration =
-        reduceMotion || !isDragging ? Duration.zero : _animDuration;
+        reduceMotion || !dragData.isDragging ? Duration.zero : _animDuration;
 
     return DragTarget<KanbanCard>(
       onWillAcceptWithDetails: (details) {
@@ -53,47 +62,23 @@ class _InsertionGap extends ConsumerWidget {
         return AnimatedContainer(
           duration: duration,
           curve: Curves.easeInOut,
-          height: isActive ? _gapHeight : 0,
-          child: AnimatedOpacity(
-            duration: duration,
-            curve: Curves.easeInOut,
-            opacity: isActive ? 1.0 : 0.0,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: _InsertionLine(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-          ),
+          height: targetHeight,
+          child: dragData.isActive && dragData.draggedCard != null
+              ? ClipRect(
+                  child: Opacity(
+                    opacity: 0.4,
+                    child: IgnorePointer(
+                      child: _KanbanCardTile(
+                        card: dragData.draggedCard!,
+                        columnId: columnId,
+                        columnIndex: dragData.sourceColumnIndex ?? 0,
+                      ),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
         );
       },
-    );
-  }
-}
-
-/// Accent-colored horizontal line with rounded pill ends and a soft glow.
-class _InsertionLine extends StatelessWidget {
-  const _InsertionLine({required this.color});
-
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 4,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(2),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.4),
-            blurRadius: 8,
-            spreadRadius: 1,
-          ),
-        ],
-      ),
     );
   }
 }
