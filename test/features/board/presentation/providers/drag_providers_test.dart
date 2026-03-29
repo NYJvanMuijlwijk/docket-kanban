@@ -52,6 +52,8 @@ void main() {
       expect(state.originalIndex, isNull);
       expect(state.hoverColumnId, isNull);
       expect(state.hoverIndex, isNull);
+      expect(state.sourceColumnIndex, isNull);
+      expect(state.draggedCardHeight, isNull);
     });
 
     test('startDrag sets all active fields', () {
