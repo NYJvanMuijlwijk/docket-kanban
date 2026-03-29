@@ -17,6 +17,10 @@ import 'package:kanban_board/features/board/domain/kanban_column.dart';
 import 'package:kanban_board/features/board/presentation/providers/board_providers.dart';
 import 'package:kanban_board/features/board/presentation/widgets/board_form_sheet.dart';
 
+/// Home screen — displays all boards sorted by [Board.lastUsedAt] (most
+/// recently used first). Supports creating new boards via a FAB and deleting
+/// boards via a long-press menu. Each board tile shows a card/column summary
+/// and a relative timestamp ("2 hours ago") that refreshes periodically.
 class BoardListScreen extends ConsumerStatefulWidget {
   const BoardListScreen({super.key});
 

@@ -37,6 +37,16 @@ enum _BoardMenuAction { rename }
 
 enum _ColumnMenuAction { rename, delete }
 
+/// Main board view — renders columns horizontally with their cards, supports
+/// drag-and-drop reordering, and provides CRUD for columns and cards.
+///
+/// This screen is split across four `part` files for readability:
+/// - `board_detail_screen.card.dart` — per-column card list and card tiles
+/// - `board_detail_screen.column.dart` — column headers, menus, drop targets
+/// - `board_detail_screen.drag.dart` — ghost cards, insertion gaps, drag logic
+///
+/// Stamps `Board.lastUsedAt` on dispose and app-lifecycle pause to track
+/// board usage for the home screen sort order.
 class BoardDetailScreen extends ConsumerStatefulWidget {
   const BoardDetailScreen({required this.boardId, super.key});
 

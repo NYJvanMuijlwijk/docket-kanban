@@ -10,6 +10,22 @@ import 'package:kanban_board/features/board/domain/kanban_card.dart';
 import 'package:kanban_board/features/board/domain/kanban_column.dart';
 import 'package:uuid/uuid.dart';
 
+/// Hive-backed implementation of [BoardRepository].
+///
+/// Stores boards, columns, and cards in three separate
+/// `Box<Map<dynamic, dynamic>>` instances. Each model is serialized as a
+/// JSON map via `toJson()` and deserialized with a runtime cast to
+/// `Map<String, dynamic>` on read — Hive boxes use `dynamic` keys because
+/// Hive doesn't preserve generic type arguments across restarts.
+///
+/// Reactivity is provided by [StreamController] broadcasts that re-read the
+/// full box on every Hive `watch()` event. Each `watch*` method uses
+/// [SeedTransformer] to emit the current state immediately on listen, then
+/// subsequent updates as Hive writes occur.
+///
+/// Deletes cascade: deleting a board removes its columns and their cards;
+/// deleting a column removes its cards. All storage I/O is wrapped in
+/// try/catch to surface [StorageException] instead of raw [HiveError].
 class HiveBoardRepository implements BoardRepository {
   HiveBoardRepository(this._boardBox, this._columnBox, this._cardBox) {
     _boardSub = _boardBox.watch().listen((_) => _emitBoards());
