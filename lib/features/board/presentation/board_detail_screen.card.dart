@@ -1,13 +1,8 @@
 part of 'board_detail_screen.dart';
 
-/// File-private registry of per-column [ReorderAnimationScope] keys.
-/// Populated by [_CardListViewState] on mount, cleared on dispose.
-/// Used by [_executeDrop] to snapshot positions before same-column reorder.
-final _reorderScopeKeys = <String, GlobalKey<ReorderAnimationScopeState>>{};
-
 /// Per-column card list. Watches only [cardListProvider] for its own column
 /// (fixes Slice 4c — previously all columns re-watched together).
-class _CardListView extends ConsumerStatefulWidget {
+class _CardListView extends ConsumerWidget {
   const _CardListView({
     required this.column,
     required this.columnIndex,
@@ -23,29 +18,10 @@ class _CardListView extends ConsumerStatefulWidget {
   final double columnWidth;
 
   @override
-  ConsumerState<_CardListView> createState() => _CardListViewState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cardsAsync = ref.watch(cardListProvider(column.id));
 
-class _CardListViewState extends ConsumerState<_CardListView> {
-  final _scopeKey = GlobalKey<ReorderAnimationScopeState>();
-
-  @override
-  void initState() {
-    super.initState();
-    _reorderScopeKeys[widget.column.id] = _scopeKey;
-  }
-
-  @override
-  void dispose() {
-    _reorderScopeKeys.remove(widget.column.id);
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cardsAsync = ref.watch(cardListProvider(widget.column.id));
-
-    void onRetry() => ref.invalidate(cardListProvider(widget.column.id));
+    void onRetry() => ref.invalidate(cardListProvider(column.id));
 
     return cardsAsync.when(
       loading: () => _ColumnEmptyContent(
@@ -59,51 +35,45 @@ class _CardListViewState extends ConsumerState<_CardListView> {
       data: (cards) {
         if (cards.isEmpty) {
           return _InsertionGap(
-            columnId: widget.column.id,
+            columnId: column.id,
             index: 0,
           );
         }
 
-        return ReorderAnimationScope(
-          key: _scopeKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < cards.length; i++) ...[
-                _InsertionGap(
-                  key: ValueKey(
-                    'gap-${widget.column.id}-$i',
-                  ),
-                  columnId: widget.column.id,
-                  index: i,
-                ),
-                ReorderAnimationItem(
-                  key: ValueKey(cards[i].id),
-                  itemKey: ValueKey(cards[i].id),
-                  child: AnimatedListItem(
-                    staggerIndex: i,
-                    child: _DraggableCardSlot(
-                      card: cards[i],
-                      index: i,
-                      columnId: widget.column.id,
-                      columnIndex: widget.columnIndex,
-                      boardId: widget.boardId,
-                      autoScroll: widget.autoScroll,
-                      columnWidth: widget.columnWidth,
-                    ),
-                  ),
-                ),
-              ],
-              // Final gap after last card — allows dropping at end.
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var i = 0; i < cards.length; i++) ...[
               _InsertionGap(
                 key: ValueKey(
-                  'gap-${widget.column.id}-${cards.length}',
+                  'gap-${column.id}-$i',
                 ),
-                columnId: widget.column.id,
-                index: cards.length,
+                columnId: column.id,
+                index: i,
+              ),
+              AnimatedListItem(
+                key: ValueKey(cards[i].id),
+                staggerIndex: i,
+                child: _DraggableCardSlot(
+                  card: cards[i],
+                  index: i,
+                  columnId: column.id,
+                  columnIndex: columnIndex,
+                  boardId: boardId,
+                  autoScroll: autoScroll,
+                  columnWidth: columnWidth,
+                ),
               ),
             ],
-          ),
+            // Final gap after last card — allows dropping at end.
+            _InsertionGap(
+              key: ValueKey(
+                'gap-${column.id}-${cards.length}',
+              ),
+              columnId: column.id,
+              index: cards.length,
+            ),
+          ],
         );
       },
     );
