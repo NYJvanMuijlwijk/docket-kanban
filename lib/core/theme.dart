@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kanban_board/core/responsive.dart';
 
 // ── Palette ────────────────────────────────────────────────────────────
 // Deep cool neutrals with a warm amber accent. Hand-tuned for contrast
@@ -118,6 +119,7 @@ ThemeData buildDarkTheme() {
       contentTextStyle: const TextStyle(color: _onSurface),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       behavior: SnackBarBehavior.floating,
+      width: kContentMaxWidth,
     ),
     dialogTheme: const DialogThemeData(
       backgroundColor: _surfaceContainer,
