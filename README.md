@@ -9,7 +9,13 @@ A minimal, dark-mode-first kanban board built with Flutter. Local-first persiste
 
 ## Screenshots
 
-<!-- TODO: Add screenshots of board list and board detail views -->
+<p>
+  <img src="assets/screenshots/board_list.png" alt="Board list screen" width="200" />
+  <img src="assets/screenshots/board_screen.png" alt="Board screen" width="200" />
+  <img src="assets/screenshots/card_bottom_sheet.png" alt="Card bottom sheet" width="200" />
+  <img src="assets/screenshots/card_drag.png" alt="Card drag" width="200" />
+</p>
+
 
 ## Getting Started
 
