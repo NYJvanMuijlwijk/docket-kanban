@@ -267,6 +267,7 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
                 : const Icon(Icons.note_add),
           ),
           body: SafeArea(
+            bottom: false,
             child: columnsAsync.when(
               loading: () => const _ColumnListSkeleton(),
               error: (_, _) => StatusContent(
