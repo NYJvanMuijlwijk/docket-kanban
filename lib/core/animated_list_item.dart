@@ -62,7 +62,6 @@ class _AnimatedListItemState extends State<AnimatedListItem>
       duration: widget.duration,
     );
 
-    // Ease-out-cubic: smooth deceleration, not bouncy.
     final curved = CurvedAnimation(
       parent: _controller!,
       curve: Curves.easeOutCubic,

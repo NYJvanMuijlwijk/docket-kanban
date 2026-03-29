@@ -1,31 +1,30 @@
-/// Business rule violated — limits, duplicates, invalid input.
+/// Base class for mutation failures shown to the user via SnackBar.
 ///
-/// The [message] is user-facing and displayed directly in a SnackBar.
-class ValidationException implements Exception {
-  const ValidationException(this.message);
+/// The [message] is user-facing and displayed directly.
+sealed class MutationException implements Exception {
+  const MutationException(this.message);
   final String message;
+}
+
+/// Business rule violated — limits, duplicates, invalid input.
+class ValidationException extends MutationException {
+  const ValidationException(super.message);
 
   @override
   String toString() => 'ValidationException: $message';
 }
 
 /// Target entity was already deleted or moved (race condition).
-///
-/// The [message] is user-facing and displayed directly in a SnackBar.
-class StaleDataException implements Exception {
-  const StaleDataException(this.message);
-  final String message;
+class StaleDataException extends MutationException {
+  const StaleDataException(super.message);
 
   @override
   String toString() => 'StaleDataException: $message';
 }
 
 /// Persistence I/O failure — Hive write error, unexpected storage issue.
-///
-/// The [message] is user-facing and displayed directly in a SnackBar.
-class StorageException implements Exception {
-  const StorageException(this.message);
-  final String message;
+class StorageException extends MutationException {
+  const StorageException(super.message);
 
   @override
   String toString() => 'StorageException: $message';

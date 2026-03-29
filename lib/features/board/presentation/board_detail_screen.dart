@@ -352,18 +352,7 @@ class _BoardLoadingSkeleton extends StatelessWidget {
           child: ShimmerBlock(width: 120, height: 20),
         ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final columnWidth = computeColumnWidth(
-            viewportWidth: constraints.maxWidth,
-            columnCount: 3,
-            marginPerColumn: _kColumnMarginH * 2,
-          );
-          return ShimmerScope(
-            child: _SkeletonColumns(columnWidth: columnWidth),
-          );
-        },
-      ),
+      body: const _ColumnListSkeleton(),
     );
   }
 }

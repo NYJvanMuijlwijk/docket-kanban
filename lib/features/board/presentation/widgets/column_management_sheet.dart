@@ -227,6 +227,7 @@ class _ColumnRow extends StatefulWidget {
 
 class _ColumnRowState extends State<_ColumnRow> {
   final _focusNode = FocusNode();
+  final _keyboardFocusNode = FocusNode();
   late TextEditingController _controller;
   bool _isEditing = false;
 
@@ -252,6 +253,7 @@ class _ColumnRowState extends State<_ColumnRow> {
     _focusNode
       ..removeListener(_onFocusChange)
       ..dispose();
+    _keyboardFocusNode.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -309,7 +311,7 @@ class _ColumnRowState extends State<_ColumnRow> {
         ),
         title: _isEditing
             ? KeyboardListener(
-                focusNode: FocusNode(),
+                focusNode: _keyboardFocusNode,
                 onKeyEvent: (event) {
                   if (event is KeyDownEvent &&
                       event.logicalKey == LogicalKeyboardKey.escape) {
