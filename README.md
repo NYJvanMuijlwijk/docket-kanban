@@ -7,6 +7,8 @@ A minimal, dark-mode-first kanban board built with Flutter. Local-first persiste
 ![Riverpod](https://img.shields.io/badge/Riverpod-3.x-00A98F)
 ![Hive](https://img.shields.io/badge/Hive-Local--First-FFC107)
 
+**[Live Demo](https://nyjvanmuijlwijk.github.io/docket-kanban/)**
+
 ## Screenshots
 
 <p>
