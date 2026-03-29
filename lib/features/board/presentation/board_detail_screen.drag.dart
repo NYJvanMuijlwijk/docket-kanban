@@ -31,14 +31,14 @@ class _AnimatedGhostCard extends StatelessWidget {
     final targetHeight = isActive ? (height ?? fallbackHeight) : 0.0;
     final duration = animate ? animDuration : Duration.zero;
 
-    return ClipRect(
-      child: AnimatedContainer(
-        duration: duration,
-        curve: Curves.easeInOut,
-        height: targetHeight,
-        child: Align(
+    return AnimatedContainer(
+      duration: duration,
+      curve: Curves.easeInOut,
+      height: targetHeight,
+      child: ClipRect(
+        child: OverflowBox(
+          maxHeight: double.infinity,
           alignment: Alignment.topCenter,
-          heightFactor: 1,
           child: child,
         ),
       ),
