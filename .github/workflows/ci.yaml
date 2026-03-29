@@ -27,6 +27,8 @@ jobs:
           cache: true
 
       - run: flutter pub get
+      - run: dart pub get
+        working-directory: member_ordering_lints
       - run: flutter analyze
       - run: flutter test --coverage
         
