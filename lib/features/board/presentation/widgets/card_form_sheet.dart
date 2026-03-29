@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:kanban_board/core/confirm_dialog.dart';
 import 'package:kanban_board/core/sheet_body.dart';
 import 'package:kanban_board/core/string_utils.dart';
 import 'package:kanban_board/features/board/domain/kanban_card.dart';
@@ -182,29 +183,13 @@ class _CardDetailSheetState extends State<CardDetailSheet> {
   }
 
   Future<void> _confirmDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Card'),
-        content: Text("Delete '${truncateForDisplay(widget.card.title)}'?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-              foregroundColor: Theme.of(context).colorScheme.onError,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDeleteDialog(
+      context,
+      title: 'Delete Card',
+      message: "Delete '${truncateForDisplay(widget.card.title)}'?",
     );
 
-    if (confirmed == true && mounted) {
+    if (confirmed && mounted) {
       Navigator.of(context).pop(const CardDeleted());
     }
   }
