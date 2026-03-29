@@ -151,10 +151,26 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
       columnIndex: widget.columnIndex,
     );
 
-    // Ghost: the card left behind at the original position during drag.
-    final ghost = Opacity(
-      opacity: 0.4,
-      child: IgnorePointer(child: child),
+    // Ghost: shown at original position only when adjacency-suppressed
+    // (no-op) or before hovering a valid target. Disappears once the
+    // pointer is over a valid non-no-op slot — the gap shows the ghost
+    // there instead.
+    final ghost = Consumer(
+      builder: (context, ref, _) {
+        final showGhost = ref.watch(
+          kanbanDragControllerProvider.select((state) {
+            if (!state.isDragging) return true;
+            return state.hoverIndex == null;
+          }),
+        );
+        if (showGhost) {
+          return Opacity(
+            opacity: 0.4,
+            child: IgnorePointer(child: child),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
 
     // Feedback: the widget that follows the pointer.
