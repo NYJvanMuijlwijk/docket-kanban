@@ -323,12 +323,6 @@ void _executeDrop(WidgetRef ref, String targetColumnId) {
   }
 
   if (dragState.sourceColumnId == targetColumnId) {
-    // Snapshot card positions BEFORE the reorder mutation fires,
-    // so ReorderAnimationScope can compute deltas after rebuild.
-    _reorderScopeKeys[targetColumnId]
-        ?.currentState
-        ?.snapshotPositions();
-
     // Same-column reorder: convert pre-removal to post-removal index.
     final originalIndex = dragState.originalIndex!;
     final postRemovalIndex = hoverIndex > originalIndex

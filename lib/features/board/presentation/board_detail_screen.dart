@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kanban_board/core/animated_list_item.dart';
 import 'package:kanban_board/core/confirm_dialog.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
-import 'package:kanban_board/core/reorder_animation_scope.dart';
 import 'package:kanban_board/core/reorder_helpers.dart';
 import 'package:kanban_board/core/responsive.dart';
 import 'package:kanban_board/core/shimmer.dart';
