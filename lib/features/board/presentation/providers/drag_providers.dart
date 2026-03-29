@@ -13,6 +13,8 @@ class KanbanDragState {
   const KanbanDragState({
     this.draggedCard,
     this.sourceColumnId,
+    this.sourceColumnIndex,
+    this.draggedCardHeight,
     this.originalIndex,
     this.hoverColumnId,
     this.hoverIndex,
@@ -22,6 +24,16 @@ class KanbanDragState {
 
   final KanbanCard? draggedCard;
   final String? sourceColumnId;
+
+  /// Zero-based index of the column the drag originated from.
+  /// Used by the insertion gap to render the ghost card with the
+  /// correct column accent color.
+  final int? sourceColumnIndex;
+
+  /// Measured render height of the dragged card in logical pixels.
+  /// Used to size the insertion gap so it matches the dragged card.
+  final double? draggedCardHeight;
+
   final int? originalIndex;
   final String? hoverColumnId;
   final int? hoverIndex;
@@ -42,6 +54,8 @@ class KanbanDragState {
   int get hashCode => Object.hash(
         draggedCard,
         sourceColumnId,
+        sourceColumnIndex,
+        draggedCardHeight,
         originalIndex,
         hoverColumnId,
         hoverIndex,
@@ -53,6 +67,8 @@ class KanbanDragState {
       other is KanbanDragState &&
           draggedCard == other.draggedCard &&
           sourceColumnId == other.sourceColumnId &&
+          sourceColumnIndex == other.sourceColumnIndex &&
+          draggedCardHeight == other.draggedCardHeight &&
           originalIndex == other.originalIndex &&
           hoverColumnId == other.hoverColumnId &&
           hoverIndex == other.hoverIndex;
@@ -66,11 +82,15 @@ class KanbanDragController extends _$KanbanDragController {
   void startDrag({
     required KanbanCard card,
     required String sourceColumnId,
+    required int sourceColumnIndex,
+    required double draggedCardHeight,
     required int originalIndex,
   }) {
     state = KanbanDragState(
       draggedCard: card,
       sourceColumnId: sourceColumnId,
+      sourceColumnIndex: sourceColumnIndex,
+      draggedCardHeight: draggedCardHeight,
       originalIndex: originalIndex,
       hoverColumnId: sourceColumnId,
     );
@@ -104,6 +124,8 @@ class KanbanDragController extends _$KanbanDragController {
     state = KanbanDragState(
       draggedCard: state.draggedCard,
       sourceColumnId: state.sourceColumnId,
+      sourceColumnIndex: state.sourceColumnIndex,
+      draggedCardHeight: state.draggedCardHeight,
       originalIndex: state.originalIndex,
       hoverColumnId: columnId,
       hoverIndex: suppressedIndex,

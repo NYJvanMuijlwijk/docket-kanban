@@ -129,6 +129,8 @@ class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
         .startDrag(
           card: widget.card,
           sourceColumnId: widget.columnId,
+          sourceColumnIndex: widget.columnIndex,
+          draggedCardHeight: 0, // TODO(task-4): replace with measured height
           originalIndex: widget.index,
         );
     widget.autoScroll.startAutoScroll();
