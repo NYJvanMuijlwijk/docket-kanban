@@ -96,7 +96,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
 
     // Show undo snackbar. If dismissed without undo, deletion stands.
     final messenger = ScaffoldMessenger.of(context)..clearSnackBars();
-    final controller = messenger.showSnackBar(
+    messenger.showSnackBar(
       SnackBar(
         content: Text("'${truncateForDisplay(board.name)}' deleted"),
         action: SnackBarAction(
@@ -124,8 +124,6 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
         ),
       ),
     );
-    // Await snackbar close reason — no further action needed.
-    await controller.closed;
 
     // Dismissible already removed from tree by returning true.
     return false;
