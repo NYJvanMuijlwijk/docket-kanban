@@ -83,7 +83,7 @@ class KanbanDragController extends _$KanbanDragController {
     required KanbanCard card,
     required String sourceColumnId,
     required int sourceColumnIndex,
-    required double draggedCardHeight,
+    required double? draggedCardHeight,
     required int originalIndex,
   }) {
     state = KanbanDragState(

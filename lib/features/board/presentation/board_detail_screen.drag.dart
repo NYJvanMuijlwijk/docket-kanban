@@ -67,7 +67,8 @@ class _InsertionGap extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final dragData = ref.watch(
       kanbanDragControllerProvider.select((state) {
-        final isActive = state.isDragging &&
+        final isActive =
+            state.isDragging &&
             state.hoverColumnId == columnId &&
             state.hoverIndex == index;
         return (
@@ -142,14 +143,16 @@ class _DraggableCardSlot extends ConsumerStatefulWidget {
 
 class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
   void _onDragStarted() {
-    final box = context.findRenderObject()! as RenderBox;
-    ref.read(kanbanDragControllerProvider.notifier).startDrag(
-      card: widget.card,
-      sourceColumnId: widget.columnId,
-      sourceColumnIndex: widget.columnIndex,
-      originalIndex: widget.index,
-      draggedCardHeight: box.size.height,
-    );
+    final box = context.findRenderObject() as RenderBox?;
+    ref
+        .read(kanbanDragControllerProvider.notifier)
+        .startDrag(
+          card: widget.card,
+          sourceColumnId: widget.columnId,
+          sourceColumnIndex: widget.columnIndex,
+          originalIndex: widget.index,
+          draggedCardHeight: box?.size.height,
+        );
     widget.autoScroll.startAutoScroll();
   }
 
