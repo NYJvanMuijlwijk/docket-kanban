@@ -26,19 +26,14 @@ Widget _buildApp({
   );
 }
 
-/// Opens the board-level popup menu and taps "Manage Columns".
+/// Taps the "Manage columns" icon button in the app bar.
 Future<void> _openManageColumnsSheet(WidgetTester tester) async {
-  // The board-level popup is the PopupMenuButton that is NOT inside a
-  // DragTarget (that's the column popup). Find the one in the AppBar.
   await tester.tap(
     find.descendant(
       of: find.byType(AppBar),
-      matching: find.byWidgetPredicate((w) => w is PopupMenuButton),
+      matching: find.byTooltip('Manage columns'),
     ),
   );
-  await tester.pumpAndSettle();
-
-  await tester.tap(find.text('Manage Columns'));
   await tester.pumpAndSettle();
 }
 

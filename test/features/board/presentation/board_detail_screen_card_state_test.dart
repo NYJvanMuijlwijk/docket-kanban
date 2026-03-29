@@ -46,7 +46,7 @@ void main() {
   }
 
   group('column card error state', () {
-    testWidgets('shows error indicator instead of "No cards yet"',
+    testWidgets('shows error indicator instead of empty column',
         (tester) async {
       final column = KanbanColumn(
         id: 'col-1',
@@ -62,8 +62,6 @@ void main() {
       await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
-      // Should NOT show the empty-state text.
-      expect(find.text('No cards yet'), findsNothing);
       // Should show an error indicator with message and retry.
       expect(find.byIcon(Icons.error_outline), findsOneWidget);
       expect(find.text("Couldn't load cards"), findsOneWidget);

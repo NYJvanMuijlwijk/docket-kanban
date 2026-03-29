@@ -93,7 +93,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.widgetWithText(FilledButton, 'Start with defaults'),
+      find.widgetWithText(FilledButton, 'Create Todo / In Progress / Done'),
       findsOneWidget,
     );
     expect(find.text('Add columns manually'), findsOneWidget);
@@ -114,7 +114,7 @@ void main() {
     await tester.pumpWidget(_buildApp(boardId: 'test-id', repository: repo));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Start with defaults'));
+    await tester.tap(find.text('Create Todo / In Progress / Done'));
     await tester.pumpAndSettle();
 
     // Column headers render names uppercased.
