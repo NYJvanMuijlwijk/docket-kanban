@@ -277,7 +277,6 @@ class _ColumnAddCardButton extends ConsumerWidget {
                       title: result.title,
                       description: result.description,
                     ),
-                'Failed to create card',
               );
               unawaited(HapticFeedback.mediumImpact());
             }
@@ -334,7 +333,6 @@ class _ColumnHeader extends ConsumerWidget {
         () => ref
             .read(columnListProvider(boardId).notifier)
             .renameColumn(column.id, newName),
-        'Failed to rename column',
       );
     }
   }
@@ -355,7 +353,6 @@ class _ColumnHeader extends ConsumerWidget {
         () => ref
             .read(columnListProvider(boardId).notifier)
             .deleteColumn(column.id),
-        'Failed to delete column',
       );
     }
   }

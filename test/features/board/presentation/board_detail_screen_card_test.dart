@@ -274,7 +274,7 @@ void main() {
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
 
-    // SnackBar should show the StateError message from the repository
+    // SnackBar should show the ValidationException message from the repository
     expect(
       find.text('Column already has 100 cards'),
       findsOneWidget,

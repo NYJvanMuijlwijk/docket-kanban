@@ -65,7 +65,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
       if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Could not delete board — please try again'),
+          content: Text("Couldn't remove board — try again"),
         ),
       );
       return false;
@@ -95,7 +95,7 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
               if (!mounted) return;
               messenger.showSnackBar(
                 const SnackBar(
-                  content: Text('Could not undo — board may be lost'),
+                  content: Text('Undo failed — board data may be lost'),
                 ),
               );
             }
@@ -121,7 +121,6 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
         await guardMutation(
           context,
           () => ref.read(boardListProvider.notifier).createBoard(name),
-          'Failed to create board',
         );
         unawaited(HapticFeedback.mediumImpact());
       } finally {

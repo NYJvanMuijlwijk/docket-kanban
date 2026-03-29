@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:kanban_board/core/mutation_exception.dart';
 import 'package:kanban_board/features/board/data/hive_board_repository.dart';
 
 void main() {
@@ -50,13 +51,13 @@ void main() {
   });
 
   group('createCard', () {
-    test('throws ArgumentError for non-existent columnId', () async {
+    test('throws StaleDataException for non-existent columnId', () async {
       expect(
         () => repository.createCard(
           columnId: 'non-existent',
           title: 'Orphan',
         ),
-        throwsA(isA<ArgumentError>()),
+        throwsA(isA<StaleDataException>()),
       );
     });
 
@@ -112,7 +113,7 @@ void main() {
       expect(cards.first.title, 'Fix bug');
     });
 
-    test('throws StateError when column has 100 cards', () async {
+    test('throws ValidationException when column has 100 cards', () async {
       final columnId = await createColumnForTest();
       for (var i = 0; i < 100; i++) {
         await repository.createCard(
@@ -126,7 +127,7 @@ void main() {
           columnId: columnId,
           title: 'Too Many',
         ),
-        throwsA(isA<StateError>()),
+        throwsA(isA<ValidationException>()),
       );
     });
   });
@@ -186,7 +187,7 @@ void main() {
 
       expect(
         () => repository.updateCard(ghost),
-        throwsA(isA<ArgumentError>()),
+        throwsA(isA<StaleDataException>()),
       );
     });
   });
@@ -207,7 +208,7 @@ void main() {
     test('throws for non-existent card ID', () async {
       expect(
         () => repository.deleteCard('non-existent'),
-        throwsA(isA<ArgumentError>()),
+        throwsA(isA<StaleDataException>()),
       );
     });
   });

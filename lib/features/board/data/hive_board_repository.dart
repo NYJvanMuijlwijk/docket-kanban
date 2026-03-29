@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:fractional_indexing/fractional_indexing.dart';
 import 'package:hive/hive.dart';
+import 'package:kanban_board/core/mutation_exception.dart';
 import 'package:kanban_board/core/seed_transformer.dart';
 import 'package:kanban_board/features/board/domain/board.dart';
 import 'package:kanban_board/features/board/domain/board_repository.dart';
@@ -54,35 +55,35 @@ class HiveBoardRepository implements BoardRepository {
       updatedAt: now,
       lastUsedAt: now,
     );
-    await _boardBox.put(board.id, board.toJson());
+    await _putBoard(board);
     return board;
   }
 
   @override
   Future<void> updateBoard(Board board) async {
     if (!_boardBox.containsKey(board.id)) {
-      throw ArgumentError('Board not found: ${board.id}');
+      throw const StaleDataException('Board was already deleted');
     }
-    await _boardBox.put(board.id, board.toJson());
+    await _putBoard(board);
   }
 
   @override
   Future<void> putBoard(Board board) async {
-    await _boardBox.put(board.id, board.toJson());
+    await _putBoard(board);
   }
 
   @override
   Future<void> deleteBoard(String id) async {
     if (!_boardBox.containsKey(id)) {
-      throw ArgumentError('Board not found: $id');
+      throw const StaleDataException('Board was already deleted');
     }
     // Cascade: delete all columns (and their cards) for this board.
     final columns = _readColumnsByBoard(id);
     for (final column in columns) {
       await _deleteCardsForColumn(column.id);
-      await _columnBox.delete(column.id);
+      await _deleteColumnBox(column.id);
     }
-    await _boardBox.delete(id);
+    await _deleteBoardBox(id);
   }
 
   @override
@@ -123,11 +124,11 @@ class HiveBoardRepository implements BoardRepository {
     required String name,
   }) async {
     if (!_boardBox.containsKey(boardId)) {
-      throw ArgumentError('Board not found: $boardId');
+      throw const StaleDataException('Board was already deleted');
     }
     final existing = _readColumnsByBoard(boardId);
     if (existing.length >= maxColumnsPerBoard) {
-      throw StateError(
+      throw const ValidationException(
         'Board already has $maxColumnsPerBoard columns',
       );
     }
@@ -144,30 +145,30 @@ class HiveBoardRepository implements BoardRepository {
       createdAt: now,
       updatedAt: now,
     );
-    await _columnBox.put(column.id, column.toJson());
+    await _putColumn(column);
     return column;
   }
 
   @override
   Future<void> updateColumn(KanbanColumn column) async {
     if (!_columnBox.containsKey(column.id)) {
-      throw ArgumentError('Column not found: ${column.id}');
+      throw const StaleDataException('Column was already deleted');
     }
-    await _columnBox.put(column.id, column.toJson());
+    await _putColumn(column);
   }
 
   @override
   Future<void> putColumn(KanbanColumn column) async {
-    await _columnBox.put(column.id, column.toJson());
+    await _putColumn(column);
   }
 
   @override
   Future<void> deleteColumn(String id) async {
     if (!_columnBox.containsKey(id)) {
-      throw ArgumentError('Column not found: $id');
+      throw const StaleDataException('Column was already deleted');
     }
     await _deleteCardsForColumn(id);
-    await _columnBox.delete(id);
+    await _deleteColumnBox(id);
   }
 
   @override
@@ -203,11 +204,11 @@ class HiveBoardRepository implements BoardRepository {
     String description = '',
   }) async {
     if (!_columnBox.containsKey(columnId)) {
-      throw ArgumentError('Column not found: $columnId');
+      throw const StaleDataException('Column was already deleted');
     }
     final existing = _readCardsByColumn(columnId);
     if (existing.length >= maxCardsPerColumn) {
-      throw StateError(
+      throw const ValidationException(
         'Column already has $maxCardsPerColumn cards',
       );
     }
@@ -225,29 +226,29 @@ class HiveBoardRepository implements BoardRepository {
       createdAt: now,
       updatedAt: now,
     );
-    await _cardBox.put(card.id, card.toJson());
+    await _putCard(card);
     return card;
   }
 
   @override
   Future<void> updateCard(KanbanCard card) async {
     if (!_cardBox.containsKey(card.id)) {
-      throw ArgumentError('Card not found: ${card.id}');
+      throw const StaleDataException('Card was already deleted');
     }
-    await _cardBox.put(card.id, card.toJson());
+    await _putCard(card);
   }
 
   @override
   Future<void> putCard(KanbanCard card) async {
-    await _cardBox.put(card.id, card.toJson());
+    await _putCard(card);
   }
 
   @override
   Future<void> deleteCard(String id) async {
     if (!_cardBox.containsKey(id)) {
-      throw ArgumentError('Card not found: $id');
+      throw const StaleDataException('Card was already deleted');
     }
-    await _cardBox.delete(id);
+    await _deleteCardBox(id);
   }
 
   @override
@@ -273,6 +274,57 @@ class HiveBoardRepository implements BoardRepository {
     unawaited(_boardController.close());
     unawaited(_columnController.close());
     unawaited(_cardController.close());
+  }
+
+  // ── Storage wrappers ─────────────────────────────────────────────
+  // Wrap Hive I/O so callers see StorageException, not raw HiveError.
+
+  Future<void> _putBoard(Board board) async {
+    try {
+      await _boardBox.put(board.id, board.toJson());
+    } on Exception {
+      throw const StorageException("Couldn't save board");
+    }
+  }
+
+  Future<void> _deleteBoardBox(String id) async {
+    try {
+      await _boardBox.delete(id);
+    } on Exception {
+      throw const StorageException("Couldn't remove board");
+    }
+  }
+
+  Future<void> _putColumn(KanbanColumn column) async {
+    try {
+      await _columnBox.put(column.id, column.toJson());
+    } on Exception {
+      throw const StorageException("Couldn't save column");
+    }
+  }
+
+  Future<void> _deleteColumnBox(String id) async {
+    try {
+      await _columnBox.delete(id);
+    } on Exception {
+      throw const StorageException("Couldn't remove column");
+    }
+  }
+
+  Future<void> _putCard(KanbanCard card) async {
+    try {
+      await _cardBox.put(card.id, card.toJson());
+    } on Exception {
+      throw const StorageException("Couldn't save card");
+    }
+  }
+
+  Future<void> _deleteCardBox(String id) async {
+    try {
+      await _cardBox.delete(id);
+    } on Exception {
+      throw const StorageException("Couldn't remove card");
+    }
   }
 
   // ── Private helpers ─────────────────────────────────────────────
@@ -314,7 +366,11 @@ class HiveBoardRepository implements BoardRepository {
         .where((c) => c.columnId == columnId)
         .map((c) => c.id)
         .toList();
-    await _cardBox.deleteAll(cardIds);
+    try {
+      await _cardBox.deleteAll(cardIds);
+    } on Exception {
+      throw const StorageException("Couldn't remove cards");
+    }
   }
 
   List<KanbanColumn> _readAllColumns() {

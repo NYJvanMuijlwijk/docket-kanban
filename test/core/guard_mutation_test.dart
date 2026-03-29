@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kanban_board/core/guard_mutation.dart';
+import 'package:kanban_board/core/mutation_exception.dart';
 
 void main() {
   testWidgets('no SnackBar on success', (tester) async {
@@ -18,13 +19,14 @@ void main() {
       ),
     );
 
-    await guardMutation(savedContext, () async {}, 'fail');
+    await guardMutation(savedContext, () async {});
     await tester.pump();
 
     expect(find.byType(SnackBar), findsNothing);
   });
 
-  testWidgets('StateError shows e.message in SnackBar', (tester) async {
+  testWidgets('ValidationException shows e.message in SnackBar',
+      (tester) async {
     late BuildContext savedContext;
     await tester.pumpWidget(
       MaterialApp(
@@ -41,16 +43,16 @@ void main() {
 
     await guardMutation(
       savedContext,
-      () async => throw StateError('Board already has 10 columns'),
-      'Failed to create column',
+      () async =>
+          throw const ValidationException('Board already has 10 columns'),
     );
     await tester.pump();
 
     expect(find.text('Board already has 10 columns'), findsOneWidget);
-    expect(find.text('Failed to create column'), findsNothing);
   });
 
-  testWidgets('ArgumentError shows generic failureMessage', (tester) async {
+  testWidgets('StaleDataException shows e.message in SnackBar',
+      (tester) async {
     late BuildContext savedContext;
     await tester.pumpWidget(
       MaterialApp(
@@ -67,13 +69,62 @@ void main() {
 
     await guardMutation(
       savedContext,
-      () async => throw ArgumentError('Board not found: abc'),
-      'Failed to rename board',
+      () async =>
+          throw const StaleDataException('Board was already deleted'),
     );
     await tester.pump();
 
-    expect(find.text('Failed to rename board'), findsOneWidget);
-    expect(find.text('Board not found: abc'), findsNothing);
+    expect(find.text('Board was already deleted'), findsOneWidget);
+  });
+
+  testWidgets('StorageException shows e.message in SnackBar',
+      (tester) async {
+    late BuildContext savedContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              savedContext = context;
+              return const SizedBox();
+            },
+          ),
+        ),
+      ),
+    );
+
+    await guardMutation(
+      savedContext,
+      () async => throw const StorageException("Couldn't save board"),
+    );
+    await tester.pump();
+
+    expect(find.text("Couldn't save board"), findsOneWidget);
+  });
+
+  testWidgets('unknown Exception shows generic fallback', (tester) async {
+    late BuildContext savedContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) {
+              savedContext = context;
+              return const SizedBox();
+            },
+          ),
+        ),
+      ),
+    );
+
+    await guardMutation(
+      savedContext,
+      () async => throw Exception('unexpected'),
+    );
+    await tester.pump();
+
+    expect(find.text('Something went wrong'), findsOneWidget);
+    expect(find.text('unexpected'), findsNothing);
   });
 
   testWidgets('no crash when context is unmounted', (tester) async {
@@ -97,8 +148,8 @@ void main() {
     // Should not crash — context is unmounted, SnackBar cannot be shown.
     await guardMutation(
       savedContext,
-      () async => throw StateError('limit'),
-      'fail',
+      () async =>
+          throw const ValidationException('Board already has 10 columns'),
     );
     await tester.pump();
 

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
+import 'package:kanban_board/core/mutation_exception.dart';
 import 'package:kanban_board/features/board/data/hive_board_repository.dart';
 import 'package:kanban_board/features/board/domain/board.dart';
 
@@ -122,7 +123,7 @@ void main() {
 
       expect(
         () => repository.updateBoard(ghost),
-        throwsA(isA<ArgumentError>()),
+        throwsA(isA<StaleDataException>()),
       );
     });
   });
@@ -139,7 +140,7 @@ void main() {
     test('throws for non-existent board ID', () async {
       expect(
         () => repository.deleteBoard('non-existent'),
-        throwsA(isA<ArgumentError>()),
+        throwsA(isA<StaleDataException>()),
       );
     });
   });
