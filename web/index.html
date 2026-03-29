@@ -118,5 +118,13 @@
   -->
   <script src="flutter_bootstrap.js" async=""></script>
 
+  <script>
+    document.addEventListener("contextmenu", (e) => {
+      // Prevent while simulating touch events
+      if (e.button === -1) { 
+        e.preventDefault();
+      }
+    });
+  </script>
 
 </body></html>
