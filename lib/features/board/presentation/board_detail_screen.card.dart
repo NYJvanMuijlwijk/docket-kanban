@@ -9,6 +9,7 @@ class _CardListView extends ConsumerWidget {
     required this.boardId,
     required this.autoScroll,
     required this.columnWidth,
+    super.key,
   });
 
   final KanbanColumn column;
