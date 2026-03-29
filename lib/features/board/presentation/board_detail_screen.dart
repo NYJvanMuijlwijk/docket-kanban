@@ -155,9 +155,13 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
       return;
     }
     _isSheetOpen = true;
-    final result = await CardFormSheet.show(context);
-    _isSheetOpen = false;
-    if (result != null && mounted) {
+    final ({String title, String description})? result;
+    try {
+      result = await CardFormSheet.show(context);
+    } finally {
+      _isSheetOpen = false;
+    }
+    if (result case final r? when mounted) {
       setState(() => _isMutating = true);
       try {
         await guardMutation(
@@ -165,8 +169,8 @@ class _BoardDetailScreenState extends ConsumerState<BoardDetailScreen> {
           () => ref
               .read(cardListProvider(columns.first.id).notifier)
               .createCard(
-                title: result.title,
-                description: result.description,
+                title: r.title,
+                description: r.description,
               ),
         );
         unawaited(HapticFeedback.mediumImpact());

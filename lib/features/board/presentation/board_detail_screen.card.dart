@@ -152,7 +152,9 @@ class _KanbanCardTile extends ConsumerWidget {
                       try {
                         await repository.putCard(card);
                       } on Object {
-                        if (!context.mounted) return;
+                        // The card tile is already unmounted after
+                        // deletion, so context.mounted is always false
+                        // here. Use the captured messenger directly.
                         messenger.showSnackBar(
                           const SnackBar(
                             content: Text(
