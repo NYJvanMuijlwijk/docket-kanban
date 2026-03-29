@@ -152,9 +152,17 @@ class _KanbanColumnDropTarget extends ConsumerWidget {
         // card or gap DragTarget (i.e., empty space below cards or an
         // empty column). Oscillation from gap-animation layout shifts is
         // prevented by the no-op guard in updateHover().
-        ref
-            .read(kanbanDragControllerProvider.notifier)
-            .updateHover(columnId: column.id, index: cardCount);
+        final drag =
+            ref.read(kanbanDragControllerProvider.notifier);
+        final sourceId =
+            ref.read(kanbanDragControllerProvider).sourceColumnId;
+        if (column.id == sourceId) {
+          // Source column empty space: return ghost to original position
+          // rather than appending to end.
+          drag.resetHover();
+        } else {
+          drag.updateHover(columnId: column.id, index: cardCount);
+        }
         return true;
       },
       onAcceptWithDetails: (_) => _executeDrop(ref, column.id),
