@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:kanban_board/core/theme.dart';
@@ -7,7 +8,8 @@ import 'package:kanban_board/features/board/presentation/providers/board_provide
 import 'package:kanban_board/router/app_router.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await Hive.initFlutter();
 
   final boardsBox = await Hive.openBox<Map<dynamic, dynamic>>(
@@ -19,6 +21,8 @@ Future<void> main() async {
   final cardsBox = await Hive.openBox<Map<dynamic, dynamic>>(
     HiveBoardRepository.cardBoxName,
   );
+
+  FlutterNativeSplash.remove();
 
   runApp(
     ProviderScope(
@@ -44,7 +48,7 @@ class KanbanApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Kanban Board',
+      title: 'Docket',
       theme: buildLightTheme(),
       darkTheme: buildDarkTheme(),
       themeMode: ThemeMode.dark,
