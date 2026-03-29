@@ -109,15 +109,14 @@ class _DraggableCardSlot extends ConsumerStatefulWidget {
 
 class _DraggableCardSlotState extends ConsumerState<_DraggableCardSlot> {
   void _onDragStarted() {
-    ref
-        .read(kanbanDragControllerProvider.notifier)
-        .startDrag(
-          card: widget.card,
-          sourceColumnId: widget.columnId,
-          sourceColumnIndex: widget.columnIndex,
-          draggedCardHeight: 0, // TODO(task-4): replace with measured height
-          originalIndex: widget.index,
-        );
+    final box = context.findRenderObject()! as RenderBox;
+    ref.read(kanbanDragControllerProvider.notifier).startDrag(
+      card: widget.card,
+      sourceColumnId: widget.columnId,
+      sourceColumnIndex: widget.columnIndex,
+      originalIndex: widget.index,
+      draggedCardHeight: box.size.height,
+    );
     widget.autoScroll.startAutoScroll();
   }
 
