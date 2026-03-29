@@ -177,7 +177,7 @@ class _KanbanCardTile extends ConsumerWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

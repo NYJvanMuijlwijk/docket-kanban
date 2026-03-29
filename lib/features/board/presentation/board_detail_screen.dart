@@ -328,7 +328,7 @@ class _EmptyBoardContentState extends ConsumerState<_EmptyBoardContent> {
           const SizedBox(height: 8),
           TextButton(
             onPressed: _isMutating ? null : _openManageColumns,
-            child: const Text('Or add columns manually'),
+            child: const Text('Add columns manually'),
           ),
         ],
       ),
@@ -440,8 +440,8 @@ class _SkeletonColumn extends StatelessWidget {
             padding: EdgeInsets.only(
               left: 16,
               right: 4,
-              top: 8,
-              bottom: 4,
+              top: 12,
+              bottom: 8,
             ),
             child: Row(
               children: [

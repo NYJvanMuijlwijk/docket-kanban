@@ -66,7 +66,7 @@ void main() {
       expect(find.text('No cards yet'), findsNothing);
       // Should show an error indicator with message and retry.
       expect(find.byIcon(Icons.error_outline), findsOneWidget);
-      expect(find.text('Failed to load'), findsOneWidget);
+      expect(find.text("Couldn't load cards"), findsOneWidget);
       expect(find.text('Retry'), findsOneWidget);
     });
 
@@ -85,7 +85,7 @@ void main() {
       await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
-      expect(find.text('Add Card'), findsNothing);
+      expect(find.text('Add card'), findsNothing);
     });
 
     testWidgets('healthy column still shows cards normally', (tester) async {
@@ -104,7 +104,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('My Task'), findsOneWidget);
-      expect(find.text('Add Card'), findsOneWidget);
+      expect(find.text('Add card'), findsOneWidget);
     });
   });
 }

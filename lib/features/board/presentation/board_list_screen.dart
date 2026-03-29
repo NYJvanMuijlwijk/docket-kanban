@@ -115,10 +115,10 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                       background: Container(
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 24),
-                        color: Theme.of(context).colorScheme.error,
+                        color: Theme.of(context).colorScheme.errorContainer,
                         child: Icon(
-                          Icons.delete,
-                          color: Theme.of(context).colorScheme.onError,
+                          Icons.delete_outline,
+                          color: Theme.of(context).colorScheme.error,
                         ),
                       ),
                       onDismissed: (_) async {
@@ -140,6 +140,10 @@ class _BoardListScreenState extends ConsumerState<BoardListScreen> {
                       child: Column(
                         children: [
                           ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 4,
+                            ),
                             title: Text(
                               board.name,
                               maxLines: 1,
@@ -259,6 +263,9 @@ class _RelativeTimestampState extends State<_RelativeTimestamp> {
           '${widget.dateTime.month}/${widget.dateTime.day}/${widget.dateTime.year}';
     }
 
-    return Text('Last used $label');
+    return Text(
+      label,
+      style: Theme.of(context).textTheme.bodySmall,
+    );
   }
 }

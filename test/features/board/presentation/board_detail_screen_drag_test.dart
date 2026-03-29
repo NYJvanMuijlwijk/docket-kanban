@@ -122,7 +122,7 @@ void main() {
       await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
-      expect(find.text('Add Card'), findsOneWidget);
+      expect(find.text('Add card'), findsOneWidget);
     });
   });
 
@@ -198,7 +198,7 @@ void main() {
       await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
-      expect(find.text('Add Card'), findsOneWidget);
+      expect(find.text('Add card'), findsOneWidget);
     });
 
     testWidgets('Add Card button is visible in column with cards', (
@@ -211,7 +211,7 @@ void main() {
       await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
-      expect(find.text('Add Card'), findsOneWidget);
+      expect(find.text('Add card'), findsOneWidget);
     });
 
     testWidgets('tapping Add Card opens card form sheet', (tester) async {
@@ -221,7 +221,7 @@ void main() {
       await tester.pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Add Card'));
+      await tester.tap(find.text('Add card'));
       await tester.pumpAndSettle();
 
       // CardFormSheet shows a "Create" button.

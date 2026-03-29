@@ -298,8 +298,8 @@ class _ColumnRowState extends State<_ColumnRow> {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        color: colorScheme.error,
-        child: Icon(Icons.delete, color: colorScheme.onError),
+        color: colorScheme.errorContainer,
+        child: Icon(Icons.delete_outline, color: colorScheme.error),
       ),
       child: ListTile(
         leading: Tooltip(

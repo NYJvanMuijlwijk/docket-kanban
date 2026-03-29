@@ -53,7 +53,7 @@ void main() {
         .pumpWidget(_buildApp(boardId: 'board-1', repository: repo));
     await tester.pumpAndSettle();
 
-    expect(find.text('Add Card'), findsOneWidget);
+    expect(find.text('Add card'), findsOneWidget);
   });
 
   testWidgets('add card button opens form, submit creates card',
@@ -65,7 +65,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Tap "Add Card" button
-    await tester.tap(find.text('Add Card'));
+    await tester.tap(find.text('Add card'));
     await tester.pumpAndSettle();
 
     // Enter title
@@ -199,7 +199,7 @@ void main() {
 
     // Card should be gone, Add Card button still present.
     expect(find.text('Delete Me'), findsNothing);
-    expect(find.text('Add Card'), findsOneWidget);
+    expect(find.text('Add card'), findsOneWidget);
   });
 
   testWidgets('cancel delete dialog keeps card', (tester) async {
@@ -258,14 +258,14 @@ void main() {
 
     // Scroll "Add Card" into view — 100 cards push it far off-screen.
     await tester.scrollUntilVisible(
-      find.text('Add Card'),
+      find.text('Add card'),
       500,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
 
     // Tap "Add Card"
-    await tester.tap(find.text('Add Card'));
+    await tester.tap(find.text('Add card'));
     await tester.pumpAndSettle();
 
     // Enter title and submit
